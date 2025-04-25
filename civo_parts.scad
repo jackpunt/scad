@@ -9,12 +9,10 @@ l = 138; w = 53; h = 50;
 d1 = 55; // div at x = d1;
 
 
-db = 22; ss = 16;      // remove slot from sites end:
+db = 28; ss = 16; cr = 3;      // remove slot from sites end:
 r = 2;
 // round top_inner corners:
-rc([0, (w-ss)/2, h], [0, 90, 0], 1, r)
-rc([0, (w+ss)/2-.005, h], [0, 90, 0], 0, r)
-slotify([h-db, ss/2], [0, w/2, db])
+slotify([h-db, ss/2], [0, w/2, db], undef, cr)
  box(l, w, h, 1);
 
 
@@ -24,34 +22,37 @@ module dbox(x=0, y= 0, z=0) {
   ds = d +2*t0+1.2; // shaft size
   de = 3;           // edge to hold dice
   sw = ds - 2 * de; // slot radius: dbox
-  dz = d/2;
-  translate([x, y, z]) {
+  dz = d/2; r = 2;  //
+  translate([x, y, z]) 
+  rotatet([0, 0, 90], [ds/2, ds/2, 0])
+  {
   *translate([1.5*t0, 1.5*t0, 37]) color("white") roundedCube(d,1); // die
   difference() 
   {
-      r = 2;
-      rc([0, ds, h], [0, 90, 0], 1, r)         // site_slot
-      slotify([h-sw-dz, sw/2], [ds-t0, ds/2, sw], [0, -90, 0], [r, 1]) 
+      slotify([h-sw-dz, sw/2], [ds-t0, ds/2, sw], undef, r) 
       box(ds, ds, h-pp);
-      translate([t0, t0, h-dz]) cube([ds, ds-t0+p, ds-dz]);
+      translate([-p, -p, h-dz]) cube([ds+pp, ds+pp, ds-dz]);
   }
   }
 }
+// interior div for sites:
+translate([d1, -p, 0]) 
+slotify([h-db, ss/2], [0, w/2, db], undef, [cr])
+  div([h, w-2*p], .2);
+
 dbox(d1, p);
 mirror([0,1,0]) dbox(d1, -w-p, p);
 
-// interior div for sites:
-translate([d1, -p, 0]) div([15, w-2*p], .2);
-
 // make boxes for bonus_tokens (18x20) & resource_chips (20x20)
-bx = 22; by=22; bz = 5; f = .2; // fudge: slack in holding base
+bx = 22; by=22; bz = 10; f = .2; // fudge: slack in holding base
 bxx = bx+2*t0+f; byy = by+2*t0+f;
 
-module pbox(p=[l+t0, t0+f/2, 0]) {
-  ds = h*.2;
-    translate(p) 
+// main parts box:
+module pbox(lwh=[l+t0, t0+f/2, 0]) {
+  ds = h*.5; // raise slot
+    translate(lwh) 
     translate([-bxx+f/2 , 0, t0])
-    slotify([h-ds-t0, by*.125], [bx-t0, by/2, ds], undef, [2, 1])
+    slotify([h-ds-t0, by*.125], [bx-t0, by/2, ds], undef, 2)
     box(bx, by, h-1*t0-.1);
 }
 dup([0, w-p-by-2*t0]) pbox();
