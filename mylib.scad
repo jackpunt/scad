@@ -13,8 +13,15 @@ module box(x, y, z, t = t0) {
   }
 }
 
-// alternatively: make a 2D 'ring' and extrude it; see roundedTube()
-// then add end cap; see tray()
+// shift center of rotation, then rotate, shift back
+// rot: [ax, ay, az] the rotation
+// cr:  [dx, dy, dz] the center of rotation
+module rotatet(rot=[0,0,0], cr=[0,0,0]) {
+  translate(cr) 
+  rotate(rot) 
+  translate([-cr[0], -cr[1], -cr[2]]) 
+  children();
+}
 
 // duplicate, with translate & rotate:
 // suitable inside hull() { ... }
@@ -87,15 +94,16 @@ cube([20, 20, t0]);
 // rc:  [(0,0), (0,dy), (dx, dy), (dx, 0)] 
 module roundedRect(sxy = 10, rc = 2, k = 0) {
   s = is_list(sxy) ? sxy : [sxy,sxy];
+  k = is_undef(k) ? 0 : k;
   dx = s[0]; dy = s[1];
   r = is_list(rc) ? rc : [rc, rc, rc, rc];
   intersection()
   {
     hull() {
-      translate([r[0],       r[0]]) circle(r=r[0]);
-      translate([r[1],    dy-r[1]]) circle(r=r[1]);
-      translate([dx-r[2], dy-r[2]]) circle(r=r[2]);
-      translate([dx-r[3],    r[3]]) circle(r=r[3]);
+      translate([r[0],       r[0]]) circle(r=max(p,r[0]));
+      translate([r[1],    dy-r[1]]) circle(r=max(p,r[1]));
+      translate([dx-r[2], dy-r[2]]) circle(r=max(p,r[2]));
+      translate([dx-r[3],    r[3]]) circle(r=max(p,r[3]));
    }
    translate([k-p, -p])  square([s[0]+pp, s[1]+pp]);
   }
@@ -105,7 +113,7 @@ module roundedRect(sxy = 10, rc = 2, k = 0) {
 // A Z-extruded roundedRect: (kut across the YZ plane)
 // sxy: [dx, dy, dz]
 // r: radius (2), k: keep/cut (0), t = thick (t0)
-module roundedTube(sxy=10, r = 2, k, t = t0) {
+module roundedTube(sxy=10, r = 2, k = 0, t = t0) {
    s = is_list(sxy) ? sxy : [sxy,sxy,sxy];
    dx = s[0]; dy = s[1];
    rs = [dx, dy];
@@ -128,15 +136,16 @@ module roundedTube(sxy=10, r = 2, k, t = t0) {
  roundedTube([40, 40, 8], [15, 4,2,2], -15, 1);
 
 // a roundedRect divider across the YZ plane of a box:
-// hw: [z,y]; r: radius ([r,r,r,r])
+// hwx: [z,y,x]; r: radius ([r,r,r,r])
 // t: thick (dx = t0)
-// k>0 keep bottom/cut top; k<0 cut bottom/keep top
+// k: (0) k>0 keep bottom/cut top; k<0 cut bottom/keep top
 // k == 0 keep all
-module div(hw = 10, r = 2, k, t = t0) { 
- translate([t, 0, 0])
+module div(hwx = 10, r = 2, k, t = t0) { 
+  dx = is_undef(hwx[2]) ? 0 : hwx[2];
+ translate([dx+t, 0, 0])
  rotate([0, -90])
  linear_extrude(height = t)
- roundedRect(hw, r, k);
+ roundedRect([hwx[0], hwx[1]], r, k);
 }
 
 // a slot shaped hull; (in YZ plane)
@@ -151,32 +160,34 @@ module slot(hrt, rott) {
     translate(tr) // align after rotate
     rotate(rott)  // ignore rott[3]
     hull() {
-      dup([h, 0, 0]) cylinder(h=t+2*p, r=r);
+      dup([h, 0, 0]) cylinder(t+2*p, r, r);
    }
 }
 
 // make a slot in the yz plane
 // hrt: [h: dz (40), r: slot_radius (5), t: (t0)]
 // tr: translate onto wall ([0,0,0])
-// rot: rotate ([0, 90, 0])
-// sq: [size: radius (2*t), quad: (1)]
-module slotify(hrt, tr=[0,0,0], rot, sq) {
+// rot: rotate ([0, -90, 0])
+// rq: [radius: (2*t), q1: (3), q2: (2)]; for yz plane
+module slotify(hrt, tr=[0,0,0], rot, rq) {
     h=is_undef(hrt[0]) ? 40 : hrt[0];
     r=is_undef(hrt[1]) ?  5 : hrt[1]; 
     t=is_undef(hrt[2]) ? t0 : hrt[2];
-    module maybe_rc(sqr) {
-      if (!is_undef(sqr)) {
-        rad = is_undef(sq[0]) ? 2*t : sq[0];
-        quad = is_undef(sq[1]) ? 1 : sq[1]; 
+    module maybe_rc(rqq) {
+      if (!is_undef(rqq)) {
+        rq = is_list(rqq) ? rqq : [ rq ]; // rq as simple radius
+        rad = is_undef(rq[0]) ? 2*t : rq[0];
+        q1 = is_undef(rq[1]) ? 3 : rq[1]; 
+        q2 = is_undef(rq[2]) ? 2 : rq[2]; 
         rcr = is_undef(rot) ? [0,-90,0]: rot;
-        rc([tr[0]+t, tr[1]+r, h+tr[2]], rcr, 3, rad)
-        rc([tr[0]+t, tr[1]-r, h+tr[2]], rcr, 2, rad)
+        rc([tr[0]+t, tr[1]+r-pp, h+tr[2]], rcr, q1, rad)
+        rc([tr[0]+t, tr[1]-r+pp, h+tr[2]], rcr, q2, rad)
         children();
       } else {
         children();
       }
     } 
-    maybe_rc(sq)
+    maybe_rc(rq)
     difference()
     {
         children(0);

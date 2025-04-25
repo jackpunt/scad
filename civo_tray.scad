@@ -16,25 +16,24 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
  roundedTube([s[2], s[1], s[0]], rt, k, t);
 
  // endcaps
- hr = s[2];
- hw = [hr, s[1]];  // 2D
- translate([0, 0, 0])      div(hw, rc, k);
- translate([s[0]-t, 0, 0]) div(hw, rc, k);
+ hw0 = [s[2], s[1], 0];
+ hwx = [s[2], s[1], s[0]];
+ div(hw0, rc, k);
+ div(hwx, rc, k);
 }
 
-l1 = 57; l2 = 57; l3 = 55; lt = l1+l2+l3; 
-assert(lt <= 170, lt);
-w = 53; h = 25; r = 15; r2 = 4;
-hr = h+r;
-hw = [hr, w]; 
-rad = [r, r2, r2, r2];
-rod = [r2, r2, r2, r2];
+l1 = 57.1; l2 = 57.1; l3 = 55; lt = l1+l2+l3; 
+assert(lt <= 171, lt);
+w = 53; h = 24.3; r0 = 15; r1 = 4; rt=0;
+hr = h+r1; // tube @ h+r1, then cut -r1
+rad = [r0, r1, rt, rt];
+rod = [r1, r1, rt, rt];
 
 // 3 concatenated trays: l1, l2, l3
 module tray3() {
-translate([0, 0, 0])     tray([l1 + t0, w, hr], rad, rod, -r);
-translate([l1, 0, 0])    tray([l2 + t0, w, hr], rod, rod, -r);
-translate([l1+l2, 0, 0]) tray([l3 + t0, w, hr], rad, rod, -r);
+translate([0, 0, 0])     tray([l1, w, hr], rad, rod, -r1);
+translate([l1, 0, 0])    tray([l2, w, hr], rod, rod, -r1);
+translate([l1+l2, 0, 0]) tray([l3, w, hr], rad, rod, -r1);
 }
 translate([0, 0, 0]) tray3();
 *translate([0, w+2, 0]) tray3();
