@@ -14,6 +14,7 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
  translate([s[0], 0, 0])
  rotate([0, -90, 0])
  roundedTube([s[2], s[1], s[0]], rt, k, t);
+
  // endcaps
  hr = s[2];
  hw = [hr, s[1]];  // 2D
@@ -21,8 +22,8 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
  translate([s[0]-t, 0, 0]) div(hw, rc, k);
 }
 
-l1 = 57; l2 = 57; l3 = 56; lt = l1+l2+l3; 
-assert(lt <= 171);
+l1 = 57; l2 = 57; l3 = 55; lt = l1+l2+l3; 
+assert(lt <= 170, lt);
 w = 53; h = 25; r = 15; r2 = 4;
 hr = h+r;
 hw = [hr, w]; 
@@ -35,12 +36,12 @@ translate([0, 0, 0])     tray([l1 + t0, w, hr], rad, rod, -r);
 translate([l1, 0, 0])    tray([l2 + t0, w, hr], rod, rod, -r);
 translate([l1+l2, 0, 0]) tray([l3 + t0, w, hr], rad, rod, -r);
 }
+translate([0, 0, 0]) tray3();
+*translate([0, w+2, 0]) tray3();
+*translate([0, 2*w+4, 0]) tray3();
 
-// notch for stage4/5 cardboard:
-d = 2; 
-difference() {
-   tray3();
-   translate([l2-t0*1,   t0+p  , h-d]) 
-     cube([l2+t0*4, w-2.05*t0 - 2*p, d+p]); 
-      // inner_tube scale precision...
-}
+
+// short tube, oriented as tray:
+*translate([0, -60, 0]) 
+ rotate([0, -90, 0])
+ roundedTube([40, 53, 8], [15, 4,2,2], -15, 1);
