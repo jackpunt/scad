@@ -108,7 +108,19 @@ module roundedRect(sxy = 10, rc = 2, k = 0) {
    translate([k-p, -p])  square([s[0]+pp, s[1]+pp]);
   }
 }
-
+module pipe(rrh=10, t=t0) {
+  dx = is_list(rrh) && !is_undef(rrh[0]) ? rrh[0] : rrh;
+  dy = is_list(rrh) && !is_undef(rrh[1]) ? rrh[1] : rrh;
+  dz = is_list(rrh) && !is_undef(rrh[2]) ? rrh[2] : rrh;
+  sx = (dx-t)/dx; sy = (dy-t)/dy;
+  linear_extrude(height = dz) 
+  difference() 
+    {
+    circle(dx);
+    scale([sx, sx])
+    circle(dx);
+   }
+}
 
 // A Z-extruded roundedRect: (kut across the YZ plane)
 // sxy: [dx, dy, dz]
