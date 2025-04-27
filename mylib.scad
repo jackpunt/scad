@@ -2,14 +2,23 @@ $fa = 1;
 $fs = 0.4;
 t0 = 1; p=.001; pp = 2*p;
 
+function amul(a, b) = [for(i = [0: len(a)-1]) a[i]*b[i]];
+function adif(a, b) = [for(i = [0: len(a)-1]) a[i]-b[i]];
+
 // A hollow box:
-// x: length, y: width, z: height, bt: thick
-module box(x, y, z, t = t0) {
+// lwh: [length_x, width_y, height_z], 
+// t: ([t0,t0,t0]) thick 'translate'
+// d: delta --> size of box to remove
+module box(lwh, t = t0, d) {
+  t = is_undef(t) ? t0 : t;  // wall thickness
+  txyz = is_list(t) ? t : [t, t, t]; // in each direction
+  d = is_list(d) ? d : [2, 2, 1-p];  // reduce inner_cube by txyz
+  dxyz = adif(lwh, amul(d, txyz));
   difference()
   {
-    cube([x, y, z]);
-    translate([t,t,t])
-    cube([x-2*t, y-2*t, z+p]); // -2*bt or +2*p
+    cube(lwh);
+    translate(txyz)
+    cube(dxyz); // -2*bt or +2*p
   }
 }
 
@@ -192,8 +201,8 @@ module slotify(hrt, tr=[0,0,0], rot, rq) {
         q1 = is_undef(rq[1]) ? 3 : rq[1]; 
         q2 = is_undef(rq[2]) ? 2 : rq[2]; 
         rcr = is_undef(rot) ? [0,-90,0]: rot;
-        rc([tr[0]+t, tr[1]+r-pp, h+tr[2]], rcr, q1, rad)
-        rc([tr[0]+t, tr[1]-r+pp, h+tr[2]], rcr, q2, rad)
+        rc([tr[0]+t, tr[1]+(r-p*6), h+tr[2]], rcr, q1, rad, t)
+        rc([tr[0]+t, tr[1]-(r-p*5), h+tr[2]], rcr, q2, rad, t)
         children();
       } else {
         children();
@@ -203,6 +212,6 @@ module slotify(hrt, tr=[0,0,0], rot, rq) {
     difference()
     {
         children(0);
-        translate(tr) slot(hrt, rot); // TODO: rot[3] = tr
+        translate(tr) slot([h,r,t], rot); // TODO: rot[3] = tr
     }
 }
