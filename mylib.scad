@@ -172,14 +172,14 @@ module div(hwx = 10, r = 2, k, t = t0) {
 // a slot shaped hull; (in YZ plane)
 // hrt: [h: height, r: radius, t = t0]
 // rottr: rotate & translate ([0, -90, 0, tr=[t+p, 0, 0]]) 
-module slot(hrt, rott) {
+module slot(hrt, rottr) {
     h=is_undef(hrt[0]) ? 40 : hrt[0];
     r=is_undef(hrt[1]) ?  5 : hrt[1]; 
     t=is_undef(hrt[2]) ? t0 : hrt[2];
     rott = is_undef(rottr) || is_undef(rottr[0]) ? [0, -90, 0] : rottr;
     tr= is_undef(rott[3]) ? [t+p, 0, 0] : rott[3];
     translate(tr) // align after rotate
-    rotate(rott)  // ignore rott[3]
+    rotate([rott[0], rott[1], rott[2]])  // ignore rott[3]
     hull() {
       dup([h, 0, 0]) cylinder(t+2*p, r, r);
    }
@@ -188,7 +188,7 @@ module slot(hrt, rott) {
 // make a slot in the yz plane
 // hrt: [h: dz (40), r: slot_radius (5), t: (t0)]
 // tr: translate onto wall ([0,0,0])
-// rot: rotate ([0, -90, 0])
+// rot: rotate ([0, -90, 0]) [rx, ry, rz, [cx, cy, cz]]
 // rq: [radius: (2*t), q1: (3), q2: (2)]; for yz plane
 module slotify(hrt, tr=[0,0,0], rot, rq) {
     h=is_undef(hrt[0]) ? 40 : hrt[0];
@@ -197,10 +197,10 @@ module slotify(hrt, tr=[0,0,0], rot, rq) {
     module maybe_rc(rqq) {
       if (!is_undef(rqq)) {
         rq = is_list(rqq) ? rqq : [ rq ]; // rq as simple radius
-        rad = is_undef(rq[0]) ? 2*t : rq[0];
+        rad = is_undef(rq[0]) ? 2*t0 : rq[0];
         q1 = is_undef(rq[1]) ? 3 : rq[1]; 
         q2 = is_undef(rq[2]) ? 2 : rq[2]; 
-        rcr = is_undef(rot) ? [0,-90,0]: rot;
+        rcr = is_undef(rot) ? [0,-90,0]: [rot[0], rot[1], rot[2]];
         rc([tr[0]+t, tr[1]+(r-p*6), h+tr[2]], rcr, q1, rad, t)
         rc([tr[0]+t, tr[1]-(r-p*5), h+tr[2]], rcr, q2, rad, t)
         children();
