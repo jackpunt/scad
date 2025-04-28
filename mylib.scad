@@ -23,7 +23,7 @@ module atrans(ndx = 0, atran = [0,0,0]) {
 // lwh: [length_x, width_y, height_z], 
 // t: ([t0,t0,t0]) thick 'translate'
 // d: delta --> size of box to remove
-module box(lwh, t = t0, d) {
+module box(lwh =[10,10,10], t = t0, d) {
   t = is_undef(t) ? t0 : t;  // wall thickness
   txyz = is_list(t) ? t : [t, t, t]; // in each direction
   d = is_list(d) ? d : [2, 2, 1-p];  // reduce inner_cube by txyz
@@ -54,10 +54,16 @@ module dup(tr=[0,0,0], rot=[0,0,0]) {
 }
 
 // New implementation: MCAD
-module roundedCube(size, r, sidesonly, center) {
-  s = is_list(size) ? size : [size,size,size];
+// dxyz: [dx, dy, dz]
+// r: corner radius
+// sidesonly: round xy, flat on z?
+// center: 
+module roundedCube(dxyz, r, sidesonly, center) {
+  s = is_list(dxyz) ? dxyz : [dxyz,dxyz,dxyz];
+  echo("s=", s, "r=", r);
   translate(center ? -s/2 : [0,0,0]) {
     if (sidesonly) {
+      *linear_extrude(s[2])  roundedRect([s[0], s[1]], r);
       hull() {
         translate([     r,     r]) cylinder(r=r, h=s[2]);
         translate([     r,s[1]-r]) cylinder(r=r, h=s[2]);
@@ -184,7 +190,7 @@ module div(hwx = 10, r = 2, k, t = t0) {
 }
 
 // a slot shaped hull; (in YZ plane)
-// hrt: [h: height, r: radius, t = t0]
+// hrt: [h: height, r: radius [width, rad], t = t0]
 // rottr: rotate & translate ([0, -90, 0, tr=[t+p, 0, 0]]) 
 module slot(hrt, rottr) {
     h=is_undef(hrt[0]) ? 40 : hrt[0];
@@ -192,11 +198,12 @@ module slot(hrt, rottr) {
     t=is_undef(hrt[2]) ? t0 : hrt[2];
     rott = is_undef(rottr) || is_undef(rottr[0]) ? [0, -90, 0] : rottr;
     tr= is_undef(rott[3]) ? [t+p, 0, 0] : rott[3];
+    rw = is_list(r) ? r[0] : r;
+    rr = is_list(r) ? r[1] : r;
+    rm = min(rw/2, rr);
     translate(tr) // align after rotate
     rotate([rott[0], rott[1], rott[2]])  // ignore rott[3]
-    hull() {
-      dup([h, 0, 0]) cylinder(t+2*p, r, r);
-   }
+    translate([0, -rw, 0])  roundedCube([h, 2*rw, t], rr, true);
 }
 
 // make a slot in the yz plane
@@ -215,8 +222,12 @@ module slotify(hrt, tr=[0,0,0], rot, rq) {
         q1 = is_undef(rq[1]) ? 3 : rq[1]; 
         q2 = is_undef(rq[2]) ? 2 : rq[2]; 
         rcr = is_undef(rot) ? [0,-90,0]: [rot[0], rot[1], rot[2]];
-        rc([tr[0]+t, tr[1]+(r-p*6), h+tr[2]], rcr, q1, rad, t)
-        rc([tr[0]+t, tr[1]-(r-p*5), h+tr[2]], rcr, q2, rad, t)
+        rw = is_list(r) ? r[0] : r; // slot width/2
+        rr = is_list(r) ? r[1] : r; // corner radius
+        rm = rr;// min(rw, rr);         // limit radius
+        // echo ("[rq, rw, rr, rm]", [rq, rw, rr, rm])
+        rc([tr[0]+t, tr[1]+(rw-p*6), h+tr[2]-rm], rcr, q1, rad, t)
+        rc([tr[0]+t, tr[1]-(rw-p*5), h+tr[2]-rm], rcr, q2, rad, t)
         children();
       } else {
         children();
