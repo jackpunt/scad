@@ -108,7 +108,7 @@ bl = l-(d1+t0)-bxx; bw = ds; bh = 16; br=3; hh=6;
 module bonusTray(loc=0) {
 // tray for bonus cardboard:
   module hook() {
-  hw = 3.25;
+  hw = 3.25; // 3*t0 + f
   translate([0, t0-hw, dh+(bh-hh)+t0]) 
   rc([bl, 0, 0], [-90, 0, 0], 2, br)
   rc([0, 0, 0], [-90, 0, 0], 1, br)
