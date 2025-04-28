@@ -60,7 +60,7 @@ module dup(tr=[0,0,0], rot=[0,0,0]) {
 // center: 
 module roundedCube(dxyz, r, sidesonly, center) {
   s = is_list(dxyz) ? dxyz : [dxyz,dxyz,dxyz];
-  echo("s=", s, "r=", r);
+  echo("mhylib: s=", s, "r=", r);
   translate(center ? -s/2 : [0,0,0]) {
     if (sidesonly) {
       *linear_extrude(s[2])  roundedRect([s[0], s[1]], r);
