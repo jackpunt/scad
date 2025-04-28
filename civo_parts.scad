@@ -55,7 +55,7 @@ if (loc != 0)
 cbstack(12, [28, 28, 2], "tan", .1); // score-100 tiles
 
 color("green") div([bz, w, d1+3*(ds-t0)],0);
-color("green") div([bz, w, l-bxx-.11*t0],0);
+color("green") div([bz, w, l-bxx],0);
 // echo(d1+3*(ds-t0), l-t0-bxx-25.5)
 
 // dbox(d1, p);
@@ -67,7 +67,7 @@ mirror([0,1,0]) dbox(d1, -w-p, p);
 // make boxes for bonus_tokens (18x20) & resource_chips (20x20)
 dd = .9; // increase size for patch
 bx = 22+dd; by=22+dd; bz = 10+t0; // bz: base_height; 
-f = .2; // fudge: slack in holding base
+f = .35; // fudge: slack in holding base (~ nozzle/2)
 bxx = bx+2*t0+f; byy = by+2*t0+f;
 
 ch = h-1*t0-.01;
