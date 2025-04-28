@@ -177,7 +177,8 @@ module roundedTube(sxy=10, r = 2, k = 0, t = t0) {
  roundedTube([40, 40, 8], [15, 4,2,2], -15, 1);
 
 // a roundedRect divider across the YZ plane of a box:
-// hwx: [z,y,x]; r: radius ([r,r,r,r])
+// hwx: [z,y,x]; 
+// r: radius ([r,r,r,r])
 // t: thick (dx = t0)
 // k: (0) k>0 keep bottom/cut top; k<0 cut bottom/keep top
 // k == 0 keep all
