@@ -227,14 +227,15 @@ module slot(hrt, rottr) {
 }
 
 // make a slot in the yz plane
-// hrt: [h: dz (40), r: slot_radius (5), t: (t0)]
+// hrt: [h: dz (40), r: slot_radius|[w, r] (5), t: (t0)]
 // tr: translate onto wall ([0,0,0])
 // rot: rotate ([0, -90, 0]) [rx, ry, rz, [cx, cy, cz]]
 // rq: [radius: (2*t), q1: (3), q2: (2)]; for yz plane
-module slotify(hrt, tr=[0,0,0], rot, rq) {
+module slotify(hrt, tr=[0,0,0], rot, rq, ss = false) {
     h=is_undef(hrt[0]) ? 40 : hrt[0];
     r=is_undef(hrt[1]) ?  5 : hrt[1]; 
     t=is_undef(hrt[2]) ? t0 : hrt[2];
+    echo("slotify: hrt=", [h, r, t]);
     module maybe_rc(rqq) {
       if (!is_undef(rqq)) {
         rq = is_list(rqq) ? rqq : [ rq ]; // rq as simple radius
@@ -257,6 +258,10 @@ module slotify(hrt, tr=[0,0,0], rot, rq) {
     difference()
     {
         children(0);
-        translate(tr) slot([h,r,t], rot); // TODO: rot[3] = tr
+        if (ss) {
+        #translate(tr) slot([h,r,t], rot);
+        } else {
+         translate(tr) slot([h,r,t], rot);
+        }
     }
 }

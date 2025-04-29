@@ -6,10 +6,11 @@ l00 = 87; // official card size (according to Sleeve King )
 w00 = 56;
 l0 = 92.4;
 w0 = 60.4;
-h0 = 22 + 3; // extend for ramp!
+h0 = 22;
+h1 = h0 + 3; // extend for ramp!
 l = l0 + 2 * t0;
 w = w0 + 2 * t0;
-h = h0 + t0;
+h = h1 + t0;
 
 loc = 0;
 
@@ -95,9 +96,9 @@ module holder(a = a)
     // translate([-t0,0,-bl]) rotate([-90,0,0]) cylinder([iw+2*t0, w, bl]);
 }
 
-module card(tr = [ 2, 2, 4 ])
+module card(tr = [ (l0-l00)/2, (w0-w00)/2, 0 ])
 {
-    translate(tr) astack(32, [-.03,0,.5]) color("pink") cube([ l0-3, w0-3, .4 ]);
+    translate(tr) astack(32, [-.03,0,.5]) color("pink") roundedCube([ l00, w00, .4 ], 3, true);
 }
 
 // vz: height of ramp @ vx: bump @
@@ -142,7 +143,7 @@ module topTray(dx = l/4, dz = 5)
 {
     /* clang-format off */
 
-    f = .35;
+    f = .33;
     tw = w - 2 * t0;
     sw = 3 * t0 + f;
     atrans(loc, [ [ l+2, 0, dx, [0, 90, 0] ], 
@@ -160,7 +161,23 @@ module topTray(dx = l/4, dz = 5)
     }
 }
 
-topTray();
+module vbox() {
+  vw = l;
+  vl = 22;
+  vh = w;
+  sw = vw*.7/2;
+  sr = 5;
+  dh = 15;
+  atrans(loc, [[0, -3, 0, [0,0,-90]], [0, -vw, 0], [0, -3, 0, [0,0,-90]]]){ 
+  // translate([vw-2, 0, 0])
+  slotify([dh+sr, [sw, sr], 2*t0], [-t0, vw/2, vh-dh], undef, 2)
+  slotify([dh+sr, [sw, sr], 2*t0], [vl-2*t0, vw/2, vh-dh], undef, 2)
+    box([vl, vw, vh]);
+  sz = 20/32 * vl;
+  slotify([dh+sr, [sw, sr], 2*t0], [sz-t0, vw/2, vh-dh], undef, 2)
+    div([vh, vw, sz]);
+  }
+}
 
 // add horizontal slot to children(0)
 module hslot(dz = dz, dx = 0)
@@ -173,6 +190,8 @@ module hslot(dz = dz, dx = 0)
         translate([dx - (sw-pp)/2, t0, dz - sh ]) 
         cube([ sw, w0, sh ]);
     }
+    translate([0, w/2, 0]) 
+  cube([1, 1, dz]);
 }
 
 // cut child(0) in XY plane @ depth: y0..y1
@@ -238,7 +257,7 @@ module gridawayx(x0 = 20, w = w)
 sw = 10;
 sr = 10;
 rq = 10; // rq if different from sr
-cutaway()
+*cutaway()
     // gridawayx(10)
     // gridawayy(10)
     gridaway()
@@ -250,6 +269,10 @@ cutaway()
         box([ l, w, h ], t0);
     ramp();
 }
+
+*topTray();
+vbox();
+
 
 if (loc != 0)
     color("pink") translate([ -xb, w + t0, h + 0 ]) cube([ lt, 1, 1 ]);
@@ -263,4 +286,4 @@ dr = 5; // rCube test
 // atan(7/88) = 4.5;
 a2 = 3.2; // angle of the card on ramp
 if (loc != 0)
-    translate([ 0, 0, .1 ]) rotatet([ 0, a2, 0 ], [ 90, 0, 1 ]) card([ 3, 2, 1 ]);
+    translate([ 0, 0, .1 ]) rotatet([ 0, a2, 0 ], [ 90, 0, 1 ]) card([ 4, (w0-w00)/2, 1 ]);
