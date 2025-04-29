@@ -2,14 +2,16 @@ use <mylib.scad>;
 p = .001;
 pp = 2 * p;
 t0 = 1.0;
+l00 = 87; // official card size (according to Sleeve King )
+w00 = 56;
 l0 = 92.4;
 w0 = 60.4;
-h0 = 27.4 + 3.1; // extend for ramp!
+h0 = 22 + 3; // extend for ramp!
 l = l0 + 2 * t0;
 w = w0 + 2 * t0;
 h = h0 + t0;
 
-loc = 1;
+loc = 0;
 
 // hypotenuse: given angle * adjacent_base length
 function hypa(a, b) = (let(h = b * tan(a)) sqrt(b * b + h * h));
@@ -37,6 +39,7 @@ module pat(s = 5, l = 30)
     rotatet([ 0, 45, 0 ], [ s / 2, 0, s / 2 ]) translate([ 0, -p, 0 ]) cube([ s, l + pp, s ]);
 }
 
+// grid test:
 *translate([ 0, -40, 0 ])
 {
     nx = 50;
@@ -49,9 +52,10 @@ module pat(s = 5, l = 30)
         grid(nx, nz, s / 2) scale([ 1, 1, .7 ]) translate([ -s / 2, 0, -s / 2 ]) pat(s / 2, y);
     }
 }
+
 a = 18;
 dz = 6;                 // top of slot
-iw = 5.1;               // width of slot_interior
+iw = 3.8;               // width of slot_interior
 xb = (h - dz) * tan(a); // length of holder after tilt...
 lt = l + xb;            // length total
 echo("xb, lt, lwh=", [ xb, lt, l, w, h ], "tan(a)=", tan(a), "hyp(a,iw)=", hypa(a, iw));
@@ -65,6 +69,7 @@ module holder(a = a)
     fw = iw + 2 * t0;      // full width of slot box
     hb = ha - fw / cos(a); // down from top to rotation point
     hr = ha - hb;
+    sz = 5;   // depth to shelf
     echo("xb=", xb, "ha=", ha, "hb=", hb, "hr=", hr);
     wb = w0;
     intersection()
@@ -77,26 +82,22 @@ module holder(a = a)
                 {
                     bh = t0 + ((a > 1) ? ha / cos(a) : ha);
                     echo("bh=", bh);
-                    translate([ 0, 0, dz ]) box([ fw, w, bh ], t0); // main box
-                    translate([ 0, 0, bh - 6 ]) rotatet([ 0, -18, 0 ], [ iw, 0, 2 * t0 ])
-                        cube([ iw + t0, w, t0 ]); // bottom shelf
+                    translate([ 0, 0, dz ]) 
+                    box([ fw, w, bh ], t0); // main box
+
+                    translate([ 0, 0, bh - sz ]) 
+                    rotatet([ 0, -18, 0 ], [ iw, 0, 2 * t0 ])
+                    cube([ iw + t0, w, t0 ]); // bottom shelf
                 }
             }
         }
     }
     // translate([-t0,0,-bl]) rotate([-90,0,0]) cylinder([iw+2*t0, w, bl]);
 }
-module holder2(a = a)
-{
-    iw = 5.1;
-    fw = iw + 2 * t0;
-    bh = h0 + h0 * tan(a);
-    rotatet([ 0, -a, 0 ], [ 0, 0, bh * .5 ]) * % translate([ -iw - t0, 0, t0 ]) box([ fw, w, bh ]);
-}
-holder2();
+
 module card(tr = [ 2, 2, 4 ])
 {
-    translate(tr) color("pink") cube([ 88.5, 60.4, 1 ]);
+    translate(tr) astack(32, [-.03,0,.5]) color("pink") cube([ l0-3, w0-3, .4 ]);
 }
 
 // vz: height of ramp @ vx: bump @
@@ -114,8 +115,10 @@ module ramp(vx = vx, vz = vz, ve = 0)
     {
         union()
         {
-            rotatet([ 0, -a2, 0 ], [ vx, 0, vz + t0 ]) for (y = [0:(w - vy) / 4:w - vy]) translate([ ve, y, 0 ])
-                cube([ vx, vy, vz + t0 ]);
+            rotatet([ 0, -a2-.2, 0 ], [ vx, 0, vz + t0 ]) 
+            for (y = [0:(w - vy) / 4:w - vy]) 
+            translate([ ve, y, 0 ])
+              cube([ vx, vy, vz + t0 ]);
             translate([ vx, 0, 0 ]) cube([ 2.4, w, vz + t0 ]);
         }
         translate([ ve, 0, 0 ]) cube([ vx, w, vz + t0 ]);
@@ -135,39 +138,52 @@ module ramp(vx = vx, vz = vz, ve = 0)
  @param dz height of wings
  @ambient w: width of box, t0: thickness
  */
-module topTray(dx = 60, dz = 18)
+module topTray(dx = l/4, dz = 5)
 {
-    f = .75;
-    tw = w + 2 * t0 + 2 * f;
-    atrans(loc, [ [ 0, 0, 0 ], [ 0, -tw - 4 * f, 0 ] ])
+    /* clang-format off */
+
+    f = .35;
+    tw = w - 2 * t0;
+    sw = 3 * t0 + f;
+    atrans(loc, [ [ l+2, 0, dx, [0, 90, 0] ], 
+                [ (l-dx)/2-10, 0, h-dz+t0 ], 
+                [ (l-dx)/2-10, 0, h-dz+t0 ],
+          ])
+    /* clang-format on */
     {
-        box([ dx, tw, 4 ], t0, [ 2, 2, -2 ]);
+      //cutaway0(1, [dx+4, 8, 14], [-2, -2, -2]) // [dx, tw, dz]
+      dup([0,w-t0,0])
+      color("blue") 
+      translate([0, -t0-f/2, .5]) box([ dx, sw, dz ], [-t0, t0, -t0], [ 2, 2, 0 ]);
+      rz = 5; in = f;
+      translate([0, t0+f/2, 0]) box([ dx, w-2*t0-1*f, rz ], [-t0,t0,t0], [2,2,0]);
     }
 }
-cutaway()
+
 topTray();
 
 // add horizontal slot to children(0)
 module hslot(dz = dz, dx = 0)
 {
-    sw = 6;
+    sw = 2;
     sh = 4;
     difference()
     {
         union() children();
-        translate([ dx - sw / 2, t0, dz - sh ]) cube([ sw, w0, sh ]);
+        translate([dx - (sw-pp)/2, t0, dz - sh ]) 
+        cube([ sw, w0, sh ]);
     }
 }
 
 // cut child(0) in XY plane @ depth: y0..y1
 module cutaway0(loc = loc, cxyz=[10,10,10], txyz=[-5, -5, -5])
 {
-    if (loc != 0)
+    if (loc == 1)
     {
         difference()
         {
             children(0);
-            translate(txyz) #cube(cxyz);
+            translate(txyz) cube(cxyz);
         }
     }
     else
@@ -195,7 +211,7 @@ module gridaway(x0 = 40, l = l * .65, h = 25)
     difference()
     {
         children(0);
-        translate([ x0, 0, t0 + s ]) grid(l - s - x0, h - s - 5, 5) paty(s, w);
+        translate([ x0, 0, t0 + s*.9 ]) grid(l - s - x0, h - s - 5, 5) paty(s, w);
     }
 }
 module gridawayy(x0 = 20, l = l)
@@ -225,14 +241,15 @@ rq = 10; // rq if different from sr
 cutaway()
     // gridawayx(10)
     // gridawayy(10)
-    gridaway() hslot()
+    gridaway()
+    hslot()
 {
     ds = .1;
     holder();
     slotify([ h * (1 - ds) + sr, [ sw, sr ], t0 + 4 * p ], [ l - t0 - 2 * p, w / 2, h * ds ], undef, rq)
         box([ l, w, h ], t0);
+    ramp();
 }
-ramp();
 
 if (loc != 0)
     color("pink") translate([ -xb, w + t0, h + 0 ]) cube([ lt, 1, 1 ]);
@@ -244,6 +261,6 @@ dr = 5; // rCube test
 
 // atan(6/88) = 4;
 // atan(7/88) = 4.5;
-a2 = 3.2;
+a2 = 3.2; // angle of the card on ramp
 if (loc != 0)
-    translate([ 0, 0, .1 ]) rotatet([ 0, a2, 0 ], [ 90, 0, 1 ]) card([ 4, 2, 1 ]);
+    translate([ 0, 0, .1 ]) rotatet([ 0, a2, 0 ], [ 90, 0, 1 ]) card([ 3, 2, 1 ]);

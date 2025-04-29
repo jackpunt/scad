@@ -12,7 +12,7 @@ function adif(a, b) = [for(i = [0: len(a)-1]) a[i]-b[i]];
 // trans: array of [x,y,z {, [rx, ry, rz]}]
 module atrans(ndx = 0, atran = [0,0,0]) {
   ndx = ndx >= len(atran) ? 0 : ndx;
-  echo("ndx=", ndx, "atran=", atran);
+  echo("atrans(ndx=", ndx, "atran=", atran,")");
   tranr = atran[ndx];
   rot = is_undef(tranr[3]) ? [0,0,0]: tranr[3];
   trans = [tranr[0], tranr[1], tranr[2]];
@@ -32,6 +32,7 @@ module box(lwh =[10,10,10], t = t0, d) {
   txyz = is_list(t) ? t : [t, t, t]; // in each direction
   d = is_list(d) ? d : [2, 2, 1-p];  // reduce inner_cube by txyz
   dxyz = adif(lwh, amul(d, txyz));
+  // echo("lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
   difference()
   {
     cube(lwh);
@@ -39,7 +40,21 @@ module box(lwh =[10,10,10], t = t0, d) {
     cube(dxyz); // -2*bt or +2*p
   }
 }
-
+// stack of children()
+// n: number
+// dxyz: each iteration
+// rot: rotate from dx --> dy or dz
+module astack(n, d, rot)
+{ 
+  dxyz = is_list(d) ? d : [d, 0, 0];
+  r = is_undef(rot) ? .1 : rot;
+  rxyz = is_list(r) ? r : [0, 0, 0];
+  echo("dxyz=", dxyz)
+  for (i = [0 : n - 1])
+    {
+        rotate(rxyz) dup([ i * dxyz[0], i*dxyz[1], i*dxyz[2] ]) children();
+    }
+}
 // shift center of rotation, then rotate, shift back
 // rot: [ax, ay, az] the rotation
 // cr:  [dx, dy, dz] the center of rotation
@@ -64,7 +79,7 @@ module dup(tr=[0,0,0], rot=[0,0,0]) {
 // center: 
 module roundedCube(dxyz, r, sidesonly, center) {
   s = is_list(dxyz) ? dxyz : [dxyz,dxyz,dxyz];
-  echo("mhylib: s=", s, "r=", r);
+  echo("roundedCube: s=", s, "r=", r);
   translate(center ? -s/2 : [0,0,0]) {
     if (sidesonly) {
       *linear_extrude(s[2])  roundedRect([s[0], s[1]], r);

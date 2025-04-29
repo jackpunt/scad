@@ -117,14 +117,19 @@ hh = 6;
 module bonusTray(loc = 0)
 {
     // tray for bonus cardboard:
+    /* clang-format off */
+
     module hook()
     {
         hw = 3.25; // 3*t0 + f
-        translate([ 0, t0 - hw, dh + (bh - hh) + t0 ]) rc([ bl, 0, 0 ], [ -90, 0, 0 ], 2, br)
-            rc([ 0, 0, 0 ], [ -90, 0, 0 ], 1, br) difference()
+        translate([ 0, t0 - hw, dh + (bh - hh) + t0 ]) 
+        rc([ bl, 0, 0 ], [ -90, 0, 0 ], 2, br)
+        rc([ 0, 0, 0 ], [ -90, 0, 0 ], 1, br) 
+        difference()
         {
-            cube([ bl, hw, hh ]);
-            translate([ -p, t0, -t0 ]) cube([ bl + pp, hw - 2 * t0 + pp, hh + pp ]);
+          cube([ bl, hw, hh ]);
+          translate([ -p, t0, -t0 ]) 
+          cube([ bl + pp, hw - 2 * t0 + pp, hh + pp ]);
         }
     }
 
@@ -132,11 +137,12 @@ module bonusTray(loc = 0)
     atrans(loc, [
         [ (l + dh + bh + bx - p), -1 * t0, 0, [ 0, -90, 0 ] ], // <-- print loc
         [ (d1 + t0 / 2 - p) + t0, t0, h - dh - bh - hn + .2 ], // <-- on box
-        [ d1 - p, -20, 0 ]
-    ]) // <-- edit loc
+        [ d1 - p, -20, 0 ]  // <-- edit loc
+    ]) 
     {
         hook();
-        rc([ bl, bw, bh ], [ 90, 0, 0 ], 2, br) rc([ 0, bw, bh ], [ 90, 0, 0 ], 1, br) difference()
+        rc([ bl, bw, bh ], [ 90, 0, 0 ], 2, br) 
+        rc([ 0, bw, bh ], [ 90, 0, 0 ], 1, br) difference()
         {
             cube([ bl, bw, bh ]);
             translate([ -p, t0, t0 ]) cube([ bl + pp, bw - 2 * t0 + pp, bh + pp ]);
@@ -149,19 +155,8 @@ module bonusTray(loc = 0)
                 cbstack(5, [ 18, 20, 2, [ 0, 0, -90 ] ], "brown", .1); // <-- demo cardboard
         }
     }
-}
+}/* clang-format on */
 
-// stack of children()
-// n: number
-// dx: each iteration
-// rot: rotate from dx --> dy or dz
-module astack(n, d, rot)
-{
-    for (i = [0:n - 1])
-    {
-        rotate(rot) dup([ i * (d), 0, 0 ]) children();
-    }
-}
 // n: repetitions
 // hwt: [h, w, t] or [h, w, t, rot]
 // d: space between (.01)
