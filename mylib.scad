@@ -24,7 +24,9 @@ module atrans(ndx = 0, atran = [0,0,0]) {
 // A hollow box:
 // lwh: [length_x, width_y, height_z], 
 // t: ([t0,t0,t0]) thick 'translate'
-// d: delta --> size of box to remove
+// d: delta --> size of box to remove ([2, 2, 1-p])
+// -
+// diff() { cube(lwh); tr(txyz) cube(adif(lwh, amul(d, txyz))) }
 module box(lwh =[10,10,10], t = t0, d) {
   t = is_undef(t) ? t0 : t;  // wall thickness
   txyz = is_list(t) ? t : [t, t, t]; // in each direction
