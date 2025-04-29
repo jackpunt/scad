@@ -17,23 +17,29 @@ function hypo(a, h) = (let (b=h/tan(a)) sqrt(b*b+h*h));
 // poke holes (children(1)) in children(0) through the y axis
 // x: [x0, step, xm]
 // z: [z0, step, zm]
-module gridify(x, z) {
-  // difference() 
-  // union() {
-  for(x = [x[0]: x[1] : x[2]]) 
-    for (z = [x[0]: z[1] : z[2]]) 
-      echo("xz=", [x, z]);
-      translate([x, 0, z]) children(1);
-
-  // }
-  children(0);
+// tr: [1,0,1] select axiis to translate
+module gridify(x, z, tr = [1, 0, 1]) {
+  for(xa = [x[0]: x[1] : x[2]], za = [z[0]: z[1] : z[2]]) {
+      // echo("xz=", [xa, za]);
+      translate(amul([xa, xa, za], tr)) children(0);
+   }
+}
+module grid(nx, nz, k, tr = [1,0,1]) {
+  gridify([k, 2*k, nx], [0, 2*k, nz], tr) children(0);
+  gridify([0, 2*k, nx], [k, 2*k, nz], tr) children(0);
+}
+module pat(s = 5, l = 30) {
+  rotatet([0, 45, 0], [s/2, 0, s/2]) 
+  translate([0, -p, 0]) cube([s, l+pp, s]);
 }
 
-// translate([0, -40, 0]) {
-//   gridify([0, 4, 20], [0, 5, 20])
-//   cube([20, 20, 20]);
-//   translate([0, -5, 0]) cube([3, 30, 3]);
-// }
+*translate([0, -40, 0]) {
+  nx = 50; nz = 30; y = 1; s = 10;
+  difference() {
+    cube([nx, y, nz]);
+    grid(nx, nz, s/2) scale([1, 1, .7]) translate([-s/2, 0, -s/2])  pat(s/2, y);
+   }
+}
 a = 18; 
 dz = 6;      // top of slot
 iw = 5.1;    // width of slot_interior
@@ -122,8 +128,48 @@ module cutaway(loc=loc) {
   }
 }
 
+module paty(s=5, l=w) {
+  scale([1, 1, .7]) 
+  translate([-s/4, 0, -s/2.8]) 
+  pat(s/2, l);
+}
+module patx(s=5, l=w) {
+  scale([1, 1, .7]) 
+  translate([0, -s/4, -s/2.8]) 
+  rotatet([45, 0, 0], [0, s/2, s/2]) 
+  translate([-p, 0, 0]) cube([l+pp, s, s]);
+}
+
+module gridaway(x0=40, l = l * .65, h = 25) {
+  s = 10;
+  difference() {
+    children(0);
+    translate([x0, 0, t0+s]) grid(l-s-x0, h-s-5, 5) paty(s, w);
+   }
+}
+module gridawayy(x0=20, l = l) {
+  s = 10;
+  difference() {
+    children(0);
+    translate([x0, 0, t0+s]) grid(l-s-x0, h-s-5, 5) paty(s, w);
+   }
+}
+module gridawayx(x0=20, w = w) {
+  s = 10;
+  difference() {
+    children(0);
+    translate([-10, x0, t0+s]) 
+    // rotatet([0, 0, -90], [-20, 0, 20])
+    grid(w-s-x0, h-s-5, 5, [0, 1, 1]) 
+    patx(s/2, 20);
+   }
+}
+
 sw = 10; sr = 10; rq = 10; // rq if different from sr
 cutaway()
+// gridawayx(10)
+// gridawayy(10)
+gridaway()
 hslot() {
   ds = .1;
   holder();

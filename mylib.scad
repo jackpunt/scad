@@ -2,7 +2,9 @@ $fa = 1;
 $fs = 0.4;
 t0 = 1; p=.001; pp = 2*p;
 
+// pairwise multiplication
 function amul(a, b) = [for(i = [0: len(a)-1]) a[i]*b[i]];
+// pairwise subtraction
 function adif(a, b) = [for(i = [0: len(a)-1]) a[i]-b[i]];
 
 // move objects to new location
