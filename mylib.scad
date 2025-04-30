@@ -113,11 +113,10 @@ module roundedCube(dxyz, r, sidesonly, center) {
 // t = t0 (thickness)
 // ss: show corner
 // ambient: p
-module rc(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0,
-          ss = false) {
-  module pos() {
+module rc(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0, ss = false) {
+  module pos(ss=ss) {
     if (ss)
-#translate(tr)
+    #translate(tr)
       children(0);
     else
       // if (is_undef(rot[3]))
@@ -134,7 +133,7 @@ module rc(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0,
 
   difference() {
     children(0);
-    pos() difference() {
+    pos(ss) difference() {
       translate(org) cube([ rad + pp, rad + pp, t + pp ]);
       translate(add) cylinder(t + pp, rad, rad);
     }
@@ -147,13 +146,19 @@ module rc(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0,
 // t: thickness of wall to remove
 // ss: show cut with '#'
 module rc1(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
+  module pos(ss = ss) {
+    if (ss)
+#translate(tr) translate(csr) rotate(rot)  children(0);
+    else
+    translate(tr) translate(csr) rotate(rot) children(0);
+  }
   rot = [ [ 0, -90, 0 ], [ -90, 0, 0 ], [ 0, 0, -90 ] ][rotId];
   rp = p - rad;
   r2 = rad / 2;
   t2 = t / 2;
 
   qs = [ [ 1, 1, 1 ], [ 1, -1, 1 ], [ -1, -1, 1 ], [ -1, 1, 1 ] ][q];
-  qsr = amul(qs, [ r2, r2, -t2 - p ]); // quadrant select cylinder sector
+  qsr = amul(qs, [ r2, r2, -t ]); // quadrant select cylinder sector
 
   cs0 = [
      [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // x-axis
@@ -161,48 +166,65 @@ module rc1(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
      [[ 1, -1, 0 ], [ -1, -1, 0 ], [ -1, 1, 0 ], [ 1, 1, 0 ]], // z-axis
    ];
   cs = cs0[rotId][q];                  // offset cyl_cut to corner
-  org = [ [ -p, -p, -p ], [ -p, rp, -p ], [ rp, rp, -p ], [ rp, -p, -p ] ][q];
-  add = amul([ rad, rad, -p ], qs);
+  csr = amul([r2,r2,r2], cs);
   // echo("tr, rot", tr, rot);
-  difference() {
+  // difference() 
+  {
     children(0);
-    translate(tr) 
-    translate(amul([r2,r2,r2], cs)) rotate(rot)
-  # difference()
+    pos(false)
+    color ("blue") 
+    difference() 
     {
+      p=.1; pp = 2*p; p4=p*4;
       cube([ rad + pp, rad + pp, t + pp ], true);
-      translate(qsr)
-          cylinder(t + pp, rad, rad); // z-axis from 0..t
+       translate(qsr) cylinder(t+t, rad, rad); // z-axis from 0..t
     }
   }
 }
 
+
 // clang-format off
 // test rc
 module testRC() {
-  module test(idc, irt, rot, cxyz, rots) {
-    if (idc) color (idc) 
-    for (i = [0 : 3]) rc1(rots[i], irt, i, 5, 1, idc)
-    rotate(rot) cube(cxyz, true); // Y -> X
+  module test(idc, rid, rot, cxyz, rots, ss = true) {
+    if (idc)
+    for (i = [0 : 3]) rc1(rots[i], rid, i, 5, t0, ss)
+    rotate(rot) color (idc)  cube(cxyz, true); // Y -> X
   }
+  module test0(idc, irt, rid, cxyz, rots, ss= false) {
+    rot = [ [ 0, -90, 0 ], [ -90, 0, 0 ], [ 0, 0, -90 ] ][rid];
+    if (idc) 
+    for (i = [0 : 3]) rc(rots[i], irt, i, 5, 1, ss)
+    rotate(rot) color(idc)  cube(cxyz, true); // Y -> X
+  }
+  t = t0;
   sz = false;
   szx = false;
   szy = false;
   sx = false;
-  sy0 = "green";
+  sy0 = false; //"green";
   syx = false;
-  syxc = "#BBBBBB";
+  syxc = false;// "#BBBBBB";
   syz = "red";
 
+translate([0, -50, 0]) 
+rc([0,00,0], [0, 0, 0], 0, 5, t0,true) 
+rc([0,20,0], [0, 0, 0], 1, 5,t0,true) 
+rc([20,20,0], [0, 0, 0], 2, 5, t0,true)
+rc([20,00,0], [0, 0, 0], 3, 5, t0,true) 
+cube([20, 20, t0]);
+
+
+
   // native Y -> X [green] (first test)
-  test(syxc, 0, [0,0,-90], [20, t0, 20], [
+  test(syxc, 0, [0,0,-90], [20, t, 20], [
     [00,-10,-10],
     [00, 10,-10],
     [00, 10, 10],
     [00, -10,10]
     ]);
   // native Y -> Y [grey]
-  test(sy0, 1, [0,0,0], [20, t0, 20], [
+  test(sy0, 1, [0,0,0], [20, t, 20], [
     [-10,00,10],
     [-10,00,-10],
     [10,00,-10],
@@ -210,7 +232,7 @@ module testRC() {
   ]);
 
   // native Y -> Z [red]
-  test(syz, 2, [-90,0,0], [20, t0, 20], [
+  test(syz, 2, [-90,0,0], [20, t, 20], [
     [-10,10,00],
     [10,10,00],
     [10,-10,00],
