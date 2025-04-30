@@ -147,21 +147,31 @@ module rc(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0,
 // t: thickness of wall to remove
 // ss: show cut with '#'
 module rc1(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
-  rot = [ [ -90, 0, 0 ], [ 0, -90, 0 ], [ 0, 0, -90 ] ][rotId];
+  rot = [ [ 0, -90, 0 ], [ -90, 0, 0 ], [ 0, 0, -90 ] ][rotId];
   rp = p - rad;
+  r2 = rad / 2;
+  t2 = t / 2;
 
-  cs = [ [ 1, 1, 1 ], [ 1, -1, 1 ], [ 1, -1, 1 ], [ 1, 1, 1 ] ][q];
   qs = [ [ 1, 1, 1 ], [ 1, -1, 1 ], [ -1, -1, 1 ], [ -1, 1, 1 ] ][q];
+  qsr = amul(qs, [ r2, r2, -t2 - p ]); // quadrant select cylinder sector
+
+  cs0 = [
+     [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // x-axis
+     [[ 1, 0, -1 ], [ 1, 0, 1 ], [ -1, 0, 1 ], [ -1, 0, -1 ]], // y-axis
+     [[ 1, -1, 0 ], [ -1, -1, 0 ], [ -1, 1, 0 ], [ 1, 1, 0 ]], // z-axis
+   ];
+  cs = cs0[rotId][q];                  // offset cyl_cut to corner
   org = [ [ -p, -p, -p ], [ -p, rp, -p ], [ rp, rp, -p ], [ rp, -p, -p ] ][q];
   add = amul([ rad, rad, -p ], qs);
-
+  // echo("tr, rot", tr, rot);
   difference() {
     children(0);
-    translate(tr) rotate(rot)
-#difference()
+    translate(tr) 
+    translate(amul([r2,r2,r2], cs)) rotate(rot)
+  # difference()
     {
       cube([ rad + pp, rad + pp, t + pp ], true);
-      translate(amul(qs, [ rad / 2, rad / 2, -t / 2 - p ]))
+      translate(qsr)
           cylinder(t + pp, rad, rad); // z-axis from 0..t
     }
   }
@@ -170,79 +180,96 @@ module rc1(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
 // clang-format off
 // test rc
 module testRC() {
+  module test(idc, irt, rot, cxyz, rots) {
+    if (idc) color (idc) 
+    for (i = [0 : 3]) rc1(rots[i], irt, i, 5, 1, idc)
+    rotate(rot) cube(cxyz, true); // Y -> X
+  }
   sz = false;
   szx = false;
   szy = false;
   sx = false;
-  sy0 = false;
+  sy0 = "green";
   syx = false;
-  syxc = "green";
+  syxc = "#BBBBBB";
   syz = "red";
 
+  // native Y -> X [green] (first test)
+  test(syxc, 0, [0,0,-90], [20, t0, 20], [
+    [00,-10,-10],
+    [00, 10,-10],
+    [00, 10, 10],
+    [00, -10,10]
+    ]);
+  // native Y -> Y [grey]
+  test(sy0, 1, [0,0,0], [20, t0, 20], [
+    [-10,00,10],
+    [-10,00,-10],
+    [10,00,-10],
+    [10,00,10],
+  ]);
 
-// native Z:
-if (sz) color(sz)
-translate([0, 0, 0]) 
-rc([0,00,0], [0, 0, 0], 0, 5, 1, sz) 
-rc([0,20,0], [0, 0, 0], 1, 5, 1, sz) 
-rc([20,20,0], [0, 0, 0], 2, 5, 1, sz)
-rc([20,00,0], [0, 0, 0], 3, 5, 1, sz) 
-cube([20, 20, t0]); // native: normal to Z
+  // native Y -> Z [red]
+  test(syz, 2, [-90,0,0], [20, t0, 20], [
+    [-10,10,00],
+    [10,10,00],
+    [10,-10,00],
+    [-10,-10,00],
+  ]);
 
-// native Z rotated to X
-if (szx) color(szx)
-translate([0, 0, 0]) 
-rc([0,00,0], [0, -90, 0], 0, 5, 1, szx) 
-rc([0,20,0], [0, -90, 0], 1, 5, 1, szx) 
-rc([0,20,20], [0, -90, 0], 2, 5, 1, szx)
-rc([0,00,20], [0, -90, 0], 3, 5, 1, szx) 
-rotate([0, -90, 0]) cube([20, 20, t0]); 
+  // native Y -> Z [red]
+  *if (syz) color (syz) 
+  translate([0, 0, 0]) 
+  rc([00,20,0], [0, 0, -90], 0, 5, 1, syz) 
+  rc([20,20,00], [0, 0, -90], 1, 5, 1, syz) 
+  rc([20,00,00], [0, 0, -90], 2, 5, 1, syz)
+  rc([0,0,0], [0, 0, -90], 3, 5, 1, syz) 
+  rotate([-90,0,0]) cube([20, t0, 20]); // y -> Z
 
-// native Z rotated to Y
-if (szy) color(szy)
-translate([0, 0, 0]) 
-rc([0,00,0], [-90, 0, 0], 0, 5, 1, szy) 
-rc([0,0,-20], [-90, 0, 0], 1, 5, 1, szy) 
-rc([20,0,-20], [-90, 0, 0], 2, 5, 1, szy)
-rc([20,00,0], [-90, 0, 0], 3, 5, 1, szy) 
-rotate([-90, 0, 0]) cube([20, 20, t0]);
+  // native Z:
+  if (sz) color(sz)
+  translate([0, 0, 0]) 
+  rc([0,00,0], [0, 0, 0], 0, 5, 1, sz) 
+  rc([0,20,0], [0, 0, 0], 1, 5, 1, sz) 
+  rc([20,20,0], [0, 0, 0], 2, 5, 1, sz)
+  rc([20,00,0], [0, 0, 0], 3, 5, 1, sz) 
+  cube([20, 20, t0]); // native: normal to Z
 
-// native Y no rotate
-if (sy0) color (sy0) 
-translate([0, 0, 0]) 
-rc([00,00,20], [-90, 0, 0], 0, 5, 1, sy0) 
-rc([00,00,00], [-90, 0, 0], 1, 5, 1, sy0) 
-rc([20,00,00], [-90, 0, 0], 2, 5, 1, sy0)
-rc([20,00,20], [-90, 0, 0], 3, 5, 1, sy0) 
-cube([20, t0, 20]); // native normal = y
+  // native Z rotated to X
+  if (szx) color(szx)
+  translate([0, 0, 0]) 
+  rc([0,00,0], [0, -90, 0], 0, 5, 1, szx) 
+  rc([0,20,0], [0, -90, 0], 1, 5, 1, szx) 
+  rc([0,20,20], [0, -90, 0], 2, 5, 1, szx)
+  rc([0,00,20], [0, -90, 0], 3, 5, 1, szx) 
+  rotate([0, -90, 0]) cube([20, 20, t0]); 
 
-// native Y -> X [green]
-if (syx) color (syx) 
-translate([0, 0, 0]) 
-rc([00,-20,00], [0, -90, 0], 0, 5, 1, syx) 
-rc([00,00,00], [0, -90, 0], 1, 5, 1, syx) 
-rc([0,00,20], [0, -90, 0], 2, 5, 1, syx)
-rc([0,-20,20], [0, -90, 0], 3, 5, 1, syx) 
-rotate([0,0,-90]) cube([20, t0, 20]); // Y -> X
+  // native Z rotated to Y
+  if (szy) color(szy)
+  translate([0, 0, 0]) 
+  rc([0,00,0], [-90, 0, 0], 0, 5, 1, szy) 
+  rc([0,0,-20], [-90, 0, 0], 1, 5, 1, szy) 
+  rc([20,0,-20], [-90, 0, 0], 2, 5, 1, szy)
+  rc([20,00,0], [-90, 0, 0], 3, 5, 1, szy) 
+  rotate([-90, 0, 0]) cube([20, 20, t0]);
 
-// native Y -> X [green]
-if (syxc) color (syxc) 
-translate([0, 0, 0]) 
-rc1([00,-10,-10], 0, 0, 5, 1, syxc) 
-rc1([00, 10,-10], 0, 1, 5, 1, syxc) 
-rc1([00, 10, 10], 0, 2, 5, 1, syxc)
-rc1([00,-10, 10], 0, 3, 5, 1, syxc) 
-rotate([0,0,-90]) cube([20, t0, 20], true); // Y -> X
+  // if (sy0) color (sy0) 
+  // translate([0, 0, 0]) 
+  // rc([00,00,20], [-90, 0, 0], 0, 5, 1, sy0) 
+  // rc([00,00,00], [-90, 0, 0], 1, 5, 1, sy0) 
+  // rc([20,00,00], [-90, 0, 0], 2, 5, 1, sy0)
+  // rc([20,00,20], [-90, 0, 0], 3, 5, 1, sy0) 
+  // cube([20, t0, 20]); // native normal = y
 
+  // native Y -> X [green]
+  if (syx) color (syx) 
+  translate([0, 0, 0]) 
+  rc([00,-20,00], [0, -90, 0], 0, 5, 1, syx) 
+  rc([00,00,00], [0, -90, 0], 1, 5, 1, syx) 
+  rc([0,00,20], [0, -90, 0], 2, 5, 1, syx)
+  rc([0,-20,20], [0, -90, 0], 3, 5, 1, syx) 
+  rotate([0,0,-90]) cube([20, t0, 20]); // Y -> X
 
-// native Y -> Z [red]
-*if (syz) color (syz) 
-translate([0, 0, 0]) 
-rc([00,20,0], [0, 0, -90], 0, 5, 1, syz) 
-rc([20,20,00], [0, 0, -90], 1, 5, 1, syz) 
-rc([20,00,00], [0, 0, -90], 2, 5, 1, syz)
-rc([0,0,0], [0, 0, -90], 3, 5, 1, syz) 
-rotate([-90,0,0]) cube([20, t0, 20]); // y -> Z
 
 }
 // clang-format on
@@ -377,7 +404,7 @@ module slotify(hrt, tr = [ 0, 0, 0 ], rot, rq, ss = false) {
   maybe_rc(rq) difference() {
     children(0);
     if (ss) {
-#translate(tr) slot([ h, r, t ], rot);
+# translate(tr) slot([ h, r, t ], rot);
     } else {
       translate(tr) slot([ h, r, t ], rot);
     }
