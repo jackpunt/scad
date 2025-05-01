@@ -105,6 +105,11 @@ module roundedCube(dxyz, r, sidesonly, center) {
   }
 }
 
+// translate, maybe mark child with #
+// clang-format off
+module show(ss=false) {  if (ss)    #children(0);  else    children(0); }
+// clang-format on
+
 // replace square corner with a rounded corner
 // tr: XYZ of corner;
 // rott: orientation of corner ([0,0,0, [0,0,0]]);
@@ -113,29 +118,23 @@ module roundedCube(dxyz, r, sidesonly, center) {
 // t = t0 (thickness)
 // ss: show corner
 // ambient: p
-module rc(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0, ss = false) {
-  module pos(ss=ss) {
-    if (ss)
-    #translate(tr)
-      children(0);
-    else
-      // if (is_undef(rot[3]))
-      translate(tr) rotatet(rot) children(0);
-    // else
-    // rotatet(rot) translate(tr)  children(0);
-  }
+module rc0(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0, ss = false) {
   rp = p - rad;
 
   cs = [ [ 1, 1, 1 ], [ 1, -1, 1 ], [ 1, -1, 1 ], [ 1, 1, 1 ] ][q];
   qs = [ [ 1, 1, 1 ], [ 1, -1, 1 ], [ -1, -1, 1 ], [ -1, 1, 1 ] ][q];
   org = [ [ -p, -p, -p ], [ -p, rp, -p ], [ rp, rp, -p ], [ rp, -p, -p ] ][q];
-  add = amul([ rad, rad, -p ], qs);
+  add = amul([ rad, rad, -pp ], qs);
 
-  difference() {
+ difference() 
+  {
     children(0);
-    pos(ss) difference() {
+    show(ss) 
+    color("blue") 
+    translate(tr)
+    difference() {
       translate(org) cube([ rad + pp, rad + pp, t + pp ]);
-      translate(add) cylinder(t + pp, rad, rad);
+      translate(add) cylinder(t + 2* pp, rad, rad);
     }
   }
 }
@@ -145,15 +144,8 @@ module rc(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0, ss = fals
 // q: index of orientation of corner to be rounded: [ll, ul, ur, lr]
 // t: thickness of wall to remove
 // ss: show cut with '#'
-module rc1(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
-  module pos(ss = ss) {
-    if (ss)
-#translate(tr) translate(csr) rotate(rot)  children(0);
-    else
-    translate(tr) translate(csr) rotate(rot) children(0);
-  }
+module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
   rot = [ [ 0, -90, 0 ], [ -90, 0, 0 ], [ 0, 0, -90 ] ][rotId];
-  rp = p - rad;
   r2 = rad / 2;
   t2 = t / 2;
 
@@ -167,134 +159,21 @@ module rc1(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
    ];
   cs = cs0[rotId][q];                  // offset cyl_cut to corner
   csr = amul([r2,r2,r2], cs);
-  // echo("tr, rot", tr, rot);
-  // difference() 
+
+  p=.1; pp = 2*p; p4=p*4;
+  difference()
   {
     children(0);
-    pos(false)
-    color ("blue") 
+    show(ss) 
+    // color("blue")  
+    translate(tr)  translate(csr) rotate(rot) 
     difference() 
     {
-      p=.1; pp = 2*p; p4=p*4;
       cube([ rad + pp, rad + pp, t + pp ], true);
-       translate(qsr) cylinder(t+t, rad, rad); // z-axis from 0..t
+      translate(qsr) cylinder(t+t, rad, rad); // z-axis from 0..t
     }
   }
 }
-
-
-// clang-format off
-// test rc
-module testRC() {
-  module test(idc, rid, rot, cxyz, rots, ss = true) {
-    if (idc)
-    for (i = [0 : 3]) rc1(rots[i], rid, i, 5, t0, ss)
-    rotate(rot) color (idc)  cube(cxyz, true); // Y -> X
-  }
-  module test0(idc, irt, rid, cxyz, rots, ss= false) {
-    rot = [ [ 0, -90, 0 ], [ -90, 0, 0 ], [ 0, 0, -90 ] ][rid];
-    if (idc) 
-    for (i = [0 : 3]) rc(rots[i], irt, i, 5, 1, ss)
-    rotate(rot) color(idc)  cube(cxyz, true); // Y -> X
-  }
-  t = t0;
-  sz = false;
-  szx = false;
-  szy = false;
-  sx = false;
-  sy0 = false; //"green";
-  syx = false;
-  syxc = false;// "#BBBBBB";
-  syz = "red";
-
-translate([0, -50, 0]) 
-rc([0,00,0], [0, 0, 0], 0, 5, t0,true) 
-rc([0,20,0], [0, 0, 0], 1, 5,t0,true) 
-rc([20,20,0], [0, 0, 0], 2, 5, t0,true)
-rc([20,00,0], [0, 0, 0], 3, 5, t0,true) 
-cube([20, 20, t0]);
-
-
-
-  // native Y -> X [green] (first test)
-  test(syxc, 0, [0,0,-90], [20, t, 20], [
-    [00,-10,-10],
-    [00, 10,-10],
-    [00, 10, 10],
-    [00, -10,10]
-    ]);
-  // native Y -> Y [grey]
-  test(sy0, 1, [0,0,0], [20, t, 20], [
-    [-10,00,10],
-    [-10,00,-10],
-    [10,00,-10],
-    [10,00,10],
-  ]);
-
-  // native Y -> Z [red]
-  test(syz, 2, [-90,0,0], [20, t, 20], [
-    [-10,10,00],
-    [10,10,00],
-    [10,-10,00],
-    [-10,-10,00],
-  ]);
-
-  // native Y -> Z [red]
-  *if (syz) color (syz) 
-  translate([0, 0, 0]) 
-  rc([00,20,0], [0, 0, -90], 0, 5, 1, syz) 
-  rc([20,20,00], [0, 0, -90], 1, 5, 1, syz) 
-  rc([20,00,00], [0, 0, -90], 2, 5, 1, syz)
-  rc([0,0,0], [0, 0, -90], 3, 5, 1, syz) 
-  rotate([-90,0,0]) cube([20, t0, 20]); // y -> Z
-
-  // native Z:
-  if (sz) color(sz)
-  translate([0, 0, 0]) 
-  rc([0,00,0], [0, 0, 0], 0, 5, 1, sz) 
-  rc([0,20,0], [0, 0, 0], 1, 5, 1, sz) 
-  rc([20,20,0], [0, 0, 0], 2, 5, 1, sz)
-  rc([20,00,0], [0, 0, 0], 3, 5, 1, sz) 
-  cube([20, 20, t0]); // native: normal to Z
-
-  // native Z rotated to X
-  if (szx) color(szx)
-  translate([0, 0, 0]) 
-  rc([0,00,0], [0, -90, 0], 0, 5, 1, szx) 
-  rc([0,20,0], [0, -90, 0], 1, 5, 1, szx) 
-  rc([0,20,20], [0, -90, 0], 2, 5, 1, szx)
-  rc([0,00,20], [0, -90, 0], 3, 5, 1, szx) 
-  rotate([0, -90, 0]) cube([20, 20, t0]); 
-
-  // native Z rotated to Y
-  if (szy) color(szy)
-  translate([0, 0, 0]) 
-  rc([0,00,0], [-90, 0, 0], 0, 5, 1, szy) 
-  rc([0,0,-20], [-90, 0, 0], 1, 5, 1, szy) 
-  rc([20,0,-20], [-90, 0, 0], 2, 5, 1, szy)
-  rc([20,00,0], [-90, 0, 0], 3, 5, 1, szy) 
-  rotate([-90, 0, 0]) cube([20, 20, t0]);
-
-  // if (sy0) color (sy0) 
-  // translate([0, 0, 0]) 
-  // rc([00,00,20], [-90, 0, 0], 0, 5, 1, sy0) 
-  // rc([00,00,00], [-90, 0, 0], 1, 5, 1, sy0) 
-  // rc([20,00,00], [-90, 0, 0], 2, 5, 1, sy0)
-  // rc([20,00,20], [-90, 0, 0], 3, 5, 1, sy0) 
-  // cube([20, t0, 20]); // native normal = y
-
-  // native Y -> X [green]
-  if (syx) color (syx) 
-  translate([0, 0, 0]) 
-  rc([00,-20,00], [0, -90, 0], 0, 5, 1, syx) 
-  rc([00,00,00], [0, -90, 0], 1, 5, 1, syx) 
-  rc([0,00,20], [0, -90, 0], 2, 5, 1, syx)
-  rc([0,-20,20], [0, -90, 0], 3, 5, 1, syx) 
-  rotate([0,0,-90]) cube([20, t0, 20]); // Y -> X
-
-
-}
-// clang-format on
 
 // 2D shape:
 // sxy: [dx = sxy, dy = sxy]
@@ -398,7 +277,7 @@ module slotify(hrt, tr = [ 0, 0, 0 ], rot, rq, ss = false) {
   t = is_undef(hrt[2]) ? t0 : hrt[2];
   rott = is_undef(rot) ? [ 0, -90, 0 ] : rot;
   echo("slotify: hrt=", [ h, r, t ]);
-  module maybe_rc(rqq, ss = ss) {
+  module maybe_rc0(rqq, ss = ss) {
     if (!is_undef(rqq)) {
       rq = is_list(rqq) ? rqq : [rq]; // rq as simple radius
       rad = is_undef(rq[0]) ? 2 * t0 : rq[0];
@@ -410,20 +289,20 @@ module slotify(hrt, tr = [ 0, 0, 0 ], rot, rq, ss = false) {
       rm = rr;                    // min(rw, rr);         // limit radius
       // echo ("[rq, rw, rr, rm]", [rq, rw, rr, rm])
       echo("[tr, rq, rw, rr, rm, rcr]", [ tr, rq, rw, rr, rm, rcr ]);
-      // rc([tr[0]+t, tr[1]+(rw-p*6), h+tr[2]-rm], rcr, q1, rad, t)
-      // rc([tr[0]+t, tr[1]-(rw-p*5), h+tr[2]-rm], rcr, q2, rad, t)
+      // rc0([tr[0]+t, tr[1]+(rw-p*6), h+tr[2]-rm], rcr, q1, rad, t)
+      // rc0([tr[0]+t, tr[1]-(rw-p*5), h+tr[2]-rm], rcr, q2, rad, t)
       // [0,-90,0]:[-t/2,...]; [0,90,0]:[+t/2, ...];
       trt1 = adif(tr, [ -t, -(rw - p * 6), rm - h ]);
       trt2 = adif(tr, [ -t, +(rw - p * 5), rm - h ]);
       // trt2 = [tr[0]+t/2, tr[1]-(rw-p*5), tr[2]+h-rm-rw-rr+t];
       translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
       translate(trt2) color("red") cube([ 1, 1, 1 ], true);
-      rc(trt1, rcr, q1, rad, t, ss) rc(trt2, rcr, q2, rad, t, ss) children();
+      rc0(trt1, rcr, q1, rad, t, ss) rc0(trt2, rcr, q2, rad, t, ss) children();
     } else {
       children();
     }
   }
-  maybe_rc(rq) difference() {
+  maybe_rc0(rq) difference() {
     children(0);
     if (ss) {
 # translate(tr) slot([ h, r, t ], rot);

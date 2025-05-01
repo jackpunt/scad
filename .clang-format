@@ -1,4 +1,4 @@
+#language: scad
 BasedOnStyle: GNU
 IndentWidth: 2
 ContinuationIndentWidth: 2
-language: scad
