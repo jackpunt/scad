@@ -296,17 +296,20 @@ module slotify(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
 
       // echo ("[riq, rw, rr, rm]", [riq, rw, rr, rm])
       echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
-      cr1 = [ -t/2, -(w/2), -(h/2 - r/2) ];
+      cr1 = [ -0, -(w/2), -(h/2 - r) ];
       cr2 = [ -0, +(w/2), -(h/2 - r) ];
       echo("cr1=", cr1, "cr2=", cr2);
       translate(tr) translate(cr1) color("cyan") cube([1,1,1]);
       rottr = [rott[0], rott[1], rott[2], rid];
-      trt1 = tr; //adif(tr, cr1 );
+      // trt1 = tr;
+      trt1 = adif(tr, cr1 );
       trt2 = adif(tr, cr2);
-      translate(trt1) translate(amul(cr1, [-1,-1,-1])) rotatet(rott, cr1) color("blue") cube([ 1, 1, 1 ], true);
-      translate(trt2) color("red") cube([ 1, 1, 1 ], true);
+      // translate(trt1) translate(amul(cr1, [-1,-1,-1])) rotatet(rott, cr1) color("blue") cube([ 1, 1, 1 ], true);
+      translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
+      translate(trt2) color("red")  cube([ 1, 1, 1 ], true);
       echo("rc: ", trt1, rott, q1, rad, t, ss);
-      rc(trt1, rottr, q1, rad, t, ss)
+      // rc(trt1, rottr, q1, rad, t, ss)
+      rc(trt1, rid, q1, rad, t, ss)
       rc(trt2, rid, q2, rad, t, ss)
       children();
     } else {

@@ -272,19 +272,26 @@ module mainBox()
   sh = 1; sl = (l-20); r = 2; ds = .1;
   hds = 3.5;      // bottom of slot
   slh = h+sr-hds; // slot height: sr at top of box
+  module topSlots() {
+    // corner should be: [l, h, w/2 +- sr] => [100.9, 26, 43.2--53.2 (47.2  +- 4)]
+    // 2 top-side slots: (fat slow for test)
+    slotify([sl, sh, 2*t0, r], [l/2, 0+t0/2, h], 0, [2, 0], true)
+    slotify([sh, sl, 2*t0, r], [l/2, w-t0/2, h], [0,90,90], [2, 0], true)
+      children(0);
+  }
+  topSlots0() {
+    difference() {
+      children(0);
+      translate() cube([sl, sh, 2*t0]);
+    }
+  }
+
   hslot()
   {
     holder();
     // end slot:
     slotify([slh, sw, 2*t0, sr], [l-t0/2, w/2, hds+slh/2], 1, [3, 1], true )
-
-    // corner should be: [l, h, w/2 +- sr] => [100.9, 26, 43.2--53.2 (47.2  +- 4)]
-    // 2 top-side slots: (fat slow for test)
-    slotify([sl, sh, 2*t0, r], [l/2, 0+t0/2, h], 0, [2, 0], true)
-    echo("-----SLOTIFY:--------", [0,90,90], [2, 0])
-    slotify([sh, sl, 2*t0, r], [l/2, w-t0/2, h], [0,90,90], [2, 0], true)
-    // test: botton slot
-    // slotify([slh, sw, 2*t0, sr], [l-t0/2+8, w/2, t0/2], [0,0,0, 0], [3, 2], true )
+    // topSlots();
         box([ l, w, h ], t0);
     ramp();
   }
@@ -299,8 +306,11 @@ module slottest() {
   slh = h+sr-hds; // slot height: sr at top of box
   rot = [0,0,0]; riq = [2, 0];
   echo("-----SLOTIFY TEST:--------", rot, riq);
+  // test: botton slot
+    slotify([slh, sw, 2*t0, sr], [l-t0/2+8, w/2, t0/2], [0,0,0, 0], [3, 2], true )
   slotify([sh, sl, 2*t0, r], [l/2, w-t0/2, h], rot, riq, true)
     box([100, w, 25], t0);
+
 }
 
 loc = 0;
@@ -309,10 +319,10 @@ use<testRC.scad>;
 ///
 /// MAIN BUILD HERE:
 ///
-*cutaway() gridaway() mainBox();
-slottest();
-*topTray();
-*dup([ 0, -25, 0 ]) vbox();
+cutaway() gridaway() mainBox();
+*slottest();
+topTray();
+translate([0, 170, 0]) dup([ 0, -25, 0 ]) vbox();
 
 dy = 10;
 dr = 5; // rCube test
