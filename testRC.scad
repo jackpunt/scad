@@ -1,45 +1,60 @@
 use<mylib.scad>;
 
+t0 = 1;
 // clang-format off
 // test rc
-module testRC() {
-  // rid: plane of corner cut
+
+  // idc?: color
+  // rid: plane of corner cut (rotates the cut segment)
+  // ---- 0: [-90,0,0] 1: [0, -90, 0] 2: [0, 0, -90]
   // rot: applied to given cube to put in in plane of rid
+  // cxyz: cube to rotate
+  // trans: for each corner; +/- cube radius
+  // ss: show segment (false)
   module test(idc, rid, rot, cxyz, trans, ss = true) {
-    if (idc)
+    if (idc) {
+    translate(trans[0]) color("blue") cube([ 1, 1, 1 ], true);
     rc(trans[0], rid, 0, 5, t0, ss)
     rc(trans[1], rid, 1, 5, t0, ss)
     rc(trans[2], rid, 2, 5, t0, ss)
     rc(trans[3], rid, 3, 5, t0, ss)
     rotate(rot) color (idc)  cube(cxyz, true); // Y -> X
+    }
   }
   module test0(idc, rid, rot, cxyz, trans, ss= false) {
     rrot = [ [ 0, -90, 0 ], [ -90, 0, 0 ], [ 0, 0, -90 ] ][rid];
-    if (idc) 
+    if (idc) {
+    translate(trans[0]) color("blue") cube([ 1, 1, 1 ], true);
     rc0(trans[0], rid, 0, 5, t0, ss)
     rc0(trans[1], rid, 1, 5, t0, ss)
     rc0(trans[2], rid, 2, 5, t0, ss)
     rc0(trans[3], rid, 3, 5, t0, ss)
     rotate(rot) color(idc)  cube(cxyz, true); // Y -> X
+    }
   }
+
+module testRC() {
   t = t0;
   sz = false;
-  szx = false;
-  szy = false;
+  szx = "tan";
+  szy = "cyan";
   sx = false;
-  sy0 = false; //"green";
+  sy0 = "green";//false; //
   syx = false;
-  syxc = false;// "#BBBBBB";
-  syz = "red";
+  syxc = "#BBBBBB";// "#BBBBBB";
+  syz = false;// "red";
 
   // rc() WORKS without test module!
-  tt=.5; // offset because cube is rotated but not centered
-  color("cyan") translate([20, 5, 0]) 
+  tt=t0/2; // offset because cube is rotated but not centered
+  translate([20, 5, 0]) {
+  translate([0,20,tt]) color("blue") cube([ 1, 1, 1 ], true);
+  color("cyan") 
   rc([0,20,tt], 2, 0, 5, t0,true) 
   rc([20,20,tt], 2, 1, 5,t0,true) 
   rc([20,0,tt], 2, 2, 5, t0,true)
   rc([0,00,tt], 2, 3, 5, t0,true) 
   cube([20, 20, t0]);
+  }
 
   // original test with rc0() [implicit gold]
   translate([-10, -30, 0]) 
@@ -64,7 +79,8 @@ module testRC() {
     [00, -10,10]
     ]);
   // native Y -> Y [grey]
-  test(sy0, 1, [0,0,0], [20, t, 20], [
+  translate([20,20,20])
+  test(sy0, 0, [0,0,0], [20, t, 20], [
     [-10,00,10],
     [-10,00,-10],
     [10,00,-10],
@@ -98,16 +114,20 @@ module testRC() {
   cube([20, 20, t0]); // native: normal to Z
 
   // native Z rotated to X
-  if (szx) color(szx)
-  translate([0, 0, 0]) 
-  rc0([0,00,0], [0, -90, 0], 0, 5, 1, szx) 
-  rc0([0,20,0], [0, -90, 0], 1, 5, 1, szx) 
-  rc0([0,20,20], [0, -90, 0], 2, 5, 1, szx)
-  rc0([0,00,20], [0, -90, 0], 3, 5, 1, szx) 
-  rotate([0, -90, 0]) cube([20, 20, t0]); 
+  // if (szx) color(szx)
+  // translate([0, 0, 0])
+  // amul(csr, -rad)
+  translate([-10, -20, -10]) 
+  test(szx, 1, [0, -90, 0], [20, 20, t0], [
+    [0,  -10, -10], [0, 10, -10], [0, 10, 10], [0, -10, 10], 
+  ], true);
 
   // native Z rotated to Y
-  if (szy) color(szy)
+  test(szy, 0, [-90, 0, 0], [20, 20, t0], [
+    [-10, 0,  10], [-10, 0, -10], [10, 0, -10], [10, 0, 10], 
+  ])
+
+*  if (szy) color(szy)
   translate([0, 0, 0]) 
   rc0([0,00,0], [-90, 0, 0], 0, 5, 1, szy) 
   rc0([0,0,-20], [-90, 0, 0], 1, 5, 1, szy) 

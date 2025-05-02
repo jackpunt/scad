@@ -58,8 +58,9 @@ function as3D(ary, a2) = [ ary[0], ary[1], is_undef(ary[2]) ? a2 : ary[2] ];
 // cr:  [dx, dy, dz] the center of rotation
 module rotatet(rot = [ 0, 0, 0 ], cr = [ 0, 0, 0 ]) {
   rcr = is_undef(rot[3]) ? cr : rot[3];
+  echo("rotatet: rot, cr, rcr", rot, cr, rcr);
   translate(rcr) rotate(as3D(rot))
-      translate(amul(cr, [ -1, -1, -1 ])) // [-cr[0], -cr[1], -cr[2]]) //
+      translate(amul(rcr, [ -1, -1, -1 ])) // [-cr[0], -cr[1], -cr[2]]) //
       children();
 }
 
@@ -81,7 +82,7 @@ module dup(tr = [ 0, 0, 0 ], rott = [ 0, 0, 0 ]) {
 module roundedCube(dxyz, r, sidesonly, center) {
   s = is_list(dxyz) ? dxyz : [ dxyz, dxyz, dxyz ];
   // echo("roundedCube: s=", s, "r=", r);
-  translate(center ? -s / 2 : [ 0, 0, 0 ]) {
+  translate(center ? amul(s, [-.5, -.5, -.5]) : [ 0, 0, 0 ]) {
     if (sidesonly) {
       *linear_extrude(s[2]) roundedRect([ s[0], s[1] ], r);
       hull() {
@@ -107,7 +108,13 @@ module roundedCube(dxyz, r, sidesonly, center) {
 
 // translate, maybe mark child with #
 // clang-format off
-module show(ss=false) {  if (ss)    #children(0);  else    children(0); }
+module show(ss=false, tr=[0,0,0]) { 
+  // echo("show: ss=", ss) ;
+  if (ss)
+    # translate(tr) children(0);
+  else
+    translate(tr) children(0); 
+}
 // clang-format on
 
 // replace square corner with a rounded corner
@@ -126,7 +133,7 @@ module rc0(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0, ss = fal
   org = [ [ -p, -p, -p ], [ -p, rp, -p ], [ rp, rp, -p ], [ rp, -p, -p ] ][q];
   add = amul([ rad, rad, -pp ], qs);
 
- difference() 
+  difference() 
   {
     children(0);
     show(ss) 
@@ -139,34 +146,42 @@ module rc0(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0, ss = fal
   }
 }
 
+function rotOfId(rid) = [ [ -90, 0, 0 ], [ 0, -90, 0 ], [ 0, 0, -90 ], [0,0,0] ][rid];
 // tr: position of corner to be rounded
 // rotId: [x-axis: [+-90, 0, 0], y-axis: [0, +-90, 0], z-axis: [0, 0, +-90]]
 // q: index of orientation of corner to be rounded: [ll, ul, ur, lr]
-// t: thickness of wall to remove
+// rad: corner radius (5)
+// t: thickness of wall to remove (t0)
 // ss: show cut with '#'
 module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
-  rot = [ [ 0, -90, 0 ], [ -90, 0, 0 ], [ 0, 0, -90 ] ][rotId];
+  rid = is_list(rotId) ? rotId[3] : rotId;
+  rot = is_list(rotId) ? as3D(rotId) : rotOfId(rotId);
   r2 = rad / 2;
   t2 = t / 2;
 
   qs = [ [ 1, 1, 1 ], [ 1, -1, 1 ], [ -1, -1, 1 ], [ -1, 1, 1 ] ][q];
+  qsm = [[ r2, r2, -t ], [ r2, -t, r2 ]];
+  echo("rc: q, qs=", q, qs);
   qsr = amul(qs, [ r2, r2, -t ]); // quadrant select cylinder sector
 
+//  [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // x-axis
+
   cs0 = [
-     [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // x-axis
-     [[ 1, 0, -1 ], [ 1, 0, 1 ], [ -1, 0, 1 ], [ -1, 0, -1 ]], // y-axis
+     [[ 1, 0, -1 ], [ 1, 0, 1 ], [ -1, 0, 1 ], [ -1, 0, -1 ]], // x-axis
+     [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // y-axis
      [[ 1, -1, 0 ], [ -1, -1, 0 ], [ -1, 1, 0 ], [ 1, 1, 0 ]], // z-axis
    ];
-  cs = cs0[rotId][q];                  // offset cyl_cut to corner
+  cs = cs0[rid][q];             // offset cyl_cut to corner
+  echo("rc: rid q, cs=", rid, q, cs);
   csr = amul([r2,r2,r2], cs);
 
   p=.1; pp = 2*p; p4=p*4;
   difference()
   {
     children(0);
-    show(ss) 
+    show(ss, tr) 
     // color("blue")  
-    translate(tr)  translate(csr) rotate(rot) 
+    translate(csr) rotatet(rot)
     difference() 
     {
       cube([ rad + pp, rad + pp, t + pp ], true);
@@ -241,73 +256,80 @@ module div(hwx = 10, r = 2, k, t = t0) {
       roundedRect([ hwx[0], hwx[1] ], r, k);
 }
 
-// a slot shaped hull; (in YZ plane)
-// hrt: [h: height, r: radius [width, rad], t = t0]
-// rottr: rotate & translate ([0, -90, 0, tr=[t+p, 0, 0]])
-module slot(hrt, rottr) {
-  h = is_undef(hrt[0]) ? 40 : hrt[0];
-  r = is_undef(hrt[1]) ? 5 : hrt[1];
-  t = is_undef(hrt[2]) ? t0 : hrt[2];
-  rott = is_undef(rottr) || is_undef(rottr[0]) ? [ 0, -90, 0 ] : rottr;
-  tr = is_undef(rott[3]) ? [ t + p, 0, 0 ] : rott[3];
-  rw = is_list(r) ? r[0] : r; // slot radius: width/2
-  rr = is_list(r) ? r[1] : r; // corner radius
-  rm = min(rw / 2, rr);
-  translate(tr)          // align after rotate
-      rotate(as3D(rott)) // include rott[3]
-      translate([ -h / 2, -rw, -t / 2 ]) roundedCube(
-          [ h, 2 * rw, t ], rr, true); // transpose coords so 'sides only' works
-}
-module align(tr, rott) {
-  // rott = is_undef(rottr) || is_undef(rottr[0]) ? [0, -90, 0] : rottr;
-  // tr= is_undef(rott[3]) ? [t+p, 0, 0] : rott[3];
-  translate(tr)     // align after rotate
-      rotatet(rott) // include rott[3]
-      children(0);
+// a slot shaped hull; (in XY plane -> rot(-Y) -> ZY)
+// hwtr: [h: height, w: width, t = t0, r: radius (w/2)]
+// rot: rotate|rid ([0, 0, 0]: XY) 0: YZ or 1: XZ or 2: XY (hw->wh)
+module slot(hwtr, rot) {
+  h = is_undef(hwtr[0]) ? 40 : hwtr[0]; // slot height
+  w = is_undef(hwtr[1]) ? 5 : hwtr[1];  // slot width
+  t = is_undef(hwtr[2]) ? t0 : hwtr[2]; // thick
+  r0 = is_undef(hwtr[3]) ? w/2 : hwtr[3];// inner radius
+  r = r0;// min(r0, w/2, h/2);
+  rot0 = is_undef(rot) ? [ 0, 0, 0 ] : rot;
+  rota = is_list(rot0) ? as3D(rot0) : rotOfId(rot0);
+    rotate(rota)
+    roundedCube([ h, w, t ], r, true, true);
 }
 
-// make a slot in the yz plane
-// hrt: [h: dz (40), r: slot_radius|[w, r] (5), t: (t0)]
+// cut a slot in child object:
+// difference() { child(0); trans(tr) slot(hwtr); }
+// hwtr: [h: dz (40), w: 5, t: (t0), r: slot_radius (w/2)]
 // tr: translate onto wall ([0,0,0])
-// rot: rotate ([0, -90, 0]) [rx, ry, rz, [cx, cy, cz]]
-// rq: [radius: (2*t), q1: (3), q2: (2)]; for yz plane
-module slotify(hrt, tr = [ 0, 0, 0 ], rot, rq, ss = false) {
-  h = is_undef(hrt[0]) ? 40 : hrt[0];
-  r = is_undef(hrt[1]) ? 5 : hrt[1];
-  t = is_undef(hrt[2]) ? t0 : hrt[2];
-  rott = is_undef(rot) ? [ 0, -90, 0 ] : rot;
-  echo("slotify: hrt=", [ h, r, t ]);
-  module maybe_rc0(rqq, ss = ss) {
-    if (!is_undef(rqq)) {
-      rq = is_list(rqq) ? rqq : [rq]; // rq as simple radius
-      rad = is_undef(rq[0]) ? 2 * t0 : rq[0];
-      q1 = is_undef(rq[1]) ? 3 : rq[1];
-      q2 = is_undef(rq[2]) ? 2 : rq[2];
-      rcr = is_undef(rot) ? [ 0, -90, 0 ] : rot;
-      rw = is_list(r) ? r[0] : r; // slot width/2
-      rr = is_list(r) ? r[1] : r; // corner radius
-      rm = rr;                    // min(rw, rr);         // limit radius
-      // echo ("[rq, rw, rr, rm]", [rq, rw, rr, rm])
-      echo("[tr, rq, rw, rr, rm, rcr]", [ tr, rq, rw, rr, rm, rcr ]);
-      // rc0([tr[0]+t, tr[1]+(rw-p*6), h+tr[2]-rm], rcr, q1, rad, t)
-      // rc0([tr[0]+t, tr[1]-(rw-p*5), h+tr[2]-rm], rcr, q2, rad, t)
-      // [0,-90,0]:[-t/2,...]; [0,90,0]:[+t/2, ...];
-      trt1 = adif(tr, [ -t, -(rw - p * 6), rm - h ]);
-      trt2 = adif(tr, [ -t, +(rw - p * 5), rm - h ]);
-      // trt2 = [tr[0]+t/2, tr[1]-(rw-p*5), tr[2]+h-rm-rw-rr+t];
-      translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
+// rid: rotate (1 = [0, -90, 0]) flip to YZ plane
+// riq: [radius: (2*t), rid: (1) , q1: (3), q2: (2)]; for YZ plane
+module slotify(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
+  h = is_undef(hwtr[0]) ? 40 : hwtr[0];
+  w = is_undef(hwtr[1]) ? 5 : hwtr[1];
+  t = is_undef(hwtr[2]) ? t0 : hwtr[2];
+  r = is_undef(hwtr[3]) ? min(h, w)/2 : hwtr[3]; // main radius
+  rot0 = is_undef(rot) ? 1 : rot; // flip XY to YZ plane
+  rott = is_list(rot0) ? rot0 : rotOfId(rot0);
+  echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
+  module maybe_rc0(ss = ss, riq = riq) {
+    if (!is_undef(riq)) {
+      riq = is_list(riq) ? riq : [riq]; // riq as simple radius
+      rad = is_undef(riq[0]) ? 2 * t : riq[0]; // corner radius
+      rid = is_undef(riq[1]) ? 1 : riq[1];
+      q1 = is_undef(riq[2]) ? 3 : riq[2];
+      q2 = is_undef(riq[3]) ? 2 : riq[3];
+      rm = rad;
+
+      // echo ("[riq, rw, rr, rm]", [riq, rw, rr, rm])
+      echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
+      cr1 = [ -t/2, -(w/2), -(h/2 - r/2) ];
+      cr2 = [ -0, +(w/2), -(h/2 - r) ];
+      echo("cr1=", cr1, "cr2=", cr2);
+      translate(tr) translate(cr1) color("cyan") cube([1,1,1]);
+      rottr = [rott[0], rott[1], rott[2], rid];
+      trt1 = tr; //adif(tr, cr1 );
+      trt2 = adif(tr, cr2);
+      translate(trt1) translate(amul(cr1, [-1,-1,-1])) rotatet(rott, cr1) color("blue") cube([ 1, 1, 1 ], true);
       translate(trt2) color("red") cube([ 1, 1, 1 ], true);
-      rc0(trt1, rcr, q1, rad, t, ss) rc0(trt2, rcr, q2, rad, t, ss) children();
+      echo("rc: ", trt1, rott, q1, rad, t, ss);
+      rc(trt1, rottr, q1, rad, t, ss)
+      rc(trt2, rid, q2, rad, t, ss)
+      children();
     } else {
       children();
     }
+    echo("---maybe rc done");
   }
-  maybe_rc0(rq) difference() {
+  maybe_rc0(ss, riq) 
+  difference() 
+  {
     children(0);
-    if (ss) {
-# translate(tr) slot([ h, r, t ], rot);
-    } else {
-      translate(tr) slot([ h, r, t ], rot);
-    }
+    show(ss, tr)
+    slot([ h, w, t, r ], rott);
   }
+}
+
+// see also: show(ss, tr) rotatet(rottr)
+// tr: position ([0,0,0])
+// rottr: rotate (around offset) = ([rotOfId(rottr=1), [0,0,0]])
+module align(tr = [0,0,0], rottr = [0,0,0], ss = false) {
+  rottr0 = is_undef(rottr) ? 1 : rottr;
+  rottr1 = is_list(rottr0) ? rottr0 : rotOfId(rottr0);
+  show(ss, tr)
+  rotatet(rottr1)
+  children(0);
 }
