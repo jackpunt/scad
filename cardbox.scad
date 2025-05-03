@@ -1,60 +1,25 @@
 use <mylib.scad>;
 p = .001;
 pp = 2 * p;
-t0 = 1.0;
-l00 = 87; // official card size (according to Sleeve King )
-w00 = 56;
+t0 = 1;
+l00 = 87; // official card size (+2mm for sleeves)
+w00 = 56; // sleeves bring thickness to ~.625 per card. (from min .4mm)
 l0 = 92.4;
-w0 = 60.4;
-h0 = 22;
+w0 = 60.4; // w00 + 2mm (sleeves) + 2mm (slack); retain 60.4 for slider compat
+h0 = 27;
 h1 = h0 + 3; // extend for ramp!
 l = l0 + 2 * t0;
 w = w0 + 2 * t0;
 h = h1 + t0;
+tsd = 1.7;      // top_slot depth of topTray
 
 // hypotenuse: given angle * adjacent_base length
 function hypa(a, b) = (let(h = b * tan(a)) sqrt(b * b + h * h));
 function hypo(a, h) = (let(b = h / tan(a)) sqrt(b * b + h * h));
 
-// poke holes (children(1)) in children(0) through the y axis
-// x: [x0, step, xm]
-// z: [z0, step, zm]
-// tr: [1,0,1] select axiis to translate
-module gridify(x, z, tr = [ 1, 0, 1 ])
-{
-    for (xa = [x[0]:x[1]:x[2]], za = [z[0]:z[1]:z[2]])
-    {
-        // echo("xz=", [xa, za]);
-        translate(amul([ xa, xa, za ], tr)) children(0);
-    }
-}
-module grid(nx, nz, k, tr = [ 1, 0, 1 ])
-{
-    gridify([ k, 2 * k, nx ], [ 0, 2 * k, nz ], tr) children(0);
-    gridify([ 0, 2 * k, nx ], [ k, 2 * k, nz ], tr) children(0);
-}
-module pat(s = 5, l = 30)
-{
-    rotatet([ 0, 45, 0 ], [ s / 2, 0, s / 2 ]) translate([ 0, -p, 0 ]) cube([ s, l + pp, s ]);
-}
-
-// grid test:
-*translate([ 0, -40, 0 ])
-{
-    nx = 50;
-    nz = 30;
-    y = 1;
-    s = 10;
-    difference()
-    {
-        cube([ nx, y, nz ]);
-        grid(nx, nz, s / 2) scale([ 1, 1, .7 ]) translate([ -s / 2, 0, -s / 2 ]) pat(s / 2, y);
-    }
-}
-
 a = 18;
 dz = 6;                 // top of slot
-iw = 3.8;               // width of slot_interior
+iw = 3.5;               // width of slot_interior
 xb = (h - dz) * tan(a); // length of holder after tilt...
 lt = l + xb;            // length total
 echo("cardbox: xb, lt, lwh=", [ xb, lt, l, w, h ]);
@@ -62,41 +27,41 @@ echo("cardbox: xb, lt, lwh=", [ xb, lt, l, w, h ]);
 
 module holder(a = a)
 {
-    xb = (h - dz) * tan(a); // length of holder after tilt...
-    ha = (h - dz);
-    echo();                // top to slot
-    fw = iw + 2 * t0;      // full width of slot box
-    hb = ha - fw / cos(a); // down from top to rotation point
-    hr = ha - hb;
-    sz = 5;   // depth to shelf
-    echo("xb=", xb, "ha=", ha, "hb=", hb, "hr=", hr);
-    wb = w0;
-    intersection()
+  xb = (h - dz) * tan(a); // length of holder after tilt...
+  ha = (h - dz);
+  echo();                // top to slot
+  fw = iw + 2 * t0;      // full width of slot box
+  hb = ha - fw / cos(a); // down from top to rotation point
+  hr = ha - hb;
+  sz = 8;   // depth to shelf
+  echo("xb=", xb, "ha=", ha, "hb=", hb, "hr=", hr);
+  wb = w0;
+  intersection()
+  {
+    translate([ p - xb, 0, 0 ]) cube([ xb, w, h ]);
     {
-        translate([ p - xb, 0, 0 ]) cube([ xb, w, h ]);
+      rotatet([ 0, -a, 0 ], [ 0, 0, dz ])
+      {
+        translate([ fw, 0, 0 ]) cube([ 7, w, 1.2 * h ]); // fill w/ giant block, then intersect
         {
-            rotatet([ 0, -a, 0 ], [ 0, 0, dz ])
-            {
-                translate([ fw, 0, 0 ]) cube([ 7, w, 1.2 * h ]); // fill w/ giant block, then intersect
-                {
-                    bh = t0 + ((a > 1) ? ha / cos(a) : ha);
-                    echo("bh=", bh);
-                    translate([ 0, 0, dz ]) 
-                    box([ fw, w, bh ], t0); // main box
+        bh = t0 + ((a > 1) ? ha / cos(a) : ha);
+        // echo("bh=", bh);
+        translate([ 0, 0, dz ]) 
+        box([ fw, w, bh ], t0); // main box
 
-                    translate([ 0, 0, bh - sz ]) 
-                    rotatet([ 0, -18, 0 ], [ iw, 0, 2 * t0 ])
-                    cube([ iw + t0, w, t0 ]); // bottom shelf
-                }
-            }
+        translate([ 0, 0, bh - sz ]) 
+        rotatet([ 0, -18, 0 ], [ iw, 0, 2 * t0 ])
+        cube([ iw + t0, w, t0 ]); // bottom shelf
         }
+      }
     }
-    // translate([-t0,0,-bl]) rotate([-90,0,0]) cylinder([iw+2*t0, w, bl]);
+  }
+  // translate([-t0,0,-bl]) rotate([-90,0,0]) cylinder([iw+2*t0, w, bl]);
 }
 
 module card(tr = [ (l0 - l00) / 2, (w0 - w00) / 2, 0 ])
 {
-    translate(tr) astack(32, [ -.03, 0, .5 ]) color("pink") roundedCube([ l00, w00, .4 ], 3, true);
+    translate(tr) astack(32, [ -.03, 0, .625 ]) color("pink") roundedCube([ l00, w00, .4 ], 3, true);
 }
 
 // vz: height of ramp @ vx: bump @
@@ -138,26 +103,23 @@ module ramp(vx = vx, vz = vz, ve = 0)
  @param dz height of wings
  @ambient w: width of box, t0: thickness
  */
-module topTray(dx = l/4, dz = 5)
+module topTray(dx = l/4, dz = 6)
 {
-
-    f = .33;
-    tw = w - 2 * t0;
+    f = .43;
+    tw = w +.75;
     sw = 2 * t0;
-    atrans(loc, [ [ l+2, 0, dx, [0, 90, 0] ], 
-                [ (l-dx)/2-10, 0, h-dz+t0 ], 
-                [ (l-dx)/2-10, 0, h-dz+t0+p ],
+    atrans(1, [ [ l+2, 0, dx, [0, 90, 0] ], 
+                [ (l-dx)/2+20, 0, h-dz-tsd+t0 ], 
+                [ (l-dx)/2+20, 0, h-dz-tsd+t0+p ],
           ])
     /* clang-format on */
     {
         rz = 5;
         in = f;
+        dw = 3;
         dup([ 0, w, 0], [0,0,180, [dx/2, 0, 0]])
-        union() {
-          translate([0, p+t0, 0]) cube([dx, w/2+t0+p, t0]);
-          color("blue") translate([ p, p, p ]) 
-            box([ dx, sw, dz ], [ -t0, -t0, -t0 ], [ 2, 0, 0 ]);
-        }
+          color("blue") translate([0, 2-(dw+f/2), rz]) cube([dx, dw, t0]);
+      translate([0, t0-f/2, 0]) box([ dx, w-2*t0+f, rz+1 ], [-t0,t0,t0], [2,2,0]);
     }
 }
 
@@ -165,22 +127,59 @@ module topTray(dx = l/4, dz = 5)
 // box for setup (Events, VICI, markers, chips) cards:
 module vbox()
 {
-  vw = l;
-  vl = 22;
-  vh = w; // as high as main box is wide
-  sw = 55;// vw * .7;
-  dh = 15; // depth of slot
+  sh = 3.4; // center slot reduction & lid size
+  vw = l + 2; // more slack for lid...
+  vl = 20+2*t0;
+  vh = w0 + sh + t0 +t0; // about as high as main box is wide (+2 for )
+  sw = 55;// total width of box
+  dh = 19+sh; // depth of slot
   sr = min(5, dh/2, sw/2);
   hwtr = [dh, sw, 2*t0, sr];
-  atrans(loc, [[0, -3, 0, [0,0,-90]], [0, -vw, 0], [0, -3, 0, [0,0,-90]]]){ 
-  echo("vbox2:", [dh, sw, 2*t0, sr])
-  slotify(hwtr, [00+t0/2, vw/2, vh-(dh/2-sr)], 1, 3, true)
-  slotify(hwtr, [vl-t0/2, vw/2, vh-(dh/2-sr)], 1, 3, true)
-    box([vl, vw, vh]);
-  sz = 20/32 * vl;
-  slotify(hwtr, [sz+t0/2, vw/2, vh-(dh/2-sr)], 1, 3, true)
-    div([vh, vw, sz]);
+  h2 = w0;  // center slot height
+  sz = 11/32 * vl; // 11 +/- 1
+  ss = false;
+  echo("------h2=", h2, "vh=", vh);
+  module vboxTop() {
+    // bt = (vh-h2); // mm == 2*sh
+    tt = t0*1.2; bt = sh+tt; 
+    atrans(0, [
+        [-vw/2-2*t0,-vl/2-3*t0, 00, [0,0,90]], 
+        [vw/2,-vl/2-3*t0, vh+tt+p, [180,0,90]]])
+    {
+    color("cyan")
+    // union(){
+     translate([0, 0, tt/2]) cube([vl, vw, tt], center=true);
+     box(lwh = [vl-2*t0-.35, vw-2*t0-.45, tt+bt], cxy=true);
+    // }
+    }
   }
+  module cardGuide() {
+    up = 10; h1 = 10; h2 = 10; cy=0; a = 6; df = 4;
+    union() {
+    translate([0, 0, vh/2+up+df/2 ])
+    rotate([0, 90-a, 0]) color("green") cube([h1, vl, t0+1], true);
+    translate([0, 0, vh/2+up-df/2-(h2+h1)/2, ])
+    rotate([0, 90+a, 0]) color("green") cube([h2, vl, t0+1], true);
+    translate([.0, 0, vh/2+up/2, ])
+    cube([t0+2, vl, df+t0, ], true);
+    }
+  }
+// temp union for 'intersection' test
+//   intersection() 
+ {
+  atrans(0, [[0, -3*t0, 0, [0,0,-90]], [0, w+vh, 0, [0,0,-90]], [0, -3*t0, 0, [0,0,-90]]]){ 
+//   echo("vbox2:", hwtr)
+    slotify(hwtr, [00+t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
+    slotify(hwtr, [vl-t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
+    box([vl, vw, vh], t0);
+  dh2 = dh-(vh-h2); hwtr2 = [dh2, sw, 2*t0, sr];
+  slotify(hwtr2, [sz+t0/2, vw/2, h2-(dh2/2-sr)], 1, 3, false)
+    div([h2, vw, sz], 2, 0, t0);
+    translate([vl/2, t0+.6, 0 ]) rotate([0,0,90]) cardGuide();
+    #translate([vl/2, vw- (t0+.6), 0 ]) rotate([0,0,-90]) cardGuide();
+  }
+  vboxTop();
+ }
 }
 
 // add horizontal slot to children(0)
@@ -222,6 +221,10 @@ module cutaway(loc = loc)
 {
     cutaway0(loc, [ lt + 10, 10, h + 10 ], [ -5 - xb, -5, -5 ]) children();
 }
+module pat(s = 5, l = 30)
+{
+    rotatet([ 0, 45, 0 ], [ s / 2, 0, s / 2 ]) translate([ 0, -p, 0 ]) cube([ s, l + pp, s ]);
+}
 
 module paty(s = 5, l = w)
 {
@@ -239,7 +242,7 @@ module gridaway(x0 = 40, l = l * .65, h = 25)
     difference()
     {
         children(0);
-        translate([ x0, 0, t0 + s * .9 ]) grid(l - s - x0, h - s - 5, 5) paty(s, w);
+        translate([ x0, 0, t0 + s * .8 ]) grid(l - s - x0, h - s - 5, 5) paty(s, w);
     }
 }
 module gridawayy(x0 = 20, l = l)
@@ -270,19 +273,22 @@ module mainBox()
   rq = 3; // rq if different from sr
 
   sh = 1; sl = (l-20); r = 2; ds = .1;
-  hds = 3.5;      // bottom of slot
+  hds = 7.0;      // bottom of slot
   slh = h+sr-hds; // slot height: sr at top of box
+  ss = false;
+
   module topSlots() {
     // corner should be: [l, h, w/2 +- sr] => [100.9, 26, 43.2--53.2 (47.2  +- 4)]
     // 2 top-side slots: (fat slow for test)
-    slotify([sl, sh, 2*t0, r], [l/2, 0+t0/2, h], 0, [2, 0], true)
-    slotify([sh, sl, 2*t0, r], [l/2, w-t0/2, h], [0,90,90], [2, 0], true)
+    slotify([sl, sh, 2*t0, r], [l/2, 0+t0/2, h], 0, [2, 0], ss)
+    slotify([sh, sl, 2*t0, r], [l/2, w-t0/2, h], [0,90,90], [2, 0], ss)
       children(0);
   }
-  topSlots0() {
+  module topSlots0() {
+    hds = 1.5;
     difference() {
       children(0);
-      translate() cube([sl, sh, 2*t0]);
+      show(false) translate([(l-sl)/2, -p, h-tsd]) cube([sl, w+2*t0+pp, tsd+pp]);
     }
   }
 
@@ -290,9 +296,13 @@ module mainBox()
   {
     holder();
     // end slot:
-    slotify([slh, sw, 2*t0, sr], [l-t0/2, w/2, hds+slh/2], 1, [3, 1], true )
-    // topSlots();
+    slotify([slh, sw, 2*t0, sr], [l-t0/2, w/2, hds+slh/2], 1, [3, 1], ss )
+    topSlots0()
         box([ l, w, h ], t0);
+    // Brace end of box:
+    xx = 3*t0; zz = 7;
+    translate([l-xx,0,0]) cube([xx,w,zz/2]);
+    translate([l-(xx-t0),0,0]) cube([xx-t0,w,zz]);
     ramp();
   }
 }
@@ -313,16 +323,18 @@ module slottest() {
 
 }
 
-loc = 0;
 use<testRC.scad>;
 *translate([-50, -40, 0])  testRC();
+
+loc = 0;
 ///
 /// MAIN BUILD HERE:
 ///
-cutaway() gridaway() mainBox();
+*cutaway() gridaway() mainBox();
 *slottest();
-topTray();
-translate([0, 170, 0]) dup([ 0, -25, 0 ]) vbox();
+*topTray();
+// dup([ 0, -25, 0 ])
+ vbox();
 
 dy = 10;
 dr = 5; // rCube test
@@ -333,4 +345,4 @@ dr = 5; // rCube test
 // atan(7/88) = 4.5;
 a2 = 3.2; // angle of the card on ramp
 if (loc != 0)
-    *translate([ 0, 0, .1 ]) rotatet([ 0, a2, 0 ], [ 90, 0, 1 ]) card([ 4, (w0 - w00) / 2, 1 ]);
+    translate([ 0, 0, .1 ]) rotatet([ 0, a2, 0 ], [ 90, 0, 1 ]) card([ 4, (w0 - w00) / 2, 1 ]);

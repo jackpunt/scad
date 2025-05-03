@@ -14,11 +14,11 @@ function adif(a, b) = [for (i = [0:len(a) - 1]) a[i] - b[i]];
 // trans: array of [x,y,z {, [rx, ry, rz]}]
 module atrans(ndx = 0, atran = [ 0, 0, 0 ]) {
   ndx = ndx >= len(atran) ? 0 : ndx;
-  echo("atrans(ndx=", ndx, "atran=", atran, ")");
+  // echo("atrans(ndx=", ndx, "atran=", atran, ")");
   tranr = atran[ndx];
   rot = is_undef(tranr[3]) ? [ 0, 0, 0 ] : tranr[3];
   trans = [ tranr[0], tranr[1], tranr[2] ];
-  echo("trans=", trans, "rot=", rot);
+  // echo("trans=", trans, "rot=", rot);
   translate(trans) rotate(rot) children();
 }
 
@@ -26,17 +26,35 @@ module atrans(ndx = 0, atran = [ 0, 0, 0 ]) {
 // lwh: [length_x, width_y, height_z],
 // t: ([t0,t0,t0]) thick 'translate'
 // d: delta --> size of box to remove ([2, 2, 1-p])
+// cxy: center XY, z = 0
 // -
 // diff() { cube(lwh); tr(txyz) cube(adif(lwh, amul(d, txyz))) }
-module box(lwh = [ 10, 10, 10 ], t = t0, d) {
+module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
   t = is_undef(t) ? t0 : t;             // wall thickness
   txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
   d = is_list(d) ? d : [ 2, 2, 1 - p ]; // reduce inner_cube by txyz
   dxyz = adif(lwh, amul(d, txyz));
-  // echo("lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
+  echo("lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
+  dc = cxy ? -.5 : 0;
+  txyzc = amul(lwh, [dc,dc,0]);
+  translate(txyzc) 
   difference() {
     cube(lwh);
     translate(txyz) cube(dxyz); // -2*bt or +2*p
+  }
+}
+
+// diff() {cube(lwh,center=true); tr(txyz) cube(adif(...), center=true)}
+module boxc(lwh = [ 10, 10, 10 ], t = t0, d) {
+  t = is_undef(t) ? t0 : t;             // wall thickness
+  txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
+  txyzc = adif(amul(txyz, [.5,.5,1+p]), [t/2, t/2, 0]);
+  d = is_list(d) ? d : [ 2, 2, 2 + p ]; // reduce inner_cube by txyz
+  dxyz = adif(lwh, amul(d, txyz));
+  // echo("lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
+  difference() {
+    cube(lwh, true);
+    translate(txyzc) cube(dxyz, true); // -2*bt or +2*p
   }
 }
 // stack of children()
@@ -47,7 +65,8 @@ module astack(n, d, rot) {
   dxyz = is_list(d) ? d : [ d, 0, 0 ];
   r = is_undef(rot) ? .1 : rot;
   rxyz = is_list(r) ? r : [ 0, 0, 0 ];
-  echo("dxyz=", dxyz) for (i = [0:n - 1]) {
+  // echo("dxyz=", dxyz) 
+  for (i = [0:n - 1]) {
     rotate(rxyz) dup([ i * dxyz[0], i * dxyz[1], i * dxyz[2] ]) children();
   }
 }
@@ -58,7 +77,7 @@ function as3D(ary, a2) = [ ary[0], ary[1], is_undef(ary[2]) ? a2 : ary[2] ];
 // cr:  [dx, dy, dz] the center of rotation
 module rotatet(rot = [ 0, 0, 0 ], cr = [ 0, 0, 0 ]) {
   rcr = is_undef(rot[3]) ? cr : rot[3];
-  echo("rotatet: rot, cr, rcr", rot, cr, rcr);
+  // echo("rotatet: rot, cr, rcr", rot, cr, rcr);
   translate(rcr) rotate(as3D(rot))
       translate(amul(rcr, [ -1, -1, -1 ])) // [-cr[0], -cr[1], -cr[2]]) //
       children();
@@ -161,7 +180,7 @@ module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
 
   qs = [ [ 1, 1, 1 ], [ 1, -1, 1 ], [ -1, -1, 1 ], [ -1, 1, 1 ] ][q];
   qsm = [[ r2, r2, -t ], [ r2, -t, r2 ]];
-  echo("rc: q, qs=", q, qs);
+  // echo("rc: q, qs=", q, qs);
   qsr = amul(qs, [ r2, r2, -t ]); // quadrant select cylinder sector
 
 //  [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // x-axis
@@ -172,7 +191,7 @@ module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
      [[ 1, -1, 0 ], [ -1, -1, 0 ], [ -1, 1, 0 ], [ 1, 1, 0 ]], // z-axis
    ];
   cs = cs0[rid][q];             // offset cyl_cut to corner
-  echo("rc: rid q, cs=", rid, q, cs);
+  // echo("rc: rid q, cs=", rid, q, cs);
   csr = amul([r2,r2,r2], cs);
 
   p=.1; pp = 2*p; p4=p*4;
@@ -284,7 +303,7 @@ module slotify(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   r = is_undef(hwtr[3]) ? min(h, w)/2 : hwtr[3]; // main radius
   rot0 = is_undef(rot) ? 1 : rot; // flip XY to YZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
-  echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
+  // echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
   module maybe_rc0(ss = ss, riq = riq) {
     if (!is_undef(riq)) {
       riq = is_list(riq) ? riq : [riq]; // riq as simple radius
@@ -294,20 +313,19 @@ module slotify(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
       q2 = is_undef(riq[3]) ? 2 : riq[3];
       rm = rad;
 
-      // echo ("[riq, rw, rr, rm]", [riq, rw, rr, rm])
-      echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
+      // echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
       cr1 = [ -0, -(w/2), -(h/2 - r) ];
       cr2 = [ -0, +(w/2), -(h/2 - r) ];
-      echo("cr1=", cr1, "cr2=", cr2);
-      translate(tr) translate(cr1) color("cyan") cube([1,1,1]);
+      // echo("cr1=", cr1, "cr2=", cr2);
+      if (ss) translate(tr) translate(cr1) color("cyan") cube([1,1,1]);
       rottr = [rott[0], rott[1], rott[2], rid];
       // trt1 = tr;
       trt1 = adif(tr, cr1 );
       trt2 = adif(tr, cr2);
       // translate(trt1) translate(amul(cr1, [-1,-1,-1])) rotatet(rott, cr1) color("blue") cube([ 1, 1, 1 ], true);
-      translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
-      translate(trt2) color("red")  cube([ 1, 1, 1 ], true);
-      echo("rc: ", trt1, rott, q1, rad, t, ss);
+      if (ss) translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
+      if (ss) translate(trt2) color("red")  cube([ 1, 1, 1 ], true);
+      // echo("rc: ", trt1, rott, q1, rad, t, ss);
       // rc(trt1, rottr, q1, rad, t, ss)
       rc(trt1, rid, q1, rad, t, ss)
       rc(trt2, rid, q2, rad, t, ss)
@@ -315,7 +333,6 @@ module slotify(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
     } else {
       children();
     }
-    echo("---maybe rc done");
   }
   maybe_rc0(ss, riq) 
   difference() 
@@ -336,3 +353,37 @@ module align(tr = [0,0,0], rottr = [0,0,0], ss = false) {
   rotatet(rottr1)
   children(0);
 }
+
+
+// poke holes (children(1)) in children(0) through the y axis
+// x: [x0, step, xm]
+// z: [z0, step, zm]
+// tr: [1,0,1] select axiis to translate
+module gridify(x, z, tr = [ 1, 0, 1 ])
+{
+    for (xa = [x[0]:x[1]:x[2]], za = [z[0]:z[1]:z[2]])
+    {
+        // echo("xz=", [xa, za]);
+        translate(amul([ xa, xa, za ], tr)) children(0);
+    }
+}
+module grid(nx, nz, k, tr = [ 1, 0, 1 ])
+{
+    gridify([ k, 2 * k, nx ], [ 0, 2 * k, nz ], tr) children(0);
+    gridify([ 0, 2 * k, nx ], [ k, 2 * k, nz ], tr) children(0);
+}
+
+// grid test:
+*translate([ 0, -40, 0 ])
+{
+    nx = 50;
+    nz = 30;
+    y = 1;
+    s = 10;
+    difference()
+    {
+        cube([ nx, y, nz ]);
+        grid(nx, nz, s / 2) scale([ 1, 1, .7 ]) translate([ -s / 2, 0, -s / 2 ]) pat(s / 2, y);
+    }
+}
+
