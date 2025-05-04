@@ -13,13 +13,16 @@ function adif(a, b) = [for (i = [0:len(a) - 1]) a[i] - b[i]];
 // ndx: choice of location
 // trans: array of [x,y,z {, [rx, ry, rz]}]
 module atrans(ndx = 0, atran = [ 0, 0, 0 ]) {
-  ndx = ndx >= len(atran) ? 0 : ndx;
+  if (ndx >= len(atran)) {
+    *children();
+  } else {
   // echo("atrans(ndx=", ndx, "atran=", atran, ")");
-  tranr = atran[ndx];
+  tranr = (len(atran[ndx])== 0) ? atran[0] : atran[ndx] ;
   rot = is_undef(tranr[3]) ? [ 0, 0, 0 ] : tranr[3];
   trans = [ tranr[0], tranr[1], tranr[2] ];
   // echo("trans=", trans, "rot=", rot);
   translate(trans) rotate(rot) children();
+  }
 }
 
 // A hollow box:
