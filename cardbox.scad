@@ -108,7 +108,7 @@ module topTray(dx = l/4, dz = 6)
     f = .43;
     tw = w +.75;
     sw = 2 * t0;
-    atrans(1, [ [ l+2, 0, dx, [0, 90, 0] ], 
+    atrans(loc, [ [ l+2, 0, dx, [0, 90, 0] ], 
                 [ (l-dx)/2+20, 0, h-dz-tsd+t0 ], 
                 [ (l-dx)/2+20, 0, h-dz-tsd+t0+p ],
           ])
@@ -141,15 +141,16 @@ module vbox()
   echo("------h2=", h2, "vh=", vh);
   module vboxTop() {
     // bt = (vh-h2); // mm == 2*sh
-    tt = t0*1.2; bt = sh+tt; 
-    atrans(0, [
-        [-vw/2-2*t0,-vl/2-3*t0, 00, [0,0,90]], 
-        [vw/2,-vl/2-3*t0, vh+tt+p, [180,0,90]]])
+    tt = t0*1.2; bt = sh+tt; fx = .25; fy = .25;
+    atrans(loc, [
+        [-vw/2-2*t0,-vl/2-3*t0, 00,      [0,0,90]], 
+        [ vw/2,     -vl/2-3*t0, vh+tt+p, [180,0,90]],
+        ])
     {
-    color("cyan")
+    // color("cyan")
     // union(){
      translate([0, 0, tt/2]) cube([vl, vw, tt], center=true);
-     box(lwh = [vl-2*t0-.35, vw-2*t0-.45, tt+bt], cxy=true);
+     box(lwh = [vl-2*t0-fx, vw-2*t0-fy, tt+bt], cxy=true);
     // }
     }
   }
@@ -167,7 +168,7 @@ module vbox()
 // temp union for 'intersection' test
 //   intersection() 
  {
-  atrans(0, [[0, -3*t0, 0, [0,0,-90]], [0, w+vh, 0, [0,0,-90]], [0, -3*t0, 0, [0,0,-90]]]){ 
+  atrans(loc, [[0, -3*t0, 0, [0,0,-90]], [0, w+vh, 0, [0,0,-90]], [0, -3*t0, 0, [0,0,-90]]]){ 
 //   echo("vbox2:", hwtr)
     slotify(hwtr, [00+t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
     slotify(hwtr, [vl-t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
@@ -176,7 +177,7 @@ module vbox()
   slotify(hwtr2, [sz+t0/2, vw/2, h2-(dh2/2-sr)], 1, 3, false)
     div([h2, vw, sz], 2, 0, t0);
     translate([vl/2, t0+.6, 0 ]) rotate([0,0,90]) cardGuide();
-    #translate([vl/2, vw- (t0+.6), 0 ]) rotate([0,0,-90]) cardGuide();
+    translate([vl/2, vw- (t0+.6), 0 ]) rotate([0,0,-90]) cardGuide();
   }
   vboxTop();
  }
