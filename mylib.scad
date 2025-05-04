@@ -28,14 +28,14 @@ module atrans(ndx = 0, atran = [ 0, 0, 0 ]) {
 // A hollow box:
 // lwh: [length_x, width_y, height_z],
 // t: ([t0,t0,t0]) thick 'translate'
-// d: delta --> size of box to remove ([2, 2, 1-p])
+// d: delta --> reduction to create inner box ([2, 2, 1-p])
 // cxy: center XY, z = 0
 // -
 // diff() { cube(lwh); tr(txyz) cube(adif(lwh, amul(d, txyz))) }
 module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
   t = is_undef(t) ? t0 : t;             // wall thickness
   txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
-  d = is_list(d) ? d : [ 2, 2, 1 - p ]; // reduce inner_cube by txyz
+  d = is_list(d) ? d : [ 2*t, 2*t, 1*t - p ]; // reduce inner_cube by txyz
   dxyz = adif(lwh, amul(d, txyz));
   echo("lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
   dc = cxy ? -.5 : 0;
@@ -345,6 +345,31 @@ module slotify(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
     slot([ h, w, t, r ], rott);
   }
 }
+
+// hwtr: [h, w, t, r]
+// h: height of box (40) [z]
+// w: width of slot (5) [y]
+// t: thickness of slot (t0) [x]
+// r: radius of slot (min(h,w)/2)
+// tr: translate to wall [+- l/2, offset from center, bz: z-from bottom]
+// rid: rotate (1 = [0, -90, 0]) flip to YZ plane
+// riq: [radius: (2*t), rid: (1) , q1: (3), q2: (2)]; for YZ plane
+// ss: show
+module slotify2(hwtr, tr, rot, riq, ss) {
+  h = is_undef(hwtr[0]) ? 40 : hwtr[0];
+  w = is_undef(hwtr[1]) ? 5 : hwtr[1];
+  t = is_undef(hwtr[2]) ? t0 : hwtr[2];
+  r = is_undef(hwtr[3]) ? min(h, w)/2 : hwtr[3]; // main radius
+  bz = tr[2];
+  slh = h-(bz-r); // TODO: subtract (bz-r) from correct axis
+  tz = bz + slh/2;
+
+  tru = is_undef(tr[3]) ? [tr[0], tr[1], tz]: rm[tr[3]];
+  slotify([slh, w, t, r], tru, rot, riq, ss)
+  // echo("slotify2: hwtr=", [ slh, w, t, r ], "rot=", rot);
+  children();
+}
+
 
 // see also: show(ss, tr) rotatet(rottr)
 // tr: position ([0,0,0])
