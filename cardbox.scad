@@ -25,6 +25,7 @@ lt = l + xb;            // length total
 echo("cardbox: xb, lt, lwh=", [ xb, lt, l, w, h ]);
 // TODO: snap-on top!
 
+/** angled box on end to hold selected cards at angle (a) */
 module holder(a = a)
 {
   xb = (h - dz) * tan(a); // length of holder after tilt...
@@ -138,13 +139,17 @@ module vbox()
   h2 = w0;  // center slot height
   sz = 11/32 * vl; // 11 +/- 1
   ss = false;
+
+  l1y = w + 2 * (vl + 3*t0); // l1y = w+vh
+  l0y = l1y; // 0 -3*t0; 
   echo("------h2=", h2, "vh=", vh);
   module vboxTop() {
     // bt = (vh-h2); // mm == 2*sh
     tt = t0*1.2; bt = sh+tt; fx = .25; fy = .25;
     atrans(loc, [
-        [-vw/2-2*t0,-vl/2-3*t0, 00,      [0,0,90]], 
-        [ vw/2,     -vl/2-3*t0, vh+tt+p, [180,0,90]],
+        [-vw/2-2*t0, l0y-vl/2,       0, [0, 0, 90]], 
+        [-vw/2-2*t0, l1y-vl/2,       0, [0, 0, 90]],
+        [ vw/2     , l1y-vl/2, vh+tt+p, [180,0,90]],
         ])
     {
     // color("cyan")
@@ -168,7 +173,12 @@ module vbox()
 // temp union for 'intersection' test
 //   intersection() 
  {
-  atrans(loc, [[0, -3*t0, 0, [0,0,-90]], [0, w+vh, 0, [0,0,-90]], [0, -3*t0, 0, [0,0,-90]]]){ 
+  atrans(loc, [
+               [0, l0y, 0, [0,0,-90]], 
+               [0, l1y, 0, [0,0,-90]], 
+               [0, l1y, 0, [0,0,-90]]
+               ]) 
+  { 
 //   echo("vbox2:", hwtr)
     slotify(hwtr, [00+t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
     slotify(hwtr, [vl-t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
@@ -176,7 +186,7 @@ module vbox()
   dh2 = dh-(vh-h2); hwtr2 = [dh2, sw, 2*t0, sr];
   slotify(hwtr2, [sz+t0/2, vw/2, h2-(dh2/2-sr)], 1, 3, false)
     div([h2, vw, sz], 2, 0, t0);
-    translate([vl/2, t0+.6, 0 ]) rotate([0,0,90]) cardGuide();
+    translate([vl/2,     (t0+.6), 0 ]) rotate([0,0, 90]) cardGuide();
     translate([vl/2, vw- (t0+.6), 0 ]) rotate([0,0,-90]) cardGuide();
   }
   vboxTop();
@@ -281,8 +291,8 @@ module mainBox()
   module topSlots() {
     // corner should be: [l, h, w/2 +- sr] => [100.9, 26, 43.2--53.2 (47.2  +- 4)]
     // 2 top-side slots: (fat slow for test)
-    slotify([sl, sh, 2*t0, r], [l/2, 0+t0/2, h], 0, [2, 0], ss)
-    slotify([sh, sl, 2*t0, r], [l/2, w-t0/2, h], [0,90,90], [2, 0], ss)
+    slotify2([sl, 5, 2*t0, .1], [l/2, t0/2, 1], 0, undef, true)
+    // slotify2([sh, sl, 2*t0, r], [l/2, w-t0/2, h-3], [0,90,90], [2, 0], ss)
       children(0);
   }
   module topSlots0() {
@@ -293,7 +303,9 @@ module mainBox()
     }
   }
 
-  hslot()
+  // add slot to end-cap to insert cards on bottom
+  // cuts through holder, topslots0(), braces at end
+  hslot() 
   {
     holder();
     // end slot:
@@ -327,14 +339,14 @@ module slottest() {
 use<testRC.scad>;
 *translate([-50, -40, 0])  testRC();
 
-loc = 0;
+loc = 1;
 ///
 /// MAIN BUILD HERE:
 ///
-*cutaway() gridaway() mainBox();
+cutaway() gridaway() mainBox();
 *slottest();
-*topTray();
-// dup([ 0, -25, 0 ])
+topTray();
+ dup([ 0, -25, 0 ])
  vbox();
 
 dy = 10;
