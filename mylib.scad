@@ -13,7 +13,7 @@ function adif(a, b) = [for (i = [0:len(a) - 1]) a[i] - b[i]];
 // ndx: choice of location
 // trans: array of [x,y,z {, [rx, ry, rz]}]
 module atrans(ndx = 0, atran = [ 0, 0, 0 ]) {
-  if (ndx >= len(atran)) {
+  if (ndx >= len(atran) || is_undef(atran[ndx])) {
     *children();
   } else {
   // echo("atrans(ndx=", ndx, "atran=", atran, ")");

@@ -30,7 +30,7 @@ module polycylinder(h, fn = 6, r=10, cz = false) {
 
 // hexagonal tube
 module hexBox(h=10, r=5, t=t0, cz = false) {
-  translate([0, hr+t0*2, cz ? -h/2 : 0])
+  translate([0, hr + t0*2, cz ? -h/2 : 0])
   rotate([0, 0, 30])
   difference() {
     polycylinder(h, 6, r);
@@ -60,31 +60,40 @@ module hexText(name= "hex", tr, rx = 30, t = t0) {
 
 
 size = 2 * (hr + 2 * t0) * sqrt3_2; // width of box (hex with twist)
-ht = hr + hr0;                      // height of box
+ht = hr + hr0 + t0;                 // height of box
 
+// generic hexagonal tray
+// n: number of hextiles to hold
+// size: width to hold hex [ambient size]
+// name: text to engrave on bottom
+// @ambient
+// ht: height of all hextray
 module hextray(n = 10, size = size, name) {
   tl = n * d0 + 2 * t0; // n*d0 interio + 2*t0 endcaps
   echo("hextray: hr=", hr, " size=", size, "ht=", ht, "tl=", tl);
   module pos() {
     translate([0, 0, 0]) rotate ([90, 0, 90]) children();
   }
+  reveal = false; 
+  uhr = reveal ? ht : hr;
+  uht = reveal ? 0 : ht;
   // slots on side walls:
   sw = min(tl - 10, 18);
   // slotifyY2([ht, sw, 8*t0], [0, t0-dy/2, 22.3], undef, 2, false)
   // slotifyY2([ht, sw, 8*t0], [0, t0+dy/2, 20], undef, 2, false)
   // Slots on end-caps:
-  slotify2([ht, hr, 3*t0], [+tl/2, 0, ht*.3], undef, 3)
-  slotify2([ht, hr, 3*t0], [-tl/2, 0, ht*.3], undef, 3)
+  slotify2([ht, uhr, 3*t0], [+tl/2, 0, uht*.3], undef, 3)
+  slotify2([ht, uhr, 3*t0], [-tl/2, 0, uht*.3], undef, 3)
   union() {
     box([tl, size, ht], [t0, t0, -t0], [2,2,2], true); // funky rotation...
-  difference()
-  {
-    pos() hexBox(tl, hr+2*t0, t0, true); 
-    translate([0,0,ht+p]) cube([tl+pp, size, ht/2 +p], true);
-    *hexText(name, [0, 6, 4], 30, 1);
+    difference()
+    {
+      pos() hexBox(tl, hr+2*t0, t0, true); 
+      translate([0,0,ht+p]) cube([tl+pp, size, ht/2 +p], true);
+      *hexText(name, [0, 6, 4], 30, 1);
+    }
   }
-  }
-  * pos() hexstack(n);
+   pos() hexstack(n);
 
 }
 function sum(ary = [], n) = 
@@ -133,42 +142,63 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
 // 4 littles + blue block
 // last round hex
 // 
-module starterBox() {
-  sbx = 31 + 2*t0;
-  bh = 22; bw = size-2.1*t0; bl = sbx-2.2*t0; bt = 20;
-  atrans(loc, [[0, -size-t0, 0], [0,0,0]]) {
-    // main box:
-   % translate([0, -size/2, 0]) 
-      slotify2([ht, hr, 3*t0], [sbx, size/2, ht*.3], undef, 3)
-      box([sbx, size, ht]);
-    // last_round & base tiles:
-    translate([sbx, 0, 0]) series_x([1, 24], 1, ["", "base", "", ""]);
-    echo("starterBox: bw=", (bw-3*t0)/4);
-    // Player tray:
-    atrans(loc, [[-sbx -3*t0, 0, 0], [0, 0, ht - bh - bt], [0, 0, ht+3*t0]]) {
-      r0 = 20; r1 = 2; rt=0;
-      bhr = bh+r1; // tube @ h+r1, then cut -r1
-      rad = [r0, r1, rt, rt];
-      rod = [r1, r1, rt, rt];
-      translate([1.1*t0, bw/2 + .5* t0, 0])
-      rotate([0,0,-90])
+module starterBox(loc = 1) {
+  lrbt = [24,1];
+  tl = sum(lrbt) * d0 + 3 * t0;
+  sbx = 35 + 2*t0; // short dim of parts box
+  bw0 = tl;        // long dim of parts box
+  bw = bw0-2.1*t0; // long dim of player tray
+  bl = sbx-2.2*t0; // short dim of player tray
+  bh = 22;         // height of player tray
+  bt = 23;         // top of player tray, down from parts box
+  st = 2.3; sd = ht-(bh-15);// slot for lid to hold player tray & block
+  atrans(loc, [[0, -size-t0, 0], [], []]) {
+  difference() {
+    union() {
+      // last_round & base tiles:
+      translate([t0, 0, 0]) series_x(lrbt, 1, ["", "base", "", ""]);
+      echo("starterBox: bw=", (bw-3*t0)/4, "tl=", tl);
+      // parts box:
+      translate([0, -size*0.5 + 0, 0]) 
+        rotate([0, 0, -90])
         {
-        tray([bw, bl, bhr], rad, rod, -r1);
-        for (i = [1 : 3]) let (y = i * bw/4)
-          translate([-y, 0, 0]) 
-          div([bh, bl, bw], rad);
-        }
+          bw2= bw0-2*t0; bw3 = bw0 -3*t0;
+          slotifyY2([ht, 10, 3*t0], [sbx/2, bw0, ht*.3], undef, 3)
+          slotifyY2([ht, 10, 3*t0], [sbx/2, 0, ht*.3], undef, 3)
+        %    box([sbx, bw0, ht]);
+          // support rail:
+          color("green")
+          for (ds = [2*t0 : t0 : 3*t0]) let (bws = bw0 - ds)
+            repeat([0, -bws/2, 0], [0, bws, 0], 2)
+            translate([0, bw0/2 -ds/2, ht - bh - bt - (4 * t0 -ds)]) cube([sbx, ds, 1]);
+          // Player tray:
+          atrans(loc, [[sbx + t0, bw0/2, 0], [0, bw0/2, ht - bh - bt], [0, bw0/2, ht+3*t0]]) {
+            r0 = 20; r1 = 2; rt=0;
+            bhr = bh+r1; // tube @ h+r1, then cut -r1
+            rad = [r0, r1, rt, rt];
+            rod = [r1, r1, rt, rt];
+            translate([1.1*t0, bw/2 + .5* t0, 0])
+            rotate([0,0,-90])
+              {
+              tray([bw, bl, bhr], rad, rod, -r1);
+              for (i = [1 : 3]) let (y = i * bw/4)
+                translate([-y, 0, 0]) 
+                div([bh, bl, bw], rad);
+              }
+            }
+            // blue box:
+            atrans(loc, [undef, [t0+(bl-30)/2, t0+(bw-50)/2, ht - bt]])
+            color("BLUE") cube([30, 50, 15]);
+          }
       }
-      // support rail:
-      bw0 = size - 0*t0; bw2= size-2*t0; bw3 = size -3*t0;
-      color("green")
-      for (ds = [2*t0 : t0 : 3*t0]) let (bws = size - ds)
-      repeat([0, -bws/2, 0], [0, bws, 0], 2)
-      translate([0,  -ds/2, ht - bh - bt - (4 * t0 -ds)]) cube([sbx, ds, 1]);
-      // blue box:
-     * translate([1.5*t0, 2*t0-size/2, ht - bt]) 
-      color("BLUE") cube([30, 50, 15]);
-    }
+    translate([t0, -size*.5-sbx-1*t0, sd]) cube([bw, sbx+4*t0, st]);
+  }
+  atrans(loc, [[0, -2*(bl + 3*t0), .35/2], [0,0,sd+.35/2]])
+  translate([t0, -size*.5-sbx-1*t0, 0]) color("green") {
+    cube([bw, 2*t0, 6*t0]);
+    cube([bw, sbx+2.5*t0, st-.35]);
+  }
+  }
 }
 starterBox();
 
