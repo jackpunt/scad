@@ -274,7 +274,9 @@ module roundedTube(sxy = 10, r = 2, k = 0, t = t0) {
 // k == 0 keep all
 module div(hwx = 10, r = 2, k, t = t0) {
   dx = is_undef(hwx[2]) ? 0 : hwx[2];
-  translate([ dx + t, 0, 0 ]) rotate([ 0, -90 ]) linear_extrude(height = t)
+  translate([ dx + t, 0, 0 ])    //
+      rotate([ 0, -90 ])         //
+      linear_extrude(height = t) //
       roundedRect([ hwx[0], hwx[1] ], r, k);
 }
 
