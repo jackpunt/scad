@@ -47,23 +47,24 @@ module hexstack(n = 10, cx=true, c = "blue") {
     polycylinder(d0 - dx, 6, hr);
 }
 size = 2*hr + da(30, hr);
-
+ht = size*sqrt3_2; 
 module hextray(n = 10, size = size, name) {
-  w = size*sqrt3_2; tl = n * d0 + 2 * t0; // n*d0 interio + 2*t0 endcaps
+  tl = n * d0 + 2 * t0; // n*d0 interio + 2*t0 endcaps
   echo("hextray: size=", size, "tl=", tl);
   module pos(dx=0) {
-    translate([0, 0, w/2]) rotate ([90, 0, 90]) children();
+    translate([0, 0, ht/2]) rotate ([90, 0, 90]) children();
   }
   // slh = size+hr-size*.3; // slot height: sr at top of box
-  slotify2([w, hr, 3*t0], [+tl/2, 0, w*.3], undef, 3)
-  slotify2([w, hr, 3*t0], [-tl/2, 0, w*.3], undef, 3)
-    box([tl, size, w], undef, undef, true);
+  slotify2([ht, hr, 3*t0], [+tl/2, 0, ht*.3], undef, 3)
+  slotify2([ht, hr, 3*t0], [-tl/2, 0, ht*.3], undef, 3)
+    box([tl, size, ht], [t0,t0,-t0], [2,2,2], true);
+    // box([tl, size, ht], undef, undef, true);
   difference()
   {
     pos() hexBox(tl, size/2, t0, true); 
-    translate([0,0,w/2+w/4+p]) cube([tl+pp, size, w/2 +p], true);
+    translate([0,0,ht/2+ht/4+p]) cube([tl+pp, size, ht/2 +p], true);
   }
-   pos() hexstack(n);
+  * pos() hexstack(n);
 
 }
 function sum(ary = [], n) = 
@@ -82,9 +83,13 @@ separ = [43, 46, 39];
 join1 = [8, 8, 8];
 join2 = [25, 10, 10];
 dy = size + t0;
-translate ([0, -dy*0, 0]) series_x(separ, 3);
-translate ([0, -dy*1, 0]) series_x(join1, 1);
-translate ([0, -dy*2, 0]) series_x(join2, 1);
+slotifyY2([ht, 18, 8*t0], [separ[0]*d0/2, t0-dy/2, 22.3], undef, 2, true)
+slotifyY2([ht, 18, 8*t0], [separ[0]*d0/2, t0+dy/2, 20], undef, 2, true)
+translate ([0, dy*0, 0]) series_x(separ, 3);
+translate ([0, dy*1, 0]) series_x(join1, 1);
+translate ([0, dy*2, 0]) series_x(join2, 1);
+
+
 
 echo("total:", sum(separ));
 // hextray();

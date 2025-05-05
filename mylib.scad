@@ -292,6 +292,78 @@ module slot(hwtr, rot) {
     rotate(rota)
     roundedCube([ h, w, t ], r, true, true);
 }
+module slotifyY(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
+  tr = is_undef(tr) ? [0,0,0] : tr;
+  h = is_undef(hwtr[0]) ? 40 : hwtr[0];
+  w = is_undef(hwtr[1]) ? 5 : hwtr[1];
+  t = is_undef(hwtr[2]) ? t0 : hwtr[2];
+  r = is_undef(hwtr[3]) ? min(h, w)/2 : hwtr[3]; // main radius
+  rot0 = is_undef(rot) ? [0,90,90] : rot; // flip XY to XZ plane
+  rott = is_list(rot0) ? rot0 : rotOfId(rot0);
+  // echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
+  module maybe_rc0(ss = ss, riq = riq) {
+    if (!is_undef(riq)) {
+      riq = is_list(riq) ? riq : [riq]; // riq as simple radius
+      rad = is_undef(riq[0]) ? 2 * t : riq[0]; // corner radius
+      rid = is_undef(riq[1]) ? 0 : riq[1];
+      q1 = is_undef(riq[2]) ? 0 : riq[2];
+      q2 = is_undef(riq[3]) ? 3 : riq[3];
+      rm = rad;
+
+      // echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
+      cr1 = [-(w/2), -0, -(h/2 - r) ];
+      cr2 = [+(w/2), -0, -(h/2 - r) ];
+      // echo("cr1=", cr1, "cr2=", cr2);
+      if (ss) translate(tr) translate(cr1) color("cyan") cube([1,1,1]);
+      rottr = [rott[0], rott[1], rott[2], rid];
+      // trt1 = tr;
+      trt1 = adif(tr, cr1 );
+      trt2 = adif(tr, cr2);
+      // translate(trt1) translate(amul(cr1, [-1,-1,-1])) rotatet(rott, cr1) color("blue") cube([ 1, 1, 1 ], true);
+      if (ss) translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
+      if (ss) translate(trt2) color("red")  cube([ 1, 1, 1 ], true);
+      // echo("rc: ", trt1, rott, q1, rad, t, ss);
+      // rc(trt1, rottr, q1, rad, t, ss)
+      rc(trt1, rid, q1, rad, t, ss)
+      rc(trt2, rid, q2, rad, t, ss)
+      children();
+    } else {
+      children();
+    }
+  }
+  maybe_rc0(ss, riq) 
+  difference() 
+  {
+    children(0);
+    show(ss, tr)
+    slot([ h, w, t, r ], rott);
+  }
+}
+
+// hwtr: [h, w, t, r]
+// h: height of box (40) [z]
+// w: width of slot (5) [y]
+// t: thickness of slot (t0) [x]
+// r: radius of slot (min(h,w)/2)
+// tr: translate to wall [+- l/2, offset from center, bz: z-from bottom]
+// rid: rotate (1 = [0, -90, 0]) flip to YZ plane
+// riq: [radius: (2*t), rid: (1) , q1: (3), q2: (2)]; for YZ plane
+// ss: show
+module slotifyY2(hwtr, tr, rot, riq, ss) {
+  h = is_undef(hwtr[0]) ? 40 : hwtr[0];
+  w = is_undef(hwtr[1]) ? 5 : hwtr[1];
+  t = is_undef(hwtr[2]) ? t0 : hwtr[2];
+  r = is_undef(hwtr[3]) ? min(h, w)/2 : hwtr[3]; // main radius
+  bz = tr[2];
+  slh = h-(bz-r); // TODO: subtract (bz-r) from correct axis
+  tz = bz + slh/2;
+
+  tru = is_undef(tr[3]) ? [tr[0], tr[1], tz]: rm[tr[3]];
+  slotifyY([slh, w, t, r], tru, rot, riq, ss)
+  // echo("slotify2: hwtr=", [ slh, w, t, r ], "rot=", rot);
+  children();
+}
+
 
 // cut a slot in child object:
 // difference() { child(0); trans(tr) slot(hwtr); }
