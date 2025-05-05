@@ -58,8 +58,10 @@ module hexText(name= "hex", tr, rx = 30, t = t0) {
   text(name, size=hr*.4, halign = "center");
 }
 
-size = 2*(hr+2*t0) * sqrt3_2; // width of box
-ht = hr + hr0;  // height of box
+
+size = 2 * (hr + 2 * t0) * sqrt3_2; // width of box (hex with twist)
+ht = hr + hr0;                      // height of box
+
 module hextray(n = 10, size = size, name) {
   tl = n * d0 + 2 * t0; // n*d0 interio + 2*t0 endcaps
   echo("hextray: hr=", hr, " size=", size, "ht=", ht, "tl=", tl);
@@ -131,22 +133,24 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
 // 4 littles + blue block
 // last round hex
 // 
-module startBox() {
-  sbx = 35 + 2*t0;
-  bh = 20; bw = size-2.1*t0; bl = sbx-2.2*t0;
-  atrans(loc, [[0, -size-t0, 0]]) {
-    translate([0, -size/2, 0]) 
+module starterBox() {
+  sbx = 31 + 2*t0;
+  bh = 22; bw = size-2.1*t0; bl = sbx-2.2*t0; bt = 20;
+  atrans(loc, [[0, -size-t0, 0], [0,0,0]]) {
+    // main box:
+   % translate([0, -size/2, 0]) 
       slotify2([ht, hr, 3*t0], [sbx, size/2, ht*.3], undef, 3)
       box([sbx, size, ht]);
+    // last_round & base tiles:
     translate([sbx, 0, 0]) series_x([1, 24], 1, ["", "base", "", ""]);
-    echo("startBox: bw/4=", bw/4);
-    atrans(loc, [[0,0,0], [0, 0, bh+2*t0]]) {
-    // from civo_tray: , [0, -size-t0, bh+2*t0]
+    echo("starterBox: bw=", (bw-3*t0)/4);
+    // Player tray:
+    atrans(loc, [[-sbx -3*t0, 0, 0], [0, 0, ht - bh - bt], [0, 0, ht+3*t0]]) {
       r0 = 20; r1 = 2; rt=0;
       bhr = bh+r1; // tube @ h+r1, then cut -r1
       rad = [r0, r1, rt, rt];
       rod = [r1, r1, rt, rt];
-      translate([1.1*t0, bw/2 + .5* t0, ht - bh])
+      translate([1.1*t0, bw/2 + .5* t0, 0])
       rotate([0,0,-90])
         {
         tray([bw, bl, bhr], rad, rod, -r1);
@@ -155,9 +159,18 @@ module startBox() {
           div([bh, bl, bw], rad);
         }
       }
+      // support rail:
+      bw0 = size - 0*t0; bw2= size-2*t0; bw3 = size -3*t0;
+      color("green")
+      for (ds = [2*t0 : t0 : 3*t0]) let (bws = size - ds)
+      repeat([0, -bws/2, 0], [0, bws, 0], 2)
+      translate([0,  -ds/2, ht - bh - bt - (4 * t0 -ds)]) cube([sbx, ds, 1]);
+      // blue box:
+     * translate([1.5*t0, 2*t0-size/2, ht - bt]) 
+      color("BLUE") cube([30, 50, 15]);
     }
 }
-startBox();
+starterBox();
 
 
 echo("total:", sum(separ));

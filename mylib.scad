@@ -47,19 +47,31 @@ module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
   }
 }
 
-// diff() {cube(lwh,center=true); tr(txyz) cube(adif(...), center=true)}
-module boxc(lwh = [ 10, 10, 10 ], t = t0, d) {
-  t = is_undef(t) ? t0 : t;             // wall thickness
-  txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
-  txyzc = adif(amul(txyz, [.5,.5,1+p]), [t/2, t/2, 0]);
-  d = is_list(d) ? d : [ 2, 2, 2 + p ]; // reduce inner_cube by txyz
-  dxyz = adif(lwh, amul(d, txyz));
-  // echo("lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
-  difference() {
-    cube(lwh, true);
-    translate(txyzc) cube(dxyz, true); // -2*bt or +2*p
-  }
+// repeat children() in a linear pattern:
+// xyz: translate to [x, y, z] ([0, 0, 0])
+// dxyz: translate each step for multiple posts ([0, 10, 0])
+// n: number of posts (1)
+module repeat(xyz = [ 0, 0, 0 ], dxyz = [ 0, 10, 0 ], n = 1) {
+  xyz = is_undef(xyz) ? [ 0, 0, 10 ] : xyz;
+  dxyz = is_undef(dxyz) ? [ 0, 10, 0 ] : dxyz;
+  n = is_undef(n) ? 1 : n;
+  for (i = [0 : n-1])
+    translate([ xyz[0] + i * dxyz[0], xyz[1] + i * dxyz[1], xyz[2] + i * dxyz[2] ])  //
+      children();
 }
+
+// support posts:
+// zh: height of post (10)
+// xyz: translate to [x, y, z] ([0, 0, 0])
+// dxyz: translate each step for multiple posts
+// n: number of posts (1)
+// dia: diameter of post (1)
+module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = 1) {
+  zh = is_undef(zh) ? 10 : zh;
+  dia = is_undef(dia) ? 1 : dia;
+  repeat(xzy, dxyz, n) cube([ dia, dia, dz ]);
+}
+
 // stack of children()
 // n: number
 // dxyz: each iteration
