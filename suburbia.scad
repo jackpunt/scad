@@ -147,11 +147,11 @@ module starterBox(loc = 1) {
   tl = sum(lrbt) * d0 + 3 * t0;
   sbx = 35 + 2*t0; // short dim of parts box
   bw0 = tl;        // long dim of parts box
-  bw = bw0-2.1*t0; // long dim of player tray
-  bl = sbx-2.2*t0; // short dim of player tray
+  bw = bw0-2.5*t0; // long dim of player tray
+  bl = sbx-2.5*t0; // short dim of player tray
   bh = 22;         // height of player tray
   bt = 23;         // top of player tray, down from parts box
-  st = 2.3; sd = ht-(bh-15);// slot for lid to hold player tray & block
+  st = 2.3; sd = ht-(bt-15);// slot for lid to hold player tray & block
   atrans(loc, [[0, -size-t0, 0], [], []]) {
   difference() {
     union() {
