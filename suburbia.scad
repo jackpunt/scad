@@ -152,6 +152,32 @@ module hexText(name= "hex", tr, rx = 30, t = t0) {
   text(name, size=hr*.4, halign = "center");
 }
 
+hzz = 10;
+// two 'hooks'; 
+// dy: offset from center
+// tr: translate to surface
+// t: thickness of hook parts
+// ambient
+// hz1: height to 'upper' hooks
+// hz0: height to 'lower' hooks
+// hzz: vertical size of hook
+module hook(dy = 10, tr = [0,0,0], t = 2) {
+  w = 6;  // width of male plate (incl 2 for stem)
+  sy = (w-1)/2 ; // size of hook (edge is (w-1)/2)
+  f = .3;
+  translate(tr)  
+  dup([0, 0, 0], [180, 0, 0, [0, 0, hzz/2]]) color("pink")
+  union() {
+    translate ([-p, -t*(w-1)/2, 0]) cube([t + f + pp, t-f, hzz]);
+    translate ([f+ t, -t*(w-1)/2, 0]) cube([t-f, t*(w-2-f)/2, hzz]);
+  }
+  union() {
+    translate([0, -w/2, 0]) cube([t, w, hzz]);
+    translate ([t+p, -t/2, 0]) cube([t+pp, t, hzz]);
+    
+  }
+}
+hook();
 
 size = 2 * (hr + 2 * t0) * sqrt3_2; // width of box (hex with twist)
 ht = hr + hr0 + t0;                 // height of box
@@ -210,10 +236,10 @@ join2 = [25, 10, 10]; // goals, bonus, challenge
 dy = size + t0;
 *translate ([t0, dy*0, 0]) hextray_x(separ, 3, names);
 translate ([t0, dy*1, 0]) 
-slotifyY2([ht, 18, 8*t0], [join2[0]*d0/2, t0+dy/2, 22.3], undef, 2)
-slotifyY2([ht, 18, 8*t0], [join2[0]*d0/2, t0-dy/2, 22.3], undef, 2)
-hextray_x(join2, 1, ["goals", "", ""]); // conjoin 3 boxes
-starterBox();
+  slotifyY2([ht, 18, 8*t0], [join2[0]*d0/2, t0+dy/2, 22.3], undef, 2)
+  slotifyY2([ht, 18, 8*t0], [join2[0]*d0/2, t0-dy/2, 22.3], undef, 2)
+  hextray_x(join2, 1, ["goals", "", ""]); // conjoin 3 boxes
+*starterBox();
 
 
 echo("total:", sum(separ));
