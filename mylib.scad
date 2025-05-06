@@ -104,8 +104,7 @@ module rotatet(rot = [ 0, 0, 0 ], cr = [ 0, 0, 0 ]) {
 // rott: rotate (with rott[3] as center)
 module dup(tr = [ 0, 0, 0 ], rott = [ 0, 0, 0 ]) {
   children(0);
-  cr = is_undef(rott[3]) ? [ 0, 0, 0 ] : rott[3];
-  translate(tr) rotatet(rott, cr) children(0);
+  translate(tr) rotatet(rott) children(0);
 }
 
 // New implementation: MCAD
