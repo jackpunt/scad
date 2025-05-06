@@ -11,17 +11,17 @@ function adif(a, b) = [for (i = [0:len(a) - 1]) a[i] - b[i]];
 
 // move objects to new location
 // ndx: choice of location
-// trans: array of [x,y,z {, [rx, ry, rz]}]
+// trans: [ [x,y,z {, [rx, ry, rz {, [cx, cy, cz]} ]} ], ... ]
 module atrans(ndx = 0, atran = [ 0, 0, 0 ]) {
   if (ndx >= len(atran) || is_undef(atran[ndx])) {
     *children();
   } else {
   // echo("atrans(ndx=", ndx, "atran=", atran, ")");
-  tranr = (len(atran[ndx])== 0) ? atran[0] : atran[ndx] ;
+  tranr = (len(atran[ndx]) == 0) ? atran[0] : atran[ndx] ;
   rot = is_undef(tranr[3]) ? [ 0, 0, 0 ] : tranr[3];
   trans = [ tranr[0], tranr[1], tranr[2] ];
   // echo("trans=", trans, "rot=", rot);
-  translate(trans) rotate(rot) children();
+  translate(trans) rotatet(rot) children();
   }
 }
 
@@ -65,11 +65,11 @@ module repeat(xyz = [ 0, 0, 0 ], dxyz = [ 0, 10, 0 ], n = 1) {
 // xyz: translate to [x, y, z] ([0, 0, 0])
 // dxyz: translate each step for multiple posts
 // n: number of posts (1)
-// dia: diameter of post (1)
-module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = 1) {
+// dia: diameter of post (t0)
+module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = t0) {
   zh = is_undef(zh) ? 10 : zh;
-  dia = is_undef(dia) ? 1 : dia;
-  repeat(xzy, dxyz, n) cube([ dia, dia, dz ]);
+  dia = is_undef(dia) ? t0 : dia;
+  repeat(xyz, dxyz, n) cube([ dia, dia, zh ]);
 }
 
 // stack of children()
@@ -88,8 +88,8 @@ module astack(n, d, rot) {
 
 function as3D(ary, a2) = [ ary[0], ary[1], is_undef(ary[2]) ? a2 : ary[2] ];
 // shift center of rotation, then rotate, shift back
-// rot: [ax, ay, az] the rotation
-// cr:  [dx, dy, dz] the center of rotation
+// rot: [ax, ay, az {, [cx, cy, cz]}] the rotation
+// cr:  [cx, cy, cz] the center of rotation (if not in rot[3])
 module rotatet(rot = [ 0, 0, 0 ], cr = [ 0, 0, 0 ]) {
   rcr = is_undef(rot[3]) ? cr : rot[3];
   // echo("rotatet: rot, cr, rcr", rot, cr, rcr);

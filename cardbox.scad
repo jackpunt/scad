@@ -206,10 +206,8 @@ module hslot(dz = dz, dx = 0)
         cube([ sw, w0, sh ]);
     }
     // support posts:
-    dia = 1;
-    dup([0, -w/4, 0])
-    dup([0, +w/4, 0])
-    translate([ 0, w / 2, 0 ]) cube([ dia, dia, dz ]);
+    ni = 6;
+    posts(sh+pp, [0, w/ni + t0/2, dz - sh - p], [0, w/ni, 0], ni-1);
 }
 
 // cut child(0) in XY plane @ depth: y0..y1
@@ -337,22 +335,22 @@ module slottest() {
 }
 
 use<testRC.scad>;
-*translate([-50, -40, 0])  testRC();
+// translate([-50, -40, 0])  testRC();
 
-loc = 1;
+loc = 0;
 ///
 /// MAIN BUILD HERE:
 ///
 cutaway() gridaway() mainBox();
-*slottest();
-topTray();
- dup([ 0, -25, 0 ])
- vbox();
+// slottest();
+// topTray();
+//  dup([ 0, -25, 0 ])
+//  vbox();
 
 dy = 10;
 dr = 5; // rCube test
-*translate([ 0, 0, 0 ]) roundedCube([ dy, dy / 2, 3 ], dr, true);
-*roundedRect([ dy, dy ], 1);
+// translate([ 0, 0, 0 ]) roundedCube([ dy, dy / 2, 3 ], dr, true);
+// roundedRect([ dy, dy ], 1);
 
 // atan(6/88) = 4;
 // atan(7/88) = 4.5;
