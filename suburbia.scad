@@ -152,32 +152,54 @@ module hexText(name= "hex", tr, rx = 30, t = t0) {
   text(name, size=hr*.4, halign = "center");
 }
 
-hzz = 10;
-// two 'hooks'; 
-// dy: offset from center
+hzz = 8;
+// add hook & cut slot
+// dx: distance to other side
 // tr: translate to surface
+// dy: offset from center
 // t: thickness of hook parts
 // ambient
-// hz1: height to 'upper' hooks
-// hz0: height to 'lower' hooks
+// t0: size of mating plate
 // hzz: vertical size of hook
-module hook(dy = 10, tr = [0,0,0], t = 2) {
+module hook(dx, tr = [0,0,0], dy = 20, t = 2, yaxis = false ) {
+  tr = is_undef(tr) ? [0,0,0] : tr;
+  rotrc = [0,0,180,adif([dx/2, 0, 0], amul([-1,-1,-1],tr))];
   w = 6;  // width of male plate (incl 2 for stem)
-  sy = (w-1)/2 ; // size of hook (edge is (w-1)/2)
   f = .3;
-  translate(tr)  
-  dup([0, 0, 0], [180, 0, 0, [0, 0, hzz/2]]) color("pink")
-  union() {
-    translate ([-p, -t*(w-1)/2, 0]) cube([t + f + pp, t-f, hzz]);
-    translate ([f+ t, -t*(w-1)/2, 0]) cube([t-f, t*(w-2-f)/2, hzz]);
+  rot = yaxis ? [0, 90, 0] : [0,0,0];
+  dp = !(is_undef(dx) || dx == 0);
+  module maybe_dup(tr, rott) {
+    if (dp) {
+      dup(tr, rott) children(0);
+    } else {
+      children(0);
+    }
   }
-  union() {
-    translate([0, -w/2, 0]) cube([t, w, hzz]);
-    translate ([t+p, -t/2, 0]) cube([t+pp, t, hzz]);
-    
+  if (t == 0) {
+    children();
+  } else {
+  // add 1 or 2 hooks:
+  maybe_dup([0, 0, 0], rotrc) {
+    translate(tr)
+    union() {
+      translate([-2 * t0, -dy, 0]) cube([3.*t0+pp, w, t]);
+      translate([-(3.5)*t0, -dy, 0]) cube([t, w, hzz]);
+    }
+  }
+  // cut 1 or 2 slots:
+  difference() {
+    children(0);
+    maybe_dup([0, 0, 0], rotrc)
+    translate(tr) 
+    translate([-2 * t0, (dy - w - f/2) , -p])      //
+      cube([3.5 * t0 + pp, w + f, t + f]);          //
+  }
   }
 }
-hook();
+// hook test:
+atrans(1, [undef, [-40, 0, 0]])
+hook(10, [5, 0, 0], 10) 
+translate([5, -20, 0]) box([10, 40, 20], [t0, t0, -t0], [2,2,2], false);
 
 size = 2 * (hr + 2 * t0) * sqrt3_2; // width of box (hex with twist)
 ht = hr + hr0 + t0;                 // height of box
@@ -210,8 +232,8 @@ module hextray(n = 10, size = size, name) {
     {
       pos() hexBox(tl, hr+2*t0, t0, true); 
       translate([0,0,ht+p]) cube([tl+pp, size, ht/2 +p], true);
-      hexText(name, [0, 6, 4], 30, 1);
-      hexText(name, [0, 6, 4], -30, 1);
+      *hexText(name, [0, 6, 4], 30, 1);
+      *hexText(name, [0, 6, 4], -30, 1);
     }
   }
   * pos() hexstack(n);
@@ -223,18 +245,25 @@ function sum(ary = [], n) =
 
 module hextray_x(hn = [4, 5, 6], dt = 1, names) {
   for (i = [0: len(hn)-1]) 
-    let( n = hn[i], dx = d0 * (n / 2 + sum(hn, i-1)) + i * dt) {
-      translate([dx, 0, 0]) hextray(n, size, names[i]);
+    let( n = hn[i], dx = n*d0, 
+         tx = d0 * (n / 2 + sum(hn, i-1)) + i * dt,
+         tt = (dt > 1) ? 0 : 2
+       ) {
+      translate([tx, 0, 0])
+      // hook(size, []) 
+      hook(dx+2*t0, [-t0-dx/2, 0, 0])
+      hextray(n, size, names[i]);
     }
 }
 
 loc = 0;
-//     A   B   C Y gr gy goal bon chal;
+//        A    B    C    goal bon chal;
 names = ["A", "B", "C", "base"];
-separ = [43, 46, 39];
+separ = [43, 46, 39]; // A, B, C
 join2 = [25, 10, 10]; // goals, bonus, challenge
 dy = size + t0;
-*translate ([t0, dy*0, 0]) hextray_x(separ, 3, names);
+translate ([t0, dy*0, 0])
+  hextray_x(separ, 2.5, names);
 translate ([t0, dy*1, 0]) 
   slotifyY2([ht, 18, 8*t0], [join2[0]*d0/2, t0+dy/2, 22.3], undef, 2)
   slotifyY2([ht, 18, 8*t0], [join2[0]*d0/2, t0-dy/2, 22.3], undef, 2)
