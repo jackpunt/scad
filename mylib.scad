@@ -8,6 +8,15 @@ pp = 2 * p;
 function amul(a, b) = [for (i = [0:len(a) - 1]) a[i] * b[i]];
 // pairwise subtraction
 function adif(a, b) = [for (i = [0:len(a) - 1]) a[i] - b[i]];
+// select element from array:
+function selectNth(n, ary) = [for(elt = ary) elt[n]];
+
+// recursive sum of numbers in array
+function sum(ary = [], n) = 
+  !is_list(ary) ? 0 :
+  let(nn = is_undef(n) ? len(ary) - 1 : n)
+    (nn < 0) ? 0 : (n == 0) ? ary[0] : ary[nn] + sum(ary, nn-1);
+
 
 // move objects to new location
 // ndx: choice of location
@@ -37,7 +46,7 @@ module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
   txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
   d = is_list(d) ? d : [ 2*t, 2*t, 1*t - p ]; // reduce inner_cube by txyz
   dxyz = adif(lwh, amul(d, txyz));
-  echo("lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
+  // echo("box: lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
   dc = cxy ? -.5 : 0;
   txyzc = amul(lwh, [dc,dc,0]);
   translate(txyzc) 
