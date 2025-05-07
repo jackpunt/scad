@@ -7,7 +7,7 @@ pp = 2 * p;
 
 sqrt3 = sqrt(3);
 sqrt3_2 = sqrt3/2;
-d0 = 2.2;   // mm per cardbord
+d0 = 2.0;   // mm per cardbord
 hr0 = 26;    // mm on edge
 hr = hr0+min(hr0,da(30, hr0)); // extend to hold rotated hexes +da(hr0, 30)
 
@@ -33,9 +33,10 @@ module hexBox(h=10, r=5, t=t0, cz = false) {
   translate([0, hr + t0*2, cz ? -h/2 : 0])
   rotate([0, 0, 30])
   difference() {
-    polycylinder(h, 6, r);
     translate([0, 0, -p])  
-    polycylinder(h+pp, 6, r-t);
+    polycylinder(h+pp, 6, r);
+    translate([0, 0, -t0])  
+    polycylinder(h+2*t0, 6, r-t);
   }
 }
 
@@ -168,19 +169,19 @@ hzz = 6;
 // yaxis: rotate hook(s) to be on the y-face (false)
 // sh: select hooks: 0 -> none, 1: -> tr, 2: -> tr(dx), 3: both
 // ambient
-// t0: size of mating plate
+// t0: wall thickness, of this and mating part
 // hzz: vertical size of hook
-module hook(dx, tr = [0,0,0], dy = 20, t = 2, yaxis = false, sh = 3) {
+module hook(dx, tr = [0,0,0], dy = 20, t = 2, yaxis = false, sh = 3, ctr = [0,0,0]) {
   tr = is_undef(tr) ? [0,0,0] : tr;
-  // assuming that target 'box' is centered, 
-  // then tr is from that center, so this goes back to ctr:
-  ctr = adif([dx/2, -t0/4, 0], amul([-1,-1,-1],tr));
+  // assuming that target 'box' is centered: [0,0,0] is correct
+  // else user can point to center of rotation at z=0 
+  ctr = is_undef(ctr) ? [0,0,0] : ctr;
   rotrc = [0,0,180, ctr]; // rotation for 2nd child.
   w = 6;  // width of male plate (incl 2 for stem)
   f = .3;
   // roty is pre-rotation for yaxis:
   roty = yaxis ? [0, 0, 90, [dx/2, 0, 0]] : [0,0,0];
-  echo("hook: tr=", tr, "ctr=", ctr, "yaxis=", yaxis, "roty=", roty);
+  echo("hook: tr=", tr, "ctr=", ctr, "yaxis=", yaxis, "roty=", roty, "sh=", sh);
 
   hd = t0 * (1 + 1.5 * f);  // hook depth, size of gap
 
@@ -201,35 +202,40 @@ module hook(dx, tr = [0,0,0], dy = 20, t = 2, yaxis = false, sh = 3) {
     maybe_dup([0, 0, 0], rotrc) {
       translate(tr)
       rotatet(roty)
-      translate([-(hd + t), -dy - w/2, -pp]) 
+      translate([-hd-t, -dy - w/2, 0-p]) // fine positioning
       union() {
         cube([hd+t0+t, w, t]);
         cube([      t, w, hzz]);
       }
     }
     // cut 0-2 slots:
-    difference() {
+    difference() 
+    {
     children(0);
-    maybe_dup([0, 0, 0], rotrc)
+    maybe_dup([0, 0, 0], rotrc) // 0, 1 or 2 objects to cut
     translate(tr) 
     rotatet(roty)
-    translate([-2 * t0, (dy - w - f/2) , -p])      //
-#      cube([4*t0, w + 2*f, t + f]);         //
+    translate([-2 * t0, (dy - w/2 - f) , -p])      //
+  #    cube([4*t0, w + 2*f, t + f]);         //
     }
     // support post:
     maybe_dup([0, 0, 0], rotrc)
     translate(tr)
     rotatet(roty)
- #   posts(t+f+pp, [.0 * t0, (dy -t0) , -p]);
+    posts(t+f+pp, [.0 * t0, (dy - t0/2) , -p]);
   }
 }
 // hook test:
-atrans(loc, [undef, [-40, 0, 0]])
-hook(80, [0, 0, 0], 20, 2, false, 3) 
-hook(55, [10, 0, 0], 20, 2, true, 0) 
-translate([-0, -55/2, 0]) box([80, 55, 20], [t0, t0, -t0], [2,2,2], false);
+atrans(1, [undef, [-40, -30, 0]]) {
+  dx = 80; dy = 55; ofc = 0;
+  translate([-0, -dy/2, 0])
+  hook(dx, [dx/2-dx,    ofc, 0], 3, 2, false, 2) 
+  hook(dy, [dy  -dx +ofc, 0, 0], 3, 2, true, 2) 
+   box([dx, dy, 20], [t0, t0, -t0], [2,2,2], true);
+}
 
-size = 2 * (hr + 2 * t0) * sqrt3_2; // width of box (hex with twist)
+hr2 = hr + 2 * t0;  // radius of hex (extended)
+size = hr2 * sqrt3; // width of box (hex with twist)
 ht = hr + hr0 + t0;                 // height of box
 
 // generic hexagonal tray
@@ -238,12 +244,12 @@ ht = hr + hr0 + t0;                 // height of box
 // - name: text to engrave on bottom
 // - shx: hook selector for x-axis
 // - shy: hook selector for y-axis
-// size: width to hold hex (ambient size)
+// size: [interior] width to hold hex (ambient size)
 // @ambient
 // hr: width of tray (hexrad + sin(a))
 // ht: height of all hextray
 module hextray(n = 10, parms, size = size) {
-  dx = n * d0;      // interior size
+  dx = n * d0;      // interior length
   tl = dx + 2 * t0; // n*d0 interio + 2*t0 endcaps
   echo("hextray: hr=", hr, " size=", size, "ht=", ht, "tl=", tl);
   module pos() {
@@ -256,36 +262,42 @@ module hextray(n = 10, parms, size = size) {
   sw = min(tl - 10, 18);
 
   // hooks:
-  dy = size + t0;
   name = is_undef(parms[0]) ? "" : parms[0];
   shx = is_undef(parms[1]) ? 0 : parms[1];
   shy = is_undef(parms[2]) ? 0 : parms[2];
-  echo("hextray: name, shx, shy =", name, shx, shy);
-  tx = shx == 0 ? 0 : 2;    // enable x-axis hook(s)
-  ty = shy == 0 ? 0 : 2;    // enable y-axis hook(s)
-  hdy = 17.5;
+  tx = shx == 0 ? 0 : 2;    // thickness: enable x-axis hook(s)
+  ty = shy == 0 ? 0 : 2;    // thickness: enable y-axis hook(s)
+  hdy = 14; // spread hooks from center
+  dy = size; // interior width
+  echo("hextray: name, shx, shy, dy, dx =", name, shx, shy, dy, dx);
 
-  hook(dy, [-t0-dy/2, 0, 0], hdy, ty, true, shy) 
-  hook(tl, [-t0-dx/2, 0, 0], hdy, tx, false, shx)
+  // translate along ortho axis to center of box:
+  hook(dy, [size-tl+5, 0, 0], hdy, ty, true, shy) 
+  hook(tl, [tl/2-tl+0, 0, 0], hdy, tx, false, shx)
+  // hook(tl, [tl/2-tl, 0, 0], hdy, tx, false, 2)
 
   // slotifyY2([ht, sw, 8*t0], [0, t0-dy/2, 22.3], undef, 2, false)
   // slotifyY2([ht, sw, 8*t0], [0, t0+dy/2, 20], undef, 2, false)
   // Slots on end-caps:
-  slotify2([ht, uhr, 3*t0], [+tl/2, 0, uht*.3], undef, 3)
-  slotify2([ht, uhr, 3*t0], [-tl/2, 0, uht*.3], undef, 3)
-  union() {
+  // slotify2([ht, uhr, 3*t0], [+tl/2, 0, uht*.3], undef, 3)
+  // slotify2([ht, uhr, 3*t0], [-tl/2, 0, uht*.3], undef, 3)
+  // union() {
+    // outer square box:
     box([tl, size, ht], [t0, t0, -t0], [2,2,2], true); // funky rotation...
+    // include hexBox:
     // difference()
     // {
-    //   pos() hexBox(tl, hr+2*t0, t0, true); 
-    //   translate([0,0,ht+p]) cube([tl+pp, size, ht/2 +p], true);
+    //   pos() hexBox(tl, hr2, t0, true); 
+    //   // cut top section:
+    //   translate([0,0,ht+p]) cube([tl+t0, size+t0, ht/2 +pp], true);
+    //   // engrave text:
     //   if (doText && !(is_undef(name) || name == "")) {
     //     hexText(name, [0, 6, 4], 30, 1);
     //     hexText(name, [0, 6, 4], -30, 1);
     //   }
     // }
-  }
-  * pos() hexstack(n);
+  // }
+  //  pos() hexstack(n);
 
 }
 function sum(ary = [], n) = 
@@ -310,16 +322,17 @@ module hextray_x(parma, dt = 1) {
 
 loc = 2;
 doText = false;
-//        A    B    C    goal bon chal;
+//        [ n, [name, shx, shy]]
 trays  = [[43, ["A", 3, 2]], [46, ["B", 3, 2]], [39, ["C", 3, 2]]];
-trays0 = [[43, ["A", 3, 3]], [46, ["B", 3, 3]]];
+trays0 = [[43, ["A", 3, 2]], [46, ["B", 3, 2]]];
+trays1 = [[43, ["A", 3, 2]]];
 trays2 = [[39, ["C", 3, 2]]];
 joins  = [[25, ["goals", 1, 2]], [10], [10, ["", 2]]];  // goals, bonus, challenge
 goalx = joins[0][0]*d0/2;
 dy = size + 5*t0; // was layout spacing...
 tdt = (loc == 2) ? 2.25 : 6.5;
 translate ([t0, dy*0, 0])
-  hextray_x(trays0, tdt);
+  hextray_x(trays1, tdt);
 // translate ([t0+ 4*goalx, 1*dy, 0])
 //   hextray_x(trays2, tdt);
 // translate ([t0, dy*1, 0]) 
@@ -330,4 +343,3 @@ translate ([t0, dy*0, 0])
 
 
 echo("total:", sum(selectNth(0, trays)));
-// hextray();
