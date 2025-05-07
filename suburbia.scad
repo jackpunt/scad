@@ -7,7 +7,7 @@ pp = 2.2 * p;
 
 sqrt3 = sqrt(3);
 sqrt3_2 = sqrt3/2;
-d0 = 2.0;   // mm per cardbord
+d0 = 2.15;   // mm per cardbord (2.15 exact)
 hr0 = 26;    // mm on edge
 hr = hr0+min(hr0,da(30, hr0)); // extend to hold rotated hexes +da(hr0, 30)
 
@@ -75,7 +75,7 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
 // last round hex
 // 
 module starterBox(loc = loc) {
-  lrbt = [[24, ["base", 1 , 2, 0, 0]], [1, ["", 2]]];
+  lrbt = [[25, ["base", 1 , 2, 0, 0]], [2, ["", 2]]];
   tlen = sum(selectNth(0, lrbt));
   tl = tlen * d0 + 3 * t0; // sum of sizes
   bbh = 30; bbl = 50; bbw = 15+1; // blue block
@@ -89,7 +89,7 @@ module starterBox(loc = loc) {
   st = 2; sd = ht-bt;   // thickness of lid to hold player tray & block
   f = .35; np = 7; sly = -size*.5-sbx+t0*1; // slot stuff
 
-  atrans(loc, [[20, -size +10, 0, [0, 0, 90, [bw*.5, -bl*.5, 0]]], 
+  atrans(loc, [[20, -size +5 , 0, [0, 0, 90, [bw*.5, -bl*.5, 0]]], 
              [0,-dy,0], []]) 
   {
     difference() {
@@ -254,16 +254,17 @@ ht = hr + hr0 + t0; // height of box
 // ht: height of all hextray
 module hextray(n = 10, parms, size = size) {
   dx = n * d0;      // interior length
-  tl = dx + 2 * t0; // n*d0 interio + 2*t0 endcaps
-  // echo("hextray: n=",n, "parms=", parms, "hr=", hr, " size=", size, "ht=", ht, "tl=", tl);
+  tl = dx + 2 * t0; // n*d0 interior + 2*t0 endcaps
+  echo("hextray: n=",n, "parms=", parms, "hr=", hr, " size=", size, "ht=", ht, "tl=", tl);
   module pos() {
     translate([0, 0, -.18]) rotate ([90, 0, 90]) children();
   }
   // slots on side walls:
   sw = min(tl - 10, 18);
+  riq = dx < 5 ? .01 : 4;
 
   reveal = false; 
-  uhr = reveal ? ht : hr/2;
+  uhr = reveal ? ht : sw;
   uht = reveal ? 0 : ht;
   bz = uht*.4;
 
@@ -277,6 +278,7 @@ module hextray(n = 10, parms, size = size) {
   ty = shy == 0 ? 0 : 2;    // thickness: enable y-axis hook(s)
   hdy = 14; // spread hooks from center
   dy = size; // interior width
+
   echo("hextray: name, tl, shx, shy, ofcx, ofcy, dy, dx =", name, tl, shx, shy, ofcx, ofcy, dy, dx);
 
   // translate along ortho axis to center of box:
@@ -284,11 +286,11 @@ module hextray(n = 10, parms, size = size) {
   hook(tl, [-tl/2,  ofcx, 0   ], hdy, tx, false, shx)
 
   // Slots on side walls:
-  slotifyY2([ht, sw, 8*t0], [0, t0-dy/2, bz], undef, 2, false)
-  slotifyY2([ht, sw, 8*t0], [0, t0+dy/2, bz], undef, 2, false)
+  slotifyY2([ht, sw, 8*t0], [0, t0-dy/2, bz], undef, riq, false)
+  slotifyY2([ht, sw, 8*t0], [0, t0+dy/2, bz], undef, riq, false)
   // Slots on end-caps:
-  slotify2([ht, uhr, 3*t0], [+tl/2, 0, bz], undef, 3)
-  slotify2([ht, uhr, 3*t0], [-tl/2, 0, bz], undef, 3)
+  slotify2([ht, uhr, 3*t0], [+tl/2, 0, bz], undef, riq)
+  slotify2([ht, uhr, 3*t0], [-tl/2, 0, bz], undef, riq)
   union() {
     // outer square box:
     box([tl, size, ht], [t0, t0, -t0], [2,2,2], true); // funky rotation...
@@ -324,27 +326,32 @@ loc = 0;
 hexText = false;
 //        [ n, [name, shx, shy, ofc]]
 // ofc = tl/2 - size/2;
-trayABC  = [[43, ["A", 3, 2]], [46, ["B", 3, 2]], [39, ["C", 3, 2]]];
-trayAB = [[43, ["A", 3, 2, 0, 16.7]], [46, ["B", 3, 2]]];
-trayBC = [[46, ["B", 3, 2]], [39, ["C", 3, 2, 0, -12.8]]];
-trayA = [[43, ["A", 3, 1]]];
-trayC = [[39, ["C", 3, 2, 0, -12.8]]];
+// Add 1 extra slot to each stack:
+trA = [44, ["A", 3, 2, 0, 21.0]];
+trB = [47, ["B", 3, 2]];
+trC = [40, ["C", 3, 2, 0, -16.8]];
+trayA = [trA];
+trayB = [trB];
+trayC = [trC];
+trayABC  = [trA, trB, trC];
+trayAB = [trA, trB];
+trayBC = [trB, trC];
 goals  = [[25, ["goals", 1, 2, ]], [10, ["b"]], [10, ["b", 2]]];  // goals, bonus, challenge
 goalx = goals[0][0]*d0/2;
 dy = size + 5*t0; // was layout spacing...
 tdt = (loc == 2) ? 2.25 : 6.5;
-translate ([t0, dy*0, 0])
-  hextray_x(trayBC, tdt);
-// translate ([t0+ 4*goalx, 1*dy, 0])
-  // translate([113.5, -(111.25), 0]) // align hooks on "C" with "B"
-  // translate([-73.74, -31, 0])    // align hooks on "A" with "C"
+translate ([t0, dy*0, 0])  hextray_x(trayA, tdt);
+translate ([t0, dy*0, 0])  hextray_x(trayAB, tdt);
+translate ([t0+ 4*goalx, 1*dy, 0])
+  // translate([123.3, -(119.25), 0]) // align hooks on "C" with "B"
+  // translate([-81.22, -31, 0])    // align hooks on "A" with "C"
   // rotate([0, 0, 90])
-  // hextray_x(trayE, tdt);
-// translate ([t0, dy*1, 0]) 
-//   slotifyY2([ht, 18, 4*t0], [goalx, +(size - t0)/2, 22.3], undef, 2)
-//   slotifyY2([ht, 18, 4*t0], [goalx, -(size - t0)/2, 22.3], undef, 2)
-//   hextray_x(goals, 1); // conjoin 3 boxes
-// starterBox();
+  hextray_x(trayC, tdt);
+translate ([t0, dy*1, 0]) 
+  slotifyY2([ht, 18, 4*t0], [goalx, +(size - t0)/2, 22.3], undef, 2)
+  slotifyY2([ht, 18, 4*t0], [goalx, -(size - t0)/2, 22.3], undef, 2)
+  hextray_x(goals, 1); // conjoin 3 boxes
+starterBox();
 
 
 // echo("total:", sum(selectNth(0, trays)));
