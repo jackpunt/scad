@@ -44,8 +44,8 @@ module atrans(ndx = 0, atran = [ 0, 0, 0 ]) {
 module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
   t = is_undef(t) ? t0 : t;             // wall thickness
   txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
-  d = is_list(d) ? d : [ 2*t, 2*t, 1*t - p ]; // reduce inner_cube by txyz
-  dxyz = adif(lwh, amul(d, txyz));
+  d = is_list(d) ? d : [ 2, 2, 1 - p ]; // reduce inner_cube by txyz
+  dxyz = adif(lwh, amul(d, txyz)); // dxyz = lwh - d * txyz;
   // echo("box: lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
   dc = cxy ? -.5 : 0;
   txyzc = amul(lwh, [dc,dc,0]);
