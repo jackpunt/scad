@@ -148,7 +148,7 @@ module starterBox(loc = 0) {
   bbx = bbn * d0 + t0; np = 6; 
   posts(st+sf, [bbx,       sly+sbx,sz], [0, 0, 0], 1); // mid-box 'endcap'
   posts(st+sf, [bbx/(np*1),sly+sbx,sz], [bbx/np, 0, 0], np-1);
-  posts(st+sf, [bw /(np*2),sly    ,sz], [bw/np, 0, 0], np, 1);
+  posts(st+sf, [bw /(np*2),sly+t0 ,sz], [bw/np, 0, 0], np, 1);
 
   // Lid for player tray:
   atrans(loc, [[0, -2*(bl + 4*t0), 0], [0,0,sz+sf/2], [0,0,sz+sf/2]])
