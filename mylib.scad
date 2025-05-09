@@ -64,6 +64,7 @@ module repeat(xyz = [ 0, 0, 0 ], dxyz = [ 0, 10, 0 ], n = 1) {
   xyz = is_undef(xyz) ? [ 0, 0, 10 ] : xyz;
   dxyz = is_undef(dxyz) ? [ 0, 10, 0 ] : dxyz;
   n = is_undef(n) ? 1 : n;
+  // echo("repeat: xyz, dxyz, n =", xyz, dxyz, n);
   for (i = [0 : n-1])
     translate([ xyz[0] + i * dxyz[0], xyz[1] + i * dxyz[1], xyz[2] + i * dxyz[2] ])  //
       children();
