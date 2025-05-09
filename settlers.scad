@@ -156,8 +156,8 @@ module zipper_x(bb, tr, cx, txyz, z0, dsz = 0) {
   module addTabs(cx, ch = 0) {
     union() {
       children(0);
-      for (i = [0 : ns - 1]) 
-        translate([cx - ch*(sx - f)/2 , (4 * i + 3+ch) * sy, z0 + ch * dsz])
+      for (i = [0 : ns - 1]) let (ii = (4 * i + 4.5+ch) % (ns * 4)) 
+        translate([cx - ch*(sx - f)/2 , (ii) * sy, z0 + ch * dsz])
       color("pink")  cube([(sx - f), sy - f, sz - f], true);
     }
   }
@@ -165,8 +165,8 @@ module zipper_x(bb, tr, cx, txyz, z0, dsz = 0) {
   module cutSlots(cx, ch = 0) {
     difference() {
       children(0);
-      for (i = [0 : ns - 1]) let (ii = (i + 1+ch) % ns)
-        translate([cx + ch*(sx - 0*f)/2, (4 * i + 1+ch) * sy, z0 - ch * dsz])
+      for (i = [0 : ns - 1])
+        translate([cx + ch*(sx - 0*f)/2, (4 * i + 2.5+ch) * sy, z0 - ch * dsz])
         cube([sx - 0*f + pp, sy + f, sz + f], true);
     }
   }
@@ -224,7 +224,7 @@ module base_cells() {
 }
 
 // zipper_x(bb, tr, cx, txyz, dsz = 0)
-zipper_x([tx, bby, 10], [0, 0, -p], cx, [.1, 0, 0], (1-f)/2, 0) 
+zipper_x([tx, bby, 10], [0, 0, -p], cx, [10., 0, 0], (1-f)/2, 0) 
   base_cells();
 
 *cut([30, 0, 0]) 
