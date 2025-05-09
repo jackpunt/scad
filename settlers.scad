@@ -130,6 +130,8 @@ module cut(txyz) {
   cut_ls(    ) { children(0); children(2); }
   cut_rs(txyz) { children(1); children(2); }
 }
+
+f = .35;
 // cut plate in two; make slots and tabs @ cx
 // children(0): base object
 // tr: translate bb to base (put z on midline for tabs/slots)
@@ -138,11 +140,13 @@ module cut(txyz) {
 // txyz: translate rs
 // z0: midline to place the tabs/slots
 // dsz: differential offset from midline of tabs/slots
+// ambient
+// f: shrinkage (.35)
 module zipper_x(bb, tr, cx, txyz, z0, dsz = 0) {
   tr = is_undef(tr) ? [0, 0, 0] : tr;
   txyz = is_undef(txyz) ? [cx, 0, 0] : txyz;
   z0 = is_undef(z0) ? bb[2] / 2 : z0;
-  ns = 6; f = .35;
+  ns = 6;
   sx = 10;   // penetration depth of slot/tab
   sy = bb[1] / (4 * ns+1); // sy solid : sy tab : sy solid : sy slot ... sy solid
   sz = 1;
@@ -150,29 +154,27 @@ module zipper_x(bb, tr, cx, txyz, z0, dsz = 0) {
   echo("zipper: ns, sx, sy, sz =", ns, sx, sy, sz);
   // add tabs to children(ch) ch: 0(ls) OR 1(rs)
   module addTabs(cx, ch = 0) {
-    ch1 = 2 * ch - 1; // 0: -> -1; 1: -> 1
     union() {
       children(0);
       for (i = [0 : ns - 1]) 
-        translate([cx - ch1*(sx - f)/2 , (4 * i + 2) * sy, z0 + ch1 * dsz])
-        cube([(sx - f), sy - f, sz - f], true);
+        translate([cx - ch*(sx - f)/2 , (4 * i + 3+ch) * sy, z0 + ch * dsz])
+      color("pink")  cube([(sx - f), sy - f, sz - f], true);
     }
   }
   // cut slots in children(0)
   module cutSlots(cx, ch = 0) {
-    ch1 = 2 * ch - 1; // 0: -> -1; 1: -> 1
     difference() {
       children(0);
-      for (i = [0 : ns - 1])
-        translate([cx + (sx - f)/2, (4 * i + 4) * sy, z0 - ch1 * dsz])
-        cube([sx - f + pp, sy - f, sz - f], true);
+      for (i = [0 : ns - 1]) let (ii = (i + 1+ch) % ns)
+        translate([cx + ch*(sx - 0*f)/2, (4 * i + 1+ch) * sy, z0 - ch * dsz])
+        cube([sx - 0*f + pp, sy + f, sz + f], true);
     }
   }
   // add tabs & slots
   module addSlots_Tabs() {
     // ls
-    cutSlots(cx, 0) 
-    addTabs(cx, 0) 
+    cutSlots(cx, -1) 
+    addTabs(cx, -1) 
     children(0);
     // rs
     cutSlots(cx + txyz[0], 1)
@@ -222,7 +224,7 @@ module base_cells() {
 }
 
 // zipper_x(bb, tr, cx, txyz, dsz = 0)
-zipper_x([tx, bby, 10], [0, 0, -p], cx, [30, 0, 0], 1.5, 1.19) 
+zipper_x([tx, bby, 10], [0, 0, -p], cx, [.1, 0, 0], (1-f)/2, 0) 
   base_cells();
 
 *cut([30, 0, 0]) 
