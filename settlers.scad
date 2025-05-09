@@ -148,6 +148,8 @@ f = .18;
 // ambient
 // f: shrinkage (.35)
 module zipper_x(bb, tr, cx, txyz, z0, dsz = 0, sz, sy0, sx, fs = f, ft = f, ns = 3) {
+  fs = is_undef(fs) ? f : fs;
+  fsxyz = is_list(fs) ? fs : [fs, fs, fs];
   tr = is_undef(tr) ? [0, 0, 0] : tr;
   txyz = is_undef(txyz) ? [cx, 0, 0] : txyz;
   z0 = is_undef(z0) ? bb[2] / 2 : z0;
@@ -173,8 +175,8 @@ module zipper_x(bb, tr, cx, txyz, z0, dsz = 0, sz, sy0, sx, fs = f, ft = f, ns =
     difference() {
       children(0);
       for (i = [0 : ns - 1])
-        translate([cx + ch*(sx - 0*fs)/2, (4 * i + 2.5+ch) * sy, z0 - ch * dsz])
-      #  cube([(sx - 0*fs) + pp, sy + fs, sz + fs], true);
+        translate([cx + ch*(sx - 0*fsxyz[0])/2, (4 * i + 2.5+ch) * sy, z0 - ch * dsz])
+      #  cube([(sx - 0*fsxyz[0]) + pp, sy + fsxyz[1], sz + fsxyz[2]], true);
     }
   }
   // add tabs & slots
@@ -235,13 +237,13 @@ module base_cells() {
 {
   ddx = 14.1; // separate ls & rs
   sz = tb + pp;  // thickness of tab
-  ft = 0;
+  fsz = f + .6;
   // translate(v = [cx+ddx/2, bby-35, 0])  cube([50, 150, 20], true);
   union() {
-  ccx = cx - .55; k = 2.; dia = 1.; y0 = 6;
-  posts(sz+f/2 ,[ccx - k,       y0+2.4, 0], [0, 7, 0], (bby-y0)/5, dia);
-  posts(sz+f/2 ,[ccx + k + ddx, y0-.5, 0], [0, 5.5, 0], (bby-y0)/5, dia);
-  zipper_x([tx, bby, 10], [0, 0, -p], cx, [ddx, 0, 0], z0 = 0 + (sz)/2, dsz = 0, sz = sz+f, ns = 3)
+  ccx = cx - .5; k = 2.; dia = 1.; y0 = 6;
+  posts(sz+fsz/2 ,[ccx - k,       y0+2.4, 0], [0, 7, 0], (bby-y0)/7, dia);
+  posts(sz+fsz/2 ,[ccx + k + ddx, y0-.5, 0], [0, 5.5, 0], (bby-y0)/5.5, dia);
+  zipper_x([tx, bby, 10], [0, 0, -p], cx, [ddx, 0, 0], z0 = 0 + (sz)/2, dsz = 0, sz = sz+f, ns = 3, fs = [f, f, fsz])
   base_cells();
   }
 }
