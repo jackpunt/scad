@@ -2,75 +2,13 @@ use <mylib.scad>;
 p = .001;
 pp = 2 * p;
 
-module box2(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
-  t = is_undef(t) ? t0 : t;             // wall thickness
-  txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
-  d = is_list(d) ? d : [ 2, 2, 1-p ]; // reduce inner_cube by txyz
-  dxyz = adif(adif(lwh, amul(d, txyz)), [0,0,-pp]); // dxyz = lwh - d * txyz;
-  // dxyz = adif(adif(lwh, amul(d, txyz)), [0,0,-pp]); // dxyz = lwh - d * txyz;
-  echo("box: lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
-  dc = cxy ? -.5 : 0;
-  txyzc = amul(lwh, [dc,dc,0]);
-  translate(txyzc) 
-  difference() {
-    cube(lwh);
-    translate(txyz) cube(dxyz); // -2*bt or +2*p
-  }
-}
-
-
-module pat(s = 5, l = 30)
-{
-    rotatet([ 0, 45, 0 ], [ s / 2, 0, s / 2 ]) translate([ 0, -p, 0 ]) cube([ s, l + pp, s ]);
-}
-
-module paty(s = 5, l = w)
-{
-    scale([ 1, 1, .7 ]) translate([ -s / 4, 0, -s / 2.8 ]) pat(s / 2, l);
-}
-module patx(s = 5, l = w)
-{
-    scale([ 1, 1, .7 ]) translate([ 0, -s / 4, -s / 2.8 ]) rotatet([ 45, 0, 0 ], [ 0, s / 2, s / 2 ])
-        translate([ -p, 0, 0 ]) cube([ l + pp, s, s ]);
-}
-
-module gridaway(x0 = 40, l = l * .65, h = 25)
-{
-    s = 10;
-    difference()
-    {
-        children(0);
-        translate([ x0, 0, t0 + s * .8 ]) grid(l - s - x0, h - s - 5, 5) paty(s, w);
-    }
-}
-module gridawayy(x0 = 20, l = l)
-{
-    s = 10;
-    difference()
-    {
-        children(0);
-        translate([ x0, 0, t0 + s ]) grid(l - s - x0, h - s - 5, 5) paty(s, w);
-    }
-}
-module gridawayx(x0 = 20, w = w)
-{
-    s = 10;
-    difference()
-    {
-        children(0);
-        translate([ -10, x0, t0 + s ])
-            // rotatet([0, 0, -90], [-20, 0, 20])
-            grid(w - s - x0, h - s - 5, 5, [ 0, 1, 1 ]) patx(s / 2, 20);
-    }
-}
-
 // children(0) - base plate
 // children(1) - motif to subtract 
 // txyz: [x, y, z] initial offset
 // dxyz: [dx, dy, dz] delta per iteration
 // mxyz: [mx, my, mz] max value of iteration
 module perforate(txyz, dxyz, mxyz) {
-  echo("perf: x,y,z=", [ txyz, dxyz, mxyz ]) //
+  // echo("perf: x,y,z=", [ txyz, dxyz, mxyz ]) //
   difference() {
     children(0);
     for (x = [txyz[0]:dxyz[0]:mxyz[0]], //
@@ -81,56 +19,58 @@ module perforate(txyz, dxyz, mxyz) {
 }
 
 tb = 5; // thickness of base
-h = 4; // height of 'wall'
-tw = 2; // thickness of 'wall' on lid
-t0 = 3; // thickness of acrylic walls
+h = 4; // height of 'wall' on lid
+tw = 1; // thickness of 'wall' on lid
+ta = 3; // thickness of acrylic walls
+cardw = 54;
+cardh = 81;
 
+// xx: size on x-axis (outer size)
+// yy: size on y-axis
+// x0: left of cell
+// y0: top of cell
 module cell(xx, yy, x0=0, y0=0, card = true) {
   if (card) {
-    translate([x0+t0, y0+t0, 0])
-    box([xx-2*t0, yy-2*t0, t0+h], [2,2,-1.5], [2,2,4]);
+    cw = 2 * (cardw - 3) - xx; dw = (xx - cw) / 2; 
+    dh = dw; ch = yy - 2* dh;
+    assert(dw + cw < cardw - 2);
+    // assert(dh + ch < cardh - 2);
+    children(0);
+    translate([x0+dw, y0+dh, -.5*tb]) cube([cw, ch, 2*tb]);
+
+    translate([x0+ta, y0+ta, 0])
+    box([xx-2*ta, yy-2*ta, h+tb], [tw, tw, -1.5], [2, 2, 4]);
   } else {
-
+    children(0);
   }
 }
 
-r2 = 220-121;
-y2 = 220-118;
-w2 = 24;
 module cells() {
-  translate([0,0, tb-p]) {
-    cell(67, 121, 0,  0);       // Ore cell
+  r2 = 220-121;
+  y2 = 220-118;
+  w2 = 24;
+  // translate([0,0, tb-p]) {
+    cell(67, 121, 0,  0)       // Ore cell
     // parts bins:
-    cell(78, 60, 64,  0);       // player A
-    cell(79, 60, 139, 0);       // player B
-    cell(78, 64, 64, 57);       // player C
-    cell(79, 64, 139, 57);      // player D
+    // cell(78, 60, 64,  0, false)       // player A
+    // cell(79, 60, 139, 0, false)       // player B
+    // cell(78, 64, 64, 57, false)       // player C
+    // cell(79, 64, 139, 57, false)      // player D
 
-    // cell(t0+w2, r2, 0, 118);     // dice & robber
-    cell(91-w2, r2, w2, 118);    // wheat
-    cell(155-88, r2, 88, 118);   // sheep
-    cell(218-152, r2, 152, 118); // wood-brick
+    // cell(t0+w2, r2, 0, 118)     // dice & robber
+    cell(91-w2, r2, w2, 118)    // wheat
+    cell(155-88, r2, 88, 118)   // sheep
+    cell(218-152, r2, 152, 118) // wood-brick
 
-    cell(64, 93, 215);           // dev cards
+    cell(64, 93, 215)           // dev cards
     // cell(64, 118-90+t0, 215, 90); // hex markers
-    cell(64, r2, 215, 118);      // brick-wood
-  }
+    cell(64, r2, 215, 118)      // brick-wood
+    children(0);
+  // }
 }
 
-loc = 0;
-gs = 10;
-// translate([0,-222, 0]) 
- perforate([gs, gs, 0], [gs, gs, 1], [280-gs, 222-gs, 1]) 
-{
-  color("blue") 
-  cube([215+64, 222, tb]);
-  cube([gs/2,gs/2,gs/2+tb], true);
-}
-atrans(loc, [undef, [0,0,0]]) cube([220, 220, 1]);
-cells();
-
-module base(dx = 20, dy = 20, dz = 3) {
-  translate([0, 0, dz/2]) cube([dx, dy, dz], true);
+module base(dx = 20, dy = 20, dz = tb) {
+  cube([dx, dy, dz]);
 }
 // v: depth of underlying plate (dist between peg and top disk)
 // d: thickness of top disk
@@ -164,6 +104,70 @@ module matingSlot(tr = [0,0,0], ds, v = 3, r = 5, f = .5, r0 = 2.5) {
   }
 }
 
+// split base into ls & rs
+// txyz: translate for rs
+// ls: children(0)
+// rs: children(1)
+// base: children(2)
+module cut(txyz) {
+  intersection() {
+    children(0);
+    children(2);
+  }
+  translate( txyz)
+  intersection() {
+    children(1);
+    children(2);
+  }
+}
+// cut plate in two; make slots and tabs @ cx
+// children(0): base object
+// tr: translate bb to base
+// bb: big block, size of base object
+// cx: x-coord to make the cut (through YZ plane)
+// txyz: translate rs
+module zipper_x(bb, tr, cx, txyz, dsz = 0) {
+  ns = 6; f = .35;
+  sx = 10;
+  sy = bb[1] / (4 * ns+1); // sy solid : sy tab : sy solid : sy slot ... sy solid
+  sz = 1;
+  // add tabs to children(ch) ch: 0 OR 1
+  module addTabs(ch = 0) {
+    ch1 = 2 * ch - 1; // 0: -> -1; 1: -> 1
+    union() {
+      children(ch);
+      for (i = [0 : ns - 1]) 
+        translate([-p, i * (sy + 2 - ch1), ch1 * dsz])
+        cube([sx - f + pp, sy - f, sz - f], true);
+    }
+  }
+  // cut slots in children(0)
+  module cutSlots(ch = 0) {
+    ch1 = 2 * ch - 1; // 0: -> -1; 1: -> 1
+    difference() {
+      children(ch);
+      for (i = [0 : ns-1])
+        translate([-p, i * (sy + 2 + ch1), -ch1 * dsz])
+        cube([sx - f + pp, sy - f, sz - f], true);
+    }
+  }
+  // children(0) : ls
+  // children(1) : rs
+  module addSlots_Tabs() {
+    cutSlots(0) addTabs(0);
+    cutSlots(1) addTabs(1);
+  }
+
+  addSlots_tabs()
+  // ls, tr(rs)
+  cut(txyz)
+  {
+    translate(tr) cube([cx, bb[1], bb[2]]);
+    translate(tr) cube([bb[0]-cx, bb[1], bb[2]]);
+    children(0);
+  }
+}
+
 // peg & slot demo:
 // v = 3;
 // matingSlot([10, -17.5, 0])
@@ -173,3 +177,20 @@ module matingSlot(tr = [0,0,0], ds, v = 3, r = 5, f = .5, r0 = 2.5) {
 // *translate([-7.5,-7.5, v+.2]) // color("blue") 
 // matingSlot([7.5, 7.5, 0], [0, 10, 0], 3, 5, .5)
 //  cube([15, 25, v]);
+
+loc = 0;
+gs = 16;
+cut([30, 0, 0]) {
+  cx = 153.5; dx = 10;
+cube([cx, 220, 10]);
+translate([cx, 0, 0]) cube([282-cx, 220, dx]);
+cells()
+// perforate([gs, gs, 0], [gs, gs, 1], [280-gs, 222-gs, 1]) 
+{
+  color("blue") 
+  base(215+64, 222, tb);
+  cube([gs/2,gs/2,gs/2+tb], true); // pattern to cut
+}
+}
+atrans(loc, [undef, undef, [0, -2, 6]]) 
+ % cube([220, 220, 1]);
