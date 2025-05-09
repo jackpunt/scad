@@ -364,13 +364,13 @@ module slotifyY(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
 }
 
 // hwtr: [h, w, t, r]
-// h: height of box (40) [z]
-// w: width of slot (5) [y]
-// t: thickness of slot (t0) [x]
-// r: radius of slot (min(h,w)/2)
+// - h: height of box (40) [z]
+// - w: width of slot (5) [y]
+// - t: thickness of slot (t0) [x]
+// - r: radius of slot (min(h,w)/2)
 // tr: translate to wall [+- l/2, offset from center, bz: z-from bottom]
 // rid: rotate (1 = [0, -90, 0]) flip to YZ plane
-// riq: [radius: (2*t), rid: (1) , q1: (3), q2: (2)]; for YZ plane
+// riq: [radius: (2*t), rid: (1) , q1: (3), q2: (2)]; for YX plane
 // ss: show
 module slotifyY2(hwtr, tr, rot, riq, ss) {
   h = is_undef(hwtr[0]) ? 40 : hwtr[0];

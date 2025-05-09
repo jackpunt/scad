@@ -19,7 +19,7 @@ module perforate(txyz, dxyz, mxyz) {
 }
 
 tb = 3; // thickness of base
-h = 4; // height of 'wall' on lid
+hw = 4; // height of 'wall' on lid
 tw = 1; // thickness of 'wall' on lid
 ta = 3; // thickness of acrylic walls
 cardw = 54;
@@ -39,7 +39,7 @@ module cell(xx, yy, x0=0, y0=0, card = true) {
       translate([x0+dw, y0+dh, -.5*tb]) cube([cw, ch, 2*tb]);
     }
     translate([x0+ta, y0+ta, 0])
-    box([xx-2*ta, yy-2*ta, h+tb], [tw, tw, -1.5], [2, 2, 4]);
+    box([xx-2*ta, yy-2*ta, hw+tb], [tw, tw, -1.5], [2, 2, 4]);
   } else {
     children(0);
   }
@@ -250,3 +250,5 @@ module base_cells() {
 
 atrans(loc, [undef, undef, [0, -2, 6]]) 
  % cube([220, 220, 1]);
+
+// astack(); 
