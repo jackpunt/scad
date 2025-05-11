@@ -146,11 +146,10 @@ f = .35;
 // sy: breadth of tab (bb[1]/(4*ns+1))
 // sx: insertion depth of tab (10)
 // fs: ([f, f, f]) expand slot & shrink tab; applied to sx, sy, sz
-// ft: (0) 
 // ns: (3) number of tabs per side
 // ambient
 // f: shrinkage (.35)
-module zipper_x(bb, tr, cx, txyz, z0, dsz = 0, sz, sy, sx, fs = f, ft = 0, ns = 3) {
+module zipper_x(bb, tr, cx, txyz, z0, dsz = 0, sz, sy, sx, fs = f, ns = 3) {
   fs = is_undef(fs) ? f : fs;
   fsxyz = is_list(fs) ? fs : [fs, fs, fs];
   tr = is_undef(tr) ? [0, 0, 0] : tr;
@@ -243,15 +242,15 @@ module base_cells() {
 // Demo of zipper/cut
 // intersection() 
 {
-  ddx = 7.1; // separate ls & rs
+  ddx = 14.1; // separate ls & rs
   sz = tb + pp;  // thickness of tab
   fsz = f + .6;
   // translate(v = [cx+ddx/2, bby-35, 0])  cube([50, 150, 20], true);
   union() {
   ccx = cx - .5; k = 2.; dia = 1.; y0 = 6;
-  posts(sz+fsz/2+p ,[ccx - k,       y0+2.4, 0], [0, 7, 0], (bby-y0)/7, dia);
+  posts(sz+fsz/2+p ,[ccx - k,       y0+3, 0], [0, 7, 0], (bby-y0)/7, dia);
   posts(sz+fsz/2+p ,[ccx + k + ddx, y0-.5, 0], [0, 5.5, 0], (bby-y0)/5.5, dia);
-  zipper_x([tx, bby, 10], [0, 0, -p], cx, [ddx, 0, 0], z0 = tb/2,       dsz = 0, sz = sz, ns = 3, fs = [f, f, fsz], ft = 0)
+  zipper_x([tx, bby, 10], [0, 0, -p], cx, [ddx, 0, 0], z0 = tb/2-p,       sz = tb, ns = 4, fs = [f, f, fsz])
   base_cells();
   }
 }
