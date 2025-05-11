@@ -19,13 +19,6 @@ module perforate(txyz, dxyz, mxyz) {
   }
 }
 
-tb = 3; // thickness of base
-hw = 4; // height of 'wall' on lid
-tw = 1; // thickness of 'wall' on lid
-ta = 3; // thickness of acrylic walls
-cardw = 54;
-cardh = 81;
-
 // xx: size on x-axis (outer size of underlying acrylic cell)
 // yy: size on y-axis (outer size of underlying acrylic cell)
 // x0: left of cell
@@ -35,6 +28,7 @@ cardh = 81;
 // - cxdx: [cut, ddx] ([0, 0])
 // - ipd: inter-post distance, approx (5)
 // - pdy: inter-post distance, exact (computed from ipd)
+// - pd: post size (tw)
 module cell(xx, yy, x0=0, y0=0, pa) {
   if (is_undef(pa)) {
     // cut a viewport hole:
@@ -71,10 +65,15 @@ module cell(xx, yy, x0=0, y0=0, pa) {
   }
 }
 
+// pa: post args (undef --> just make walls)
+// - ph: post height (required)
+// - cxdx: [cut, ddx] ([0, 0])
+// - ipd: inter-post distance, approx (5)
+// - pdy: inter-post distance, exact (computed from ipd)
 module cells(pa) {
-  r2 = 220-121;
-  y2 = 220-118;
-  w2 = 24;
+  r2 = 220-121; // 99
+  y2 = 220-118; // 102
+  w2 = 24;      // side box for dice+robber
   cell(67, 121, 0,  0, pa)        // ore
   cell(91-w2, r2, w2, 118, pa)    // wheat
   cell(155-88, r2, 88, 118, pa)   // sheep
@@ -238,6 +237,16 @@ module zipper_x(bb, tr, cx, txyz, z0, dsz = 0, sz, sy, sx, fs = f, ns = 3) {
 // matingSlot([7.5, 7.5, 0], [0, 10, 0], 3, 5, .5)
 //  cube([15, 25, v]);
 
+module base_cells() {
+  cells()
+  // perforate([gs, gs, 0], [gs, gs, 1], [280-gs, 222-gs, 1]) 
+  {
+    color("lightblue") base(tx, 222, tb);
+    // %base(tx, 222, tb);
+    cube([gs/2, gs/2, gs/2+tb], true); // pattern to cut
+  }
+}
+
 loc = 0;
 gs = 16;
 // cut between sheep & brick
@@ -247,33 +256,30 @@ tx = 282;
 // big box for cut:
 bby = 220; bbz = 10;
 // default fudge amount:
-f = .25;
+f = .175;
 
-module base_cells() {
-  cells()
-  // perforate([gs, gs, 0], [gs, gs, 1], [280-gs, 222-gs, 1]) 
-  {
-    color("lightblue") base(tx, 222, tb);
-    // %base(tx, 222, tb);
-    // cube([gs/2, gs/2, gs/2+tb], true); // pattern to cut
-  }
-}
+tb = 3; // thickness of base
+hw = 4; // height of 'wall' on lid
+tw = 1; // thickness of 'wall' on lid
+ta = 3; // thickness of acrylic walls
+cardw = 54;
+cardh = 81;
 
 // Demo of zipper/cut
-intersection() 
+// intersection() 
 {
   ddx = 14.1; // separate ls & rs
   sz = tb + pp;  // thickness of tab
   fsz = f + .6;
-  translate(v = [cx+ddx/2, bby-35, 0])  cube([50, 150, 20], true);
+  // translate(v = [cx+ddx/2-13, bby-95, 0])  cube([20, 30, 20], true);
   union() {
   ph = sz+fsz/2+p;
   y0 = 6; // align post with x-wall (9, 5.5)
-  // posts(sz+fsz/2+p ,[cx - ta/2 - 1,   9.0, 0], [0, 7, 0], (bby-y0)/7);
-  // posts(sz+fsz/2+p ,[cx + ta/2 + ddx, 5.5, 0], [0, 5.5, 0], (bby-y0)/5.5);
-  zipper_x([tx, bby, 10], [0, 0, -p], cx, [ddx, 0, 0], z0 = tb/2-p, sy=15, sz = tb, ns = 4, fs = [f, f, fsz])
+  zipper_x([tx, bby, 10], [0, 0, -p], cx, [ddx, 0, 0], z0 = tb/2-p, sy=8, sz = tb, ns = 4, fs = [f, f, fsz])
   base_cells();
-  cells([ph, [cx-ta/2, ddx], 5, 5.3]) cube([1,1,1]);
+  cells([ph, [cx-ta/2, ddx], 6]) cube([1,1,1]);
+  pb = 3; sc10 =   [155-ta-tw-pb/2, 220-99-pb/2, 0]; // sheep
+  posts(1, sc10, undef, 1, 1 + pb );
   }
 }
 

@@ -81,6 +81,7 @@ module repeat(xyz = [ 0, 0, 0 ], dxyz = [ 0, 10, 0 ], n = 1) {
 module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = t0) {
   zh = is_undef(zh) ? 10 : zh;
   dia = is_undef(dia) ? t0 : dia;
+  // echo("posts: xyz, dxyz, n=", xyz, dxyz, n);
   repeat(xyz, dxyz, n) cube([ dia, dia, zh ]);
 }
 
