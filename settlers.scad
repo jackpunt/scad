@@ -26,48 +26,63 @@ ta = 3; // thickness of acrylic walls
 cardw = 54;
 cardh = 81;
 
-// xx: size on x-axis (outer size)
-// yy: size on y-axis
+// xx: size on x-axis (outer size of underlying acrylic cell)
+// yy: size on y-axis (outer size of underlying acrylic cell)
 // x0: left of cell
 // y0: top of cell
-module cell(xx, yy, x0=0, y0=0, card = true) {
-  if (card) {
+// pa: post args (undef --> just make walls)
+// - ph: post height (required)
+// - cxdx: [cut, ddx] ([0, 0])
+// - ipd: inter-post distance, approx (5)
+// - pdy: inter-post distance, exact (computed from ipd)
+module cell(xx, yy, x0=0, y0=0, pa) {
+  if (is_undef(pa)) {
+    // cut a viewport hole:
     difference() {
-      cw = 2 * (cardw - 3) - xx; dw = (xx - cw) / 2; 
-      dh = dw; ch = yy - 2* dh;
+      cw = 2 * (cardw - 3) - xx; // width of cutout
+      dw = (xx - cw) / 2;        // border around cutout
+      dh = dw;                   // same border for height
+      ch = yy - 2* dh;           // height of cutout
       assert(dw + cw < cardw - 2);
       children(0);
       translate([x0+dw, y0+dh, -.5*tb]) cube([cw, ch, 2*tb]);
     }
-    translate([x0+ta, y0+ta, 0])
+    // short walls to keep cards from sliding out
+    translate([x0+ta, y0+ta, p])
     box([xx-2*ta, yy-2*ta, hw+tb], [tw, tw, -1.5], [2, 2, 4]);
   } else {
+    // else make posts below the y-walls:
+    // ph, cw, ipd=3, pdy, pd
+    ph = pa[0];
+    cxdx = def(pa[1], [0,0]);
+    cx = def(cxdx[0], 0);
+    dx = def(cxdx[1], 0);
+    ipd = def(pa[2], 5);
+      ty = yy - 2 * ta - tw; // total y interval
+      np = floor(ty/ipd);
+    pdy = def(pa[3], ty/(np-1));
+    pd = def(pa[4], tw);
+    x1 = (x0 < cx) ? x0 : x0 + dx;
+
+    echo("cell: ph, x0, ta, xx, pdy, ipd, pd=", ph, x0, ta, xx, pdy, ipd, pd);
+    posts(ph, [x1+ta,       y0+ta, 0], [0, pdy, 0], np, pd);
+    posts(ph, [x1-ta+xx-tw, y0+ta, 0], [0, pdy, 0], np, pd);
     children(0);
   }
 }
 
-module cells() {
+module cells(pa) {
   r2 = 220-121;
   y2 = 220-118;
   w2 = 24;
-  // translate([0,0, tb-p]) {
-    cell(67, 121, 0,  0)       // Ore cell
-    // parts bins:
-    // cell(78, 60, 64,  0, false)       // player A
-    // cell(79, 60, 139, 0, false)       // player B
-    // cell(78, 64, 64, 57, false)       // player C
-    // cell(79, 64, 139, 57, false)      // player D
+  cell(67, 121, 0,  0, pa)        // ore
+  cell(91-w2, r2, w2, 118, pa)    // wheat
+  cell(155-88, r2, 88, 118, pa)   // sheep
+  cell(218-152, r2, 152, 118, pa) // wood-brick
 
-    // cell(t0+w2, r2, 0, 118)     // dice & robber
-    cell(91-w2, r2, w2, 118)    // wheat
-    cell(155-88, r2, 88, 118)   // sheep
-    cell(218-152, r2, 152, 118) // wood-brick
-
-    cell(64, 93, 215)           // dev cards
-    // cell(64, 118-90+t0, 215, 90); // hex markers
-    cell(64, r2, 215, 118)      // brick-wood
-    children(0);
-  // }
+  cell(64, 93, 215, 0, pa)        // dev cards
+  cell(64, r2, 215, 118, pa)      // brick-wood
+  children(0);
 }
 
 module base(dx = 20, dy = 20, dz = tb) {
@@ -132,8 +147,6 @@ module cut(txyz) {
   cut_rs(txyz) { children(1); children(2); }
 }
 
-// default fudge amount:
-f = .35;
 // cut plate in two; make slots and tabs @ cx
 // children(0): base object
 // bb: big block, size of base object
@@ -170,7 +183,7 @@ module zipper_x(bb, tr, cx, txyz, z0, dsz = 0, sz, sy, sx, fs = f, ns = 3) {
     union() {
       children(0);
       for (i = [0 : ns - 1]) let (ii = (4 * i + 4.5+ch) % (ns * 4)) 
-        translate([cx - ch * (sx - p) / 2 , ii * sy, z0 + ch * dsz])
+        translate([cx - ch * (sx - p) / 2 , ii * sy0, z0 + ch * dsz])
       color("pink")  cube([sx, sy, sz], true);
     }
   }
@@ -181,7 +194,7 @@ module zipper_x(bb, tr, cx, txyz, z0, dsz = 0, sz, sy, sx, fs = f, ns = 3) {
       children(0);
       sxf0 = sx + fsxyz[0];
       for (i = [0 : ns - 1]) let (ii = (4 * i + 2.5+ch) % (ns * 4)) 
-        translate([cx + ch * (sxf0 - p) / 2, ii * sy, z0 - ch * dsz])
+        translate([cx + ch * (sxf0 - p) / 2, ii * sy0, z0 - ch * dsz])
       #  cube([sxf0, sy + fsxyz[1], sz + fsxyz[2]], true);
     }
   }
@@ -227,31 +240,40 @@ module zipper_x(bb, tr, cx, txyz, z0, dsz = 0, sz, sy, sx, fs = f, ns = 3) {
 
 loc = 0;
 gs = 16;
-cx = 153.5; tx = 282; bby = 220; bbz = 10;
+// cut between sheep & brick
+cx = 153.5; 
+// total x extent
+tx = 282; 
+// big box for cut:
+bby = 220; bbz = 10;
+// default fudge amount:
+f = .25;
 
 module base_cells() {
   cells()
   // perforate([gs, gs, 0], [gs, gs, 1], [280-gs, 222-gs, 1]) 
   {
-    color("lightblue") 
-    base(tx, 222, tb);
+    color("lightblue") base(tx, 222, tb);
+    // %base(tx, 222, tb);
     // cube([gs/2, gs/2, gs/2+tb], true); // pattern to cut
   }
 }
 
 // Demo of zipper/cut
-// intersection() 
+intersection() 
 {
   ddx = 14.1; // separate ls & rs
   sz = tb + pp;  // thickness of tab
   fsz = f + .6;
-  // translate(v = [cx+ddx/2, bby-35, 0])  cube([50, 150, 20], true);
+  translate(v = [cx+ddx/2, bby-35, 0])  cube([50, 150, 20], true);
   union() {
-  ccx = cx - .5; k = 2.; dia = 1.; y0 = 6;
-  posts(sz+fsz/2+p ,[ccx - k,       y0+3, 0], [0, 7, 0], (bby-y0)/7, dia);
-  posts(sz+fsz/2+p ,[ccx + k + ddx, y0-.5, 0], [0, 5.5, 0], (bby-y0)/5.5, dia);
-  zipper_x([tx, bby, 10], [0, 0, -p], cx, [ddx, 0, 0], z0 = tb/2-p,       sz = tb, ns = 4, fs = [f, f, fsz])
+  ph = sz+fsz/2+p;
+  y0 = 6; // align post with x-wall (9, 5.5)
+  // posts(sz+fsz/2+p ,[cx - ta/2 - 1,   9.0, 0], [0, 7, 0], (bby-y0)/7);
+  // posts(sz+fsz/2+p ,[cx + ta/2 + ddx, 5.5, 0], [0, 5.5, 0], (bby-y0)/5.5);
+  zipper_x([tx, bby, 10], [0, 0, -p], cx, [ddx, 0, 0], z0 = tb/2-p, sy=15, sz = tb, ns = 4, fs = [f, f, fsz])
   base_cells();
+  cells([ph, [cx-ta/2, ddx], 5, 5.3]) cube([1,1,1]);
   }
 }
 

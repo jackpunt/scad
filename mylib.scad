@@ -4,6 +4,8 @@ t0 = 1;
 p = .001;
 pp = 2 * p;
 
+// default value
+function def(var, val) = is_undef(var) ? val : var;
 // pairwise multiplication
 function amul(a, b) = [for (i = [0:len(a) - 1]) a[i] * b[i]];
 // pairwise subtraction
