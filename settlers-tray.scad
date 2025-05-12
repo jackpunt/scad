@@ -17,24 +17,36 @@ module slotbox(ch = ch, ss = false) {
   children(0);
 }
 module sidebox(dx = 0, y1 = y1, ss = false) {
-  translate([dx, ch-27, 0]) 
-  slotbox(-y1+2*t0+pp, ss)
-  translate([-cw/2, -y1/2-t0,0])
+  translate([dx, ch/2 - t0, 0]) 
+  slotbox(-2*y1+pp, ss)
+  translate([-cw/2, 0, 0])
   box([cw, y1+t0, boxz]); // dice box
 }
-module cardbox() {
+module cardbox(name) {
+  echo("cardbox: name=", name);
   slotbox()
   box([cw, ch, boxz], t0, undef, true);
   // fulcrum:
-  translate([0, 0, 1.5]) cube([cw, 7, 2.3], true);
   translate([0, 0, 1]) cube([cw, 10, 2], true);
+  difference() {
+  translate([0, 0, 1.5]) cube([cw, 7, 2.3], true);
+  // if (!is_undef(name)) {
+    translate([0, -2, 2.5]) 
+    linear_extrude(height = 1) 
+    text(name, halign = "center", size=5);
+  // }
+  }
 }
 
 module cardboxes() {
-  locs = [[0,0], [0, 1], [0, 2], [1, 2], [1, 0], [1, 1]];
-  for (rc = locs) let(r = rc[0], c = rc[1], ry = r == 0 ? 0 : y1)
+  locs = [[0, 0, "wheat"], 
+          [0, 1, "sheep"], [0, 2, "wood"], 
+          [1, 0, "ore"],   [1, 1, "dev"],   [1, 2, "brick"]
+          ];
+  for (rc = locs) 
+    let(r = rc[0], c = rc[1], ry = r == 0 ? 0 : y1, name = rc[2])
   translate([c*(cw-t0), r*(ch-t0)+ry, 0])
-  cardbox();
+  cardbox(name);
 }
 
 // size: [x: length, y: width_curved, z: height_curved]
@@ -136,12 +148,12 @@ echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
 // 0: all, 1: ls, 2: rs, 3: packed
 loc = 1;
 
-atrans(loc, [[cw/2,ch/2,0], [], undef, [cw/2, ch/2, 0]])
+atrans(loc, [[cw/2, ch/2, 0], [], undef, [cw/2, ch/2, 0]])
 {
-cardboxes();
-sidebox((cw-1)*1);
-sidebox((cw-1)*2);
-sidebox(0);
+  cardboxes();
+  sidebox((cw-1)*1);
+  sidebox((cw-1)*2);
+  sidebox(0);
 }
 
 atrans(loc, [undef, undef, undef, [0,0,0]]) {
@@ -149,17 +161,16 @@ atrans(loc, [undef, undef, undef, [0,0,0]]) {
   robber([0, ch + ds + 2* t0 + rs/2, t0+rs/2]);
 }
 
-bbx0 = tw+4*t0; bby0 = 0;
+bbx0 = tw + 4; bby0 = 0;
 atrans(loc, [[bbx0, bby0, 0], undef, [], [], []]) 
   bluebox();
 
-atrans(loc, [[bbx0 + (bw + 2), -t0, 0], undef, 
+atrans(loc, [[bbx0 + (bw + 2), -t0, 0], undef, [], [],
              [bbx0-t0, -t0, 0, [0, 180, 0, [lw/2, lh/2, (boxz+2*t0)/2]]],
-             [bbx0-t0, -t0, 0, [0, 180, 0, [lw/2, lh/2, (boxz+2*t0)/2]]],
-             []])
+             ])
   partsLid(); // partslid
 
-atrans(loc, [[bbx0 + (bw + 2) * 2, 0, -t0], undef,
+atrans(loc, [[bbx0 + (bw + 2) * 2, 0, -t0], undef, [],
              [bbx0, bby0, t0], []])
   partTrays();                    // partsTrays
 
