@@ -22,17 +22,27 @@ function sum(ary = [], n) =
 
 // move objects to new location
 // ndx: choice of location
-// trans: [ [x,y,z {, [rx, ry, rz {, [cx, cy, cz]} ]} ], ... ]
-module atrans(ndx = 0, atran = [ 0, 0, 0 ]) {
-  if (ndx >= len(atran) || is_undef(atran[ndx])) {
-    *children();
+// atran: [ [x,y,z {, [rx, ry, rz {, [cx, cy, cz]} ]} ], ... ]
+// - undef: do not render children
+// - num: use atran[num]
+// - []: use atran[0]
+// - [x, y, z, rotr]: translate([x,y,z]) rotater(rotr) children(0);
+module atrans(ndx = 0, atran = [[ 0, 0, 0 ]]) {
+  len = len(atran);
+  trann = (ndx >= len || is_undef(atran[ndx])) ? undef : atran[ndx];
+  tranr = 
+    is_undef(trann) ? undef :
+    is_num(trann) ? atran[trann] : 
+    is_list(trann) ? (len(trann) == 0 ? atran[0] : trann) :
+    undef;
+  if (is_undef(tranr)) {
+    // *children(); // do nothing
   } else {
-  // echo("atrans(ndx=", ndx, "atran=", atran, ")");
-  tranr = (len(atran[ndx]) == 0) ? atran[0] : atran[ndx] ;
-  rot = is_undef(tranr[3]) ? [ 0, 0, 0 ] : tranr[3];
-  trans = [ tranr[0], tranr[1], tranr[2] ];
-  // echo("trans=", trans, "rot=", rot);
-  translate(trans) rotatet(rot) children();
+    // echo("atrans: ndx=", ndx, "atran=", atran, "tranr=", tranr);
+    rot = def(tranr[3], [0, 0, 0]);
+    trans = as3D(tranr);
+    // echo("trans=", trans, "rot=", rot);
+    translate(trans) rotatet(rot) children();
   }
 }
 
@@ -255,12 +265,15 @@ module roundedRect(sxy = 10, rc = 2, k = 0) {
     translate([ k - p, -p ]) square([ s[0] + pp, s[1] + pp ]);
   }
 }
+
+// a vertical pipe, centered @ (0,0)
+// rrh: [dx, dy, dz] 
 module pipe(rrh = 10, t = t0) {
   dx = is_list(rrh) && !is_undef(rrh[0]) ? rrh[0] : rrh;
   dy = is_list(rrh) && !is_undef(rrh[1]) ? rrh[1] : rrh;
   dz = is_list(rrh) && !is_undef(rrh[2]) ? rrh[2] : rrh;
-  sx = (dx - t) / dx;
-  sy = (dy - t) / dy;
+  sx = dx > 0 ? (dx - t) / dx : 0;
+  sy = dy > 0 ? (dy - t) / dy : 0;
   linear_extrude(height = dz) difference() {
     circle(dx);
     scale([ sx, sx ]) circle(dx);
