@@ -16,11 +16,11 @@ module slotbox(ch = ch, ss = false) {
   slotifyY2([boxz-cz, 25,   2*t0, 5], [0, -(ch-t0+p)/2,       4], undef,     2, ss)
   children(0);
 }
-module sidebox(dx = 0, y1 = y1+1, ss = false) {
-  translate([dx+cw/2, ch+y1/2, 0]) 
-  slotbox(-y1+3*t0+pp, ss)
+module sidebox(dx = 0, y1 = y1, ss = false) {
+  translate([dx, ch-27, 0]) 
+  slotbox(-y1+2*t0+pp, ss)
   translate([-cw/2, -y1/2-t0,0])
-  box([cw, y1, boxz]); // dice box
+  box([cw, y1+t0, boxz]); // dice box
 }
 module cardbox() {
   slotbox()
@@ -56,8 +56,11 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
  div(hwx, rc, k);
 }
 
+// nx: columns of partTrays
+// ny: rows of partTrays
+nx = 1; ny = 4; 
 module partTrays() {
-  nx = 1; ny = 4; mx = t0 / nx; my = t0 / ny;
+  mx = t0 / nx; my = t0 / ny;
   tw2 = bw - 2 * t0 - mx;
   th2 = bh - 2 * t0 - my;
   tw = tw2/nx;
@@ -66,13 +69,41 @@ module partTrays() {
   py0 = (bh - ny * th) / 2;
   module partstray(tr=[0,0,0]) {
     // old tray: 85,500 mm^3, now: 74,500 mm^3
-    echo("partstray: tw, th, boxz-1=", tw, th, boxz-1, tw*th*(boxz-1) );
+    echo("partstray: tw, th, boxz-1=", tw, th, boxz-2.1, tw*th*(boxz-2.1) );
     rt = 3;
-    translate(tr) tray([tw - mx, th - my, boxz-1+rt ], rt, 2 );
+    translate(tr) tray([tw - mx, th - my, boxz - 2.1 * t0 + rt ], rt, 2 );
   }
   for (ptr = [0 : ny-1], ptc = [0 : nx-1]) 
-    let(x = px0 + ptc * (tw), y = py0 + ptr * (th) )
-      partstray([x, y, 1*t0+p]);
+    let(x = px0 + ptc * tw, y = py0 + ptr * th)
+      partstray([x, y, t0+p]); // above the blue box
+}
+
+module partsLid() {
+  lz = 11;
+  sd = 7;
+  union() {
+  translate([f/2, -f/2, 0])
+    box([lw, lh, lz]); // partslid
+  // clips
+  translate([00+1.5*t0, (lh-f)/2, t0 +  sd + 2/2 ]) 
+    cube([2*t0, 4, 2], true);
+  translate([lw-1.5*t0, (lh-f)/2, t0 +  sd + 2/2 ]) 
+    cube([2*t0, 4, 2], true);
+  }
+}
+
+module bluebox() {
+  sd = 7; hm = .8;
+  difference() {
+    color("lightblue")
+    box([bw, bh, boxz]);
+    translate([(bw+t0)/2, bh/2, boxz-sd]) 
+    cube([bw + 2*t0 + f, 4+1.5*f, 2+1.5*f], true); // lid clip
+    for (ix = [0 : nx-1], iy = [0 : ny-1]) 
+      let(hw = hm*bw/nx, hh = hm*bh/ny)
+      translate([ix * bw/nx +hw/2+ hw*(1-hm)/2, iy*bh/ny + hh/2 + hh*(1-hm)/2  , -t0])
+      cube([hw, hh, 5], true); // open bottom
+  }
 }
 
 f = .18;
@@ -86,43 +117,57 @@ cardw = 54; cw = cardw + 2 + 2 + 2*t0;
 cardh = 81; ch = cardh + 2 + 6 + 2*t0;
 ds = 15; rs = 15;
 
+// size of gap between two rows of boxes:
 y1 = 220 - 2*(ch)-t0;
 // tw = total width - t0;
 tw = 3 * (cw - t0);
 // bluebox width:
 bw = (282-20) - tw - 2; // inset by 2mm
 // bluebox height:
-bh = 2 * ch + y1 - 1 * t0;
+bh = 2 * ch + y1 - t0;  // 220 - 2*t0
+// partsLid:
+lw = bw + 2*t0 + f;
+lh = bh + 2*t0 + f;
 
 echo("y1=", y1, "bh=", bh, "tw=", tw);
 echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
 
 
+// 0: all, 1: ls, 2: rs, 3: packed
 loc = 1;
 
-atrans(loc, [[bbx0+bw+2, 0, -t0],[bbx0, bby0, t0], []])
-  partTrays();
-
-atrans(loc, [[cw/2,ch/2,0], [], [cw/2, ch/2, 0]])
+atrans(loc, [[cw/2,ch/2,0], [], undef, [cw/2, ch/2, 0]])
+{
 cardboxes();
-
 sidebox((cw-1)*1);
 sidebox((cw-1)*2);
 sidebox(0);
-atrans(loc, [undef, [0,0,0]]) {
+}
+
+atrans(loc, [undef, undef, undef, [0,0,0]]) {
   dice([t0, ch+t0, t0]); dice([ds+t0+f, ch+t0, t0]);
   robber([0, ch + ds + 2* t0 + rs/2, t0+rs/2]);
 }
 
-bbx0 = tw+2; bby0 = 0;
-color("lightblue")
- translate([bbx0, bby0, 0]) 
- box([bw, bh, boxz]);
+bbx0 = tw+4*t0; bby0 = 0;
+atrans(loc, [[bbx0, bby0, 0], undef, [], [], []]) 
+  bluebox();
+
+atrans(loc, [[bbx0 + (bw + 2), -t0, 0], undef, 
+             [bbx0-t0, -t0, 0, [0, 180, 0, [lw/2, lh/2, (boxz+2*t0)/2]]],
+             [bbx0-t0, -t0, 0, [0, 180, 0, [lw/2, lh/2, (boxz+2*t0)/2]]],
+             []])
+  partsLid(); // partslid
+
+atrans(loc, [[bbx0 + (bw + 2) * 2, 0, -t0], undef,
+             [bbx0, bby0, t0], []])
+  partTrays();                    // partsTrays
+
 
 // show printer plate:
-atrans(2, [undef, undef, [-1, -1, -2]]) 
+atrans(loc, [undef, undef, undef, [-1, -1, -2]]) 
  color("tan") cube([220, 220, 1]);
 // show packing box:
-atrans(2, [undef, undef, [-10, -4, -1]]) 
+atrans(loc, [undef, undef, undef, [-10, -4, -1]]) 
  color("brown") cube([282, 228, 1]);
 
