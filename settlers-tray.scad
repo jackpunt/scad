@@ -57,18 +57,21 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
 }
 
 module partTrays() {
-  tw2 = bw - 1.5 * t0;
-  th2 = bh - 1.5 * t0;
-  tw = tw2/2 - 2.1 * t0;
-  th = th2/2 - 2.1 * t0;
+  nx = 1; ny = 4; mx = t0 / nx; my = t0 / ny;
+  tw2 = bw - 2 * t0 - mx;
+  th2 = bh - 2 * t0 - my;
+  tw = tw2/nx;
+  th = th2/ny;
+  px0 = (bw - nx * tw) / 2;
+  py0 = (bh - ny * th) / 2;
   module partstray(tr=[0,0,0]) {
     // old tray: 85,500 mm^3, now: 74,500 mm^3
     echo("partstray: tw, th, boxz-1=", tw, th, boxz-1, tw*th*(boxz-1) );
     rt = 3;
-    translate(tr) tray([tw, th, boxz-1+rt ], rt, 2 );
+    translate(tr) tray([tw - mx, th - my, boxz-1+rt ], rt, 2 );
   }
-  for (ptr = [0 : 1], ptc = [0 : 1]) 
-    let(x = bbx0 + 1.5*t0 + ptc * (tw+1.5*t0), y = bby0 + ptr * (th + .5*t0) )
+  for (ptr = [0 : ny-1], ptc = [0 : nx-1]) 
+    let(x = px0 + ptc * (tw), y = py0 + ptr * (th) )
       partstray([x, y, 1*t0+p]);
 }
 
@@ -95,9 +98,9 @@ echo("y1=", y1, "bh=", bh, "tw=", tw);
 echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
 
 
-loc = 0;
+loc = 1;
 
-atrans(loc, [[0, 3*t0, -t0],[bbx0,bby0,t0], []])
+atrans(loc, [[bbx0+bw+2, 0, -t0],[bbx0, bby0, t0], []])
   partTrays();
 
 atrans(loc, [[cw/2,ch/2,0], [], [cw/2, ch/2, 0]])
