@@ -11,9 +11,10 @@ module robber(tr = [0,0,0]) {
   translate(v = tr) rotate([0,90,0]) cylinder(r1 = rs/2, r2 = 3, h = 32);
 }
 module slotbox(ch = ch, ss = false) {
-  cz = 5; // cut a wide slot
-  slotifyY2([boxz, cw-2*t0, 2*t0, 2], [0, -(ch-t0+p)/2, boxz-cz], undef, undef, ss)
-  slotifyY2([boxz-cz, 25,   2*t0, 5], [0, -(ch-t0+p)/2,       4], undef,     2, ss)
+  r1 = .1; r2 = 5;
+  cz = 7; // cut a wide slot
+  slotifyY2([boxz, cw-2*t0, 2*t0, r1], [0, -(ch-t0+p)/2, boxz-cz], undef, undef, ss)
+  slotifyY2([boxz-cz, 25,   2*t0, r2], [0, -(ch-t0+p)/2,       4], undef,     2, ss)
   children(0);
 }
 module sidebox(dx = 0, y1 = y1, ss = false) {
@@ -22,26 +23,42 @@ module sidebox(dx = 0, y1 = y1, ss = false) {
   translate([-cw/2, 0, 0])
   box([cw, y1+t0, boxz]); // dice box
 }
+
+module card(tr = [ (4) / 2, (4) / 2, 0 ], w00 = cardh, l00 = cardw)
+{
+    translate(tr) 
+    astack(24, [ -.03, 0, .325 ]) 
+    color("pink") roundedCube([ l00, w00, .4 ], 3, true);
+}
+
 module cardbox(name) {
   echo("cardbox: name=", name);
+  difference() {
   slotbox()
   box([cw, ch, boxz], t0, undef, true);
+  translate([cw-8-cw/2, -ch/2, 0])  cube([10, ch, boxz]);
+  }
   // fulcrum:
+  rotate([-3, 0, 0]) 
+  translate([0, -5, .3]) {
   translate([0, 0, 1]) cube([cw, 10, 2], true);
   difference() {
-  translate([0, 0, 1.5]) cube([cw, 7, 2.3], true);
-  // if (!is_undef(name)) {
-    translate([0, -2, 2.5]) 
-    linear_extrude(height = 1) 
-    text(name, halign = "center", size=5);
-  // }
+    translate([0, 0, 1.8]) cube([cw, 7, 2.4], true);
+    #  translate([0, -2, 2.55]) 
+      linear_extrude(height = .5) 
+      text(name, halign = "center", size=5);
   }
+  }
+
+  a2 = -3.;
+  rotatet([ a2, 0, 0 ], [ 0, cardh/2, 1 ])
+  card([1-cardw/2, 3-cardh/2, 1.2]);
 }
 
 module cardboxes() {
   locs = [[0, 0, "wheat"], 
-          [0, 1, "sheep"], [0, 2, "wood"], 
-          [1, 0, "ore"],   [1, 1, "dev"],   [1, 2, "brick"]
+          // [0, 1, "sheep"], [0, 2, "wood"], 
+          // [1, 0, "ore"],   [1, 1, "dev"],   [1, 2, "brick"]
           ];
   for (rc = locs) 
     let(r = rc[0], c = rc[1], ry = r == 0 ? 0 : y1, name = rc[2])
@@ -151,9 +168,9 @@ loc = 1;
 atrans(loc, [[cw/2, ch/2, 0], [], undef, [cw/2, ch/2, 0]])
 {
   cardboxes();
-  sidebox((cw-1)*1);
-  sidebox((cw-1)*2);
-  sidebox(0);
+  // sidebox((cw-1)*1);
+  // sidebox((cw-1)*2);
+  // sidebox(0);
 }
 
 atrans(loc, [undef, undef, undef, [0,0,0]]) {
