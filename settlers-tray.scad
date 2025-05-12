@@ -25,12 +25,13 @@ module sidebox(dx = 0, y1 = y1+1, ss = false) {
 module cardbox() {
   slotbox()
   box([cw, ch, boxz], t0, undef, true);
+  // fulcrum:
   translate([0, 0, 1.5]) cube([cw, 7, 2.3], true);
   translate([0, 0, 1]) cube([cw, 10, 2], true);
 }
 
 module cardboxes() {
-  locs = [[0,0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 3]];
+  locs = [[0,0], [0, 1], [0, 2], [1, 2], [1, 0], [1, 1]];
   for (rc = locs) let(r = rc[0], c = rc[1], ry = r == 0 ? 0 : y1)
   translate([c*(cw-t0), r*(ch-t0)+ry, 0])
   cardbox();
@@ -44,7 +45,7 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
  s = is_list(size) ? size : [size,size,size]; // tube_size
  rm = is_list(rt) ? max(rt[1], rt[2]) : rt;   // round_max
  k = is_undef(k0) ? -rm : k0;
- translate([s[0], 0, 0])
+ translate([s[0], 0, 0+p])
  rotate([0, -90, 0])
  roundedTube([s[2], s[1], s[0]], rt, k, t);
 
@@ -56,19 +57,19 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
 }
 
 module partTrays() {
-  tw2 = 120 - 2 * t0;
-  th2 = (220-ch) - 0 * t0;
+  tw2 = bw - 1.5 * t0;
+  th2 = bh - 1.5 * t0;
   tw = tw2/2 - 2.1 * t0;
   th = th2/2 - 2.1 * t0;
   module partstray(tr=[0,0,0]) {
     // old tray: 85,500 mm^3, now: 74,500 mm^3
     echo("partstray: tw, th, boxz-1=", tw, th, boxz-1, tw*th*(boxz-1) );
     rt = 3;
-    translate(tr) tray([tw, th, boxz-1+rt ], rt, 2);
+    translate(tr) tray([tw, th, boxz-1+rt ], rt, 2 );
   }
-  for (ptr = [0 : 1], ptc = [1 : 2]) 
-    let(x = 1.5*t0 + ptc * (tw+1.5*t0), y = ch + t0 + ptr * (th + .5*t0) )
-      partstray([x, y, 1*t0]);
+  for (ptr = [0 : 1], ptc = [0 : 1]) 
+    let(x = bbx0 + 1.5*t0 + ptc * (tw+1.5*t0), y = bby0 + ptr * (th + .5*t0) )
+      partstray([x, y, 1*t0+p]);
 }
 
 f = .18;
@@ -76,33 +77,49 @@ f = .18;
 // trays for cards, player-bits, dice, robber, disks
 tb = 3; // thickness of base
 
-boxz = 22; // depth of boxes: city=19; 8-10-cards, 3-lever, 2-holding
+// depth of boxes: city=19; 8-10-cards, 3-lever, 2-holding
+boxz = 22;
 cardw = 54; cw = cardw + 2 + 2 + 2*t0;
 cardh = 81; ch = cardh + 2 + 6 + 2*t0;
 ds = 15; rs = 15;
 
-y1 = 220 - 2*(ch);
-echo("y1=", y1);
+y1 = 220 - 2*(ch)-t0;
+// tw = total width - t0;
+tw = 3 * (cw - t0);
+// bluebox width:
+bw = (282-20) - tw - 2; // inset by 2mm
+// bluebox height:
+bh = 2 * ch + y1 - 1 * t0;
+
+echo("y1=", y1, "bh=", bh, "tw=", tw);
+echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
+
 
 loc = 0;
 
-atrans(loc, [[0, ch+y1+3*t0, -t0],[0,0,0], []])
+atrans(loc, [[0, 3*t0, -t0],[bbx0,bby0,t0], []])
   partTrays();
 
 atrans(loc, [[cw/2,ch/2,0], [], [cw/2, ch/2, 0]])
 cardboxes();
 
+sidebox((cw-1)*1);
+sidebox((cw-1)*2);
 sidebox(0);
 atrans(loc, [undef, [0,0,0]]) {
   dice([t0, ch+t0, t0]); dice([ds+t0+f, ch+t0, t0]);
   robber([0, ch + ds + 2* t0 + rs/2, t0+rs/2]);
 }
 
-sidebox((cw-1)*3);
-
+bbx0 = tw+2; bby0 = 0;
 color("lightblue")
- translate([cw-t0, ch-t0, 0]) 
-box([120-t0, 220-ch, boxz]);
+ translate([bbx0, bby0, 0]) 
+ box([bw, bh, boxz]);
 
-atrans(2, [undef, undef, [0, -2, -1]]) 
- % cube([282, 220, 1]);
+// show printer plate:
+atrans(2, [undef, undef, [-1, -1, -2]]) 
+ color("tan") cube([220, 220, 1]);
+// show packing box:
+atrans(2, [undef, undef, [-10, -4, -1]]) 
+ color("brown") cube([282, 228, 1]);
+
