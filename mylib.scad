@@ -204,9 +204,9 @@ module rc0(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0, ss = fal
 
 function rotOfId(rid) = [ [ -90, 0, 0 ], [ 0, -90, 0 ], [ 0, 0, -90 ], [0,0,0] ][rid];
 // tr: position of corner to be rounded
-// rotId: [x-axis: [+-90, 0, 0], y-axis: [0, +-90, 0], z-axis: [0, 0, +-90]]
-// q: index of orientation of corner to be rounded: [ll, ul, ur, lr]
-// rad: corner radius (5)
+// rotId: (1) [x-axis: [+-90, 0, 0], y-axis: [0, +-90, 0], z-axis: [0, 0, +-90]]
+// q:     (0) index of orientation of corner to be rounded: [ll, ul, ur, lr]
+// rad:   (5) corner radius 
 // t: thickness of wall to remove (t0)
 // ss: show cut with '#'
 module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
@@ -494,22 +494,31 @@ module align(tr = [0,0,0], rottr = [0,0,0], ss = false) {
 }
 
 
-// poke holes (children(1)) in children(0) through the y axis
-// x: [x0, step, xm]
-// z: [z0, step, zm]
-// tr: [1,0,1] select axiis to translate
-module gridify(x, z, tr = [ 1, 0, 1 ])
+// array of children(0, suitable for poking holes in the y axis.
+// xy: [x0, step, xm] (step in x or y direction)
+// zz: [z0, step, zm] (step in z direction)
+// tr: select axiis to translate ([1,0,1]) vs [0,1,1]
+module gridify0(xy, zz, tr = [ 1, 0, 1 ])
 {
-    for (xa = [x[0]:x[1]:x[2]], za = [z[0]:z[1]:z[2]])
+    for (xa = [xy[0]:xy[1]:xy[2]], za = [zz[0]:zz[1]:zz[2]])
     {
-        // echo("xz=", [xa, za]);
+        // echo("x,y,z=", [xa, xa, za]);
         translate(amul([ xa, xa, za ], tr)) children(0);
     }
 }
+module gridify(d1, d2, rid = 0)
+{
+  for (a = [d1[0]:d1[1]:d1[2]], b = [d2[0]:d2[1]:d2[2]])
+    let (tr = rid == 0 ? [0, a, b] 
+            : rid == 1 ? [a, 0, b]
+            : rid == 2 ? [a, b, 0]
+            : [0, 0, 0])
+    translate(tr) children(0);
+}
 module grid(nx, nz, k, tr = [ 1, 0, 1 ])
 {
-    gridify([ k, 2 * k, nx ], [ 0, 2 * k, nz ], tr) children(0);
-    gridify([ 0, 2 * k, nx ], [ k, 2 * k, nz ], tr) children(0);
+    gridify0([ k, 2 * k, nx ], [ 0, 2 * k, nz ], tr) children(0);
+    gridify0([ 0, 2 * k, nx ], [ k, 2 * k, nz ], tr) children(0);
 }
 
 // grid test:
