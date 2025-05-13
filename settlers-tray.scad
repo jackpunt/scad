@@ -39,6 +39,7 @@ module sidebox(dx = 0, y1 = y1, ss = false) {
       // cut access slot:
       translate([dw/2, 2*cylr - dy, t0]) cube([cw-dw , cylr, boxz]);
       translate([t0, t0, t0]) cube([cylr, cylr, boxz]);
+      translate([t0, cylr, cylz-3.8]) cube([2, 5.5, 4.1]);
       translate([cw-cylr, t0, t0]) cube([cylr, cylr, boxz]);
     }
   }
@@ -71,7 +72,7 @@ module cardbox(name, cutaway = false) {
   {
   slotbox()
   box([cw, ch, boxz], t0, undef, true);
-  translate([(-8-cw)/2, (-f-ch)/2, -p]) # cube(cut);
+  translate([(-8-cw)/2, (-f-ch)/2, -p]) cube(cut); // cutaway view
   }
   // fulcrum:
   rotate([-3, 0, 0]) 
@@ -104,9 +105,9 @@ module cardboxes(i0, i1, cut = false) {
   cardbox(name, cut);
 }
 function cutb(cw3 = cardw-11) = (cw - cw3)/2;
-// hole to cut from big lid
+// viewport to cut from big lid
 module cutTop(t = tb) {
-  // cut a viewport hole:
+  // cut a viewport:
   // difference() 
   {
     cw3 = (cardw - 11);       // width of cutout
@@ -149,13 +150,13 @@ module cardtops(i0, i1, cut = false) {
     translate([0, 0, boxz-t0])
       gridify([x0+xi, xi, xm-xi], [ch, (y1-2*t0-cs)/3, ch+y1-cs], 2 ) cube([cs, cs, cs]);
   }
-  tw = 1; 
+  tw = 1; hw = 3;
   // add retainer walls at end of  cardbox:
   for (i = [i0: i1]) let (rc = locs[i]) 
     let(r = rc[0], c = rc[1], ry = r == 0 ? 0 : y1, cz = 11)
     translate([c*(cw-t0), r*(ch-t0)+ry, 0])
-    translate([1.5*t0, 1.5*t0, boxz-cz+t0-p]) 
-    box([cw - 3*t0, ch-3*t0, 3], [tw, tw, -1.5], [2, 2, 4]);
+    translate([1.5*t0, 1.5*t0, boxz-hw]) 
+    box([cw - 3*t0, ch-3*t0, hw+pp], [tw, tw, -1.5], [2, 2, 4]);
 
   // retainer bar for disks
   dr = (true) ? 27/2 : 0; // disk radius
@@ -169,19 +170,22 @@ module cardtops(i0, i1, cut = false) {
 module cardsLid() {
   clw = 3 * (cw) + t0 + 2*f;
   clh = 2 * (ch) + t0 + y1 + t0 + 2*f; // bh + 2*t0 + 2*f
-  lz = 11; // == boxz/2 !!
-  sd = 7;
   r180 = [0, 180, 0, [clw/2, clh/2, boxz/2]];
   atrans(loc, [[-clw-6*t0, 0, t0, r180], 
-               undef,
-               undef,
-               undef,
+               undef, undef, undef,
                [0, 0, 0, r180],
                [0, 0, 0],
                ])
+  {
+  // add clips:
+  dx = 1.5*t0; 
+  tr = [0, (lh-f)/2, lz+3-f];
+  clips(tr, [0, clw-1*t0-dx], 10);
+
   cardtops()
   atrans(0, [[-t0-f, -t0-f, +t0, r180]])
     box([clw, clh, lz]);
+  }
 }
 
 // size: [x: length, y: width_curved, z: height_curved]
@@ -241,30 +245,55 @@ module partsGrid() {
   translate([0, 0, -t0])
   gridify([x0, xi, xm], [y0, yi, ym], 2) cube([cs, cs, cs]);
 }
+
+module clip(tr, wx = 1.8, ly = 3, hz = 2) {
+  translate(tr) cube([wx, ly, hz], true);
+}
+module hole(tr, wx = 2, ly = 3, hz = 2) {
+  translate(tr) cube([wx, ly+5*f, hz+5*f], true);
+}
+module clips(tr, xa, dy = 30, wx = 2, ly = 3, hz = 2) {
+  for (x = xa, iy = [-dy: dy: dy]) 
+  {
+    clip([tr[0]+x, tr[1]+iy, tr[2]], wx, ly, hz);
+    // clip([tr[0]+x1, tr[1]+iy, tr[2]], wx, ly, hz);
+  }
+}
+module holes(tr, xa, dy = 30, wx = 2, ly = 3, hz = 2) {
+  for (x = xa, iy = [-dy: dy: dy]) 
+  {
+    hole([tr[0]+x, tr[1]+iy, tr[2]], wx, ly, hz);
+  }
+}
+
+// lid z:
+lz = 11;
+// depth to clips/holes
+sd = 7;
+
 module partsLid() {
-  lz = 11;
   sd = 7;
   union() {
   translate([f/2, -f/2, 0])
-    difference() {
+  difference() {
     box([lw, lh, lz]); // partslid
     partsGrid();
-    }
-  // clips
-  translate([00+1.5*t0, (lh-f)/2, t0 +  sd + 2/2 ]) 
-    cube([2*t0, 4, 2], true);
-  translate([lw-1.5*t0, (lh-f)/2, t0 +  sd + 2/2 ]) 
-    cube([2*t0, 4, 2], true);
+  }
+
+  // add clips:
+  dx = 1.5*t0; 
+  tr = [0, (lh-f)/2, t0+sd+f];
+  clips(tr, [00+dx, lw-dx], 30);
   }
 }
 
 module bluebox() {
-  sd = 7; hm = .8;
+  hm = .8;
   difference() {
     color("lightblue")
     box([bw, bh, boxz]);
-    translate([(bw+t0)/2, bh/2, boxz-sd]) 
-    cube([bw + 2*t0 + f, 4+1.5*f, 2+1.5*f], true); // lid clip
+    holes([0, bh/2, boxz-sd], [t0/2, bw-t0/2], 30); // for clips
+
     for (ix = [0 : nx-1], iy = [0 : ny-1]) 
       let(hw = hm*bw/nx, hh = hm*bh/ny)
       translate([ix * bw/nx +hw/2+ hw*(1-hm)/2, iy*bh/ny + hh/2 + hh*(1-hm)/2  , -t0])
@@ -302,19 +331,23 @@ echo("y1=", y1, "bh=", bh, "tw=", tw);
 echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
 
 
-// 0: all, 1: main, 2: blue & lid, 3: partsTrays, 4: cardsLid, 5: packed
-loc = 5;
+// 0: all, 1: cardboxes, 2: bluebox & partsLid, 3: partTrays, 4: cardsLid,
+// 5: packed, 6: bluebox & partsLid (fit); 7: bluebox & partTrays (fit)
+loc = 3;
 
-// intersection() // render disk box
-// {
-//   translate([0, ch-t0, -t0]) cube([cw+t0, y1+2*t0, boxz+2*t0]);
+// CardBox:
+difference() {
 atrans(loc, [[cw/2, ch/2, 0], 0, undef, undef, undef, 0])
 {
   cardboxes();
   for (i = [0 : 2]) sidebox((cw-1)*i);
 }
-// }
-
+{
+  // cut holes for clips:
+  dx = 1.5*t0; 
+  holes([0, (lh-f)/2, lz+3], [-t0 + dx, tw+2*t0 - dx], 10, 4);
+}
+}
 cardsLid();
 
 atrans(loc, [[cw+t0, ch+t0, t0], undef, undef, undef, undef, 0]) {
@@ -323,11 +356,11 @@ atrans(loc, [[cw+t0, ch+t0, t0], undef, undef, undef, undef, 0]) {
 }
 
 bbx0 = tw + 6; bby0 = 0;
-atrans(loc, [[bbx0, bby0, 0], undef, [0, 0, 0], undef, undef, 0, 0]) 
+atrans(loc, [[bbx0, bby0, 0], undef, [0, 0, 0], undef, undef, 0, 0, 0, 0]) 
   bluebox();
 
 atrans(loc, [[bbx0 + (bw + 2), -t0, 0], undef, [bw + 2, -t0, 0], undef, undef, 
-             [bbx0-t0, -t0, -t0, [0, 180, 0, [lw/2, lh/2, (boxz+2*t0)/2]]],
+             [bbx0-t0, -t0, -t0, [0, 180, 0, [lw/2, lh/2, (boxz+2*t0)/2]]], 5,
              ])
   partsLid(); // partslid
 
@@ -335,8 +368,8 @@ atrans(loc, [[bbx0 + (bw + 2) * 2, bby0, -t0],
              undef, undef, 
              [ (bw + 2) * 0, bby0, -t0],
              undef, 
-             [bbx0, bby0, t0], 0])
-  partTrays();                    // partsTrays
+             [bbx0, bby0, t0], undef,  5])
+  partTrays(0,0);                    // partTrays
 // Roads: 1 X 3/16 X 3/16
 // City: 3/4 X 3/4 X 10mm
 // House: 9 X 14 X 12 mm
