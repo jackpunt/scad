@@ -346,9 +346,9 @@ echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
 
 // 0: all, 1: cardboxes, 2: bluebox & partsLid, 3: partTrays, 4: cardsLid,
 // 5: packed, 6: bluebox & partsLid (fit); 7: bluebox & partTrays (fit)
-loc = 1;
+loc = 3;
 
-// CardBox:
+// CardTray-1:
 difference() {
 atrans(loc, [[cw/2, ch/2, 0], 0, undef, undef, undef, 0])
 {
@@ -361,6 +361,7 @@ atrans(loc, [[cw/2, ch/2, 0], 0, undef, undef, undef, 0])
   holes([0, (lh-f)/2, cbz - lz + 4], [-t0 + dx, tw+2*t0 - dx], 10, 4);
 }
 }
+// cardsLid-4
 cardsLid();
 
 atrans(loc, [[cw+t0, ch+t0, t0], undef, undef, undef, undef, 0]) {
@@ -368,6 +369,7 @@ atrans(loc, [[cw+t0, ch+t0, t0], undef, undef, undef, undef, 0]) {
   robber([0, ds + t0 + rs/2, rs/2]);
 }
 
+// partsBox-2 w/Lid
 bbx0 = tw + 6; bby0 = 0;
 atrans(loc, [[bbx0, bby0, 0], undef, [0, 0, 0], undef, undef, 0, 0, 0, 0]) 
   bluebox();
@@ -377,12 +379,13 @@ atrans(loc, [[bbx0 + (bw + 2), -t0, 0], undef, [bw + 2, -t0, 0], undef, undef,
              ])
   partsLid(); // partslid
 
+// partTrays-3x4
 atrans(loc, [[bbx0 + (bw + 2) * 2, bby0, -t0], 
              undef, undef, 
              [ (bw + 2) * 0, bby0, -t0],
              undef, 
              [bbx0, bby0, t0], undef,  5])
-  partTrays(0,0);  // (0,0);            // partTrays
+  partTrays();  // (0,0);            // partTrays
 // Roads: 1 X 3/16 X 3/16
 // City: 3/4 X 3/4 X 10mm
 // House: 9 X 14 X 12 mm
