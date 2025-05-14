@@ -113,21 +113,20 @@ module bonusTray(loc = 0) {
 
     dh = 2.9;
     atrans(loc, [
-        [ (l + dh + bh + bx - p), -1 * t0, 0, [ 0, -90, 0 ] ], // <-- print loc
+        [ (l + dh  + bx - p), 0, -t0, [ 0, 90, 0, [bl/2, 0, bh*2] ] ], // <-- print loc
+        // [ (l + dh + bh + bx - p), -1 * t0, 0, [ 0, -90, 0 ] ], // <-- print loc
         [ (d1 + t0 / 2 - p) + t0, t0, h - dh - bh - hn + .2], // <-- on box
-        [ d1 - p, -20, 0 ]  // <-- edit loc
+        [ d1 - p, -20, 0 ],  // <-- edit loc
+        undef,
+        0,
     ]) 
     {
         hook();
         rc([ bl, bw-t0/2, bh ], 0, 3, br) 
         rc([ 0, bw-t0/2, bh ], 0, 0, br)
-        difference()
-        {
-            cube([ bl, bw, bh ]);
-            translate([ -p, t0, t0 ]) cube([ bl + pp, bw - 2 * t0 + pp, bh + pp ]);
-        }
-        div([bh, bw, 0], .1, -br);
-        div([bh, bw, bl-t0], .1, -br);
+        box([bl, bw, bh], [-t0, t0, t0]);
+        div([3, bw, 0], .1, 0);  // end cap
+        div([bh, bw, bl-t0], .1, -br); // other end
         if (loc == 1)
         {
             translate([ 2, bw - 1.2 * t0, t0 ])
@@ -184,9 +183,9 @@ module mainBox() {
       pipe([ rp + t0 + f / 2, rp + t0 + f / 2, bz ]);
 
 }
-loc = 0;
-
-*mainBox();
+loc = 4;
+atrans(loc, [[0,0,0], 0, 0, 0])
+mainBox();
 bonusTray(loc);
-*pbox([ l + t0, t0 + f / 2, 0 ], t0 + p);
-*hbox();
+pbox([ l + t0, t0 + f / 2, 0 ], t0 + p);
+hbox();
