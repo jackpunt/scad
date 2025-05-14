@@ -68,6 +68,30 @@ module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
   }
 }
 
+
+// A hollow box:
+// lwh: [length_x, width_y, height_z],
+// r: corner radius, sidesonly (2)
+// t: ([t0,t0,t0]) thick 'translate'
+// d: delta --> reduction to create inner box ([2, 2, 1-p])
+// cxy: center XY, z = 0
+// -
+// diff() { cube(lwh); tr(txyz) cube(adif(lwh, amul(d, txyz))) }
+module roundedBox(lwh = [ 10, 10, 10 ], r = 2, t = t0, d, cxy = false) {
+  t = is_undef(t) ? t0 : t;             // wall thickness
+  txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
+  d = is_list(d) ? d : [ 2, 2, 1 - pp ]; // reduce inner_cube by txyz
+  dxyz = adif(lwh, amul(d, txyz)); // dxyz = lwh - d * txyz;
+  // echo("box: lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
+  dc = cxy ? -.5 : 0;
+  txyzc = amul(lwh, [dc,dc,0]);
+  translate(txyzc) 
+  difference() {
+    roundedCube(lwh, r, true, false);
+    translate(txyz) roundedCube(dxyz, r, true); // -2*bt or +2*p
+  }
+}
+
 // repeat children() in a linear pattern:
 // xyz: translate to [x, y, z] ([0, 0, 0])
 // dxyz: translate each step for multiple posts ([0, 10, 0])

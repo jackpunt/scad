@@ -15,7 +15,8 @@ ibz = 14;
 module slotbox(ch = ch, ss = false) {
   r1 = .1; r2 = 5;
   cz = 3; // cut a wide slot, reducing height of 'box' for 25mm slot
-  slotifyY2([cbz, cw-2*t0, 2*t0, r1], [0, -(ch-t0+p)/2, ibz], undef, undef, false)
+  // 2 + .5mm to meet the roundedBox corner:
+  slotifyY2([cbz, cw-2.5*t0, 2*t0, r1], [0, -(ch-t0+p)/2, ibz], undef, undef, false)
   slotifyY2([ibz, 25,      2*t0, r2], [0, -(ch-t0+p)/2,   4], undef,     2, ss)
   children(0);
 }
@@ -73,7 +74,7 @@ module cardbox(name, cutaway = false) {
   difference() 
   {
   slotbox()
-  box([cw, ch, cbz], t0, undef, true);
+  roundedBox([cw, ch, cbz], 1, t0, undef, true);   // round the outer corners
   translate([(-8-cw)/2, (-f-ch)/2, -p]) cube(cut); // cutaway view
   }
   // fulcrum:
@@ -82,9 +83,11 @@ module cardbox(name, cutaway = false) {
   translate([0, 0, 1]) cube([cw, 10, 2], true);
   difference() {
     translate([0, 0, 1.8]) cube([cw, 7, 2.4], true);
-      translate([0, -2, 2.55]) 
+      translate([0, -2.1, 2.75]) 
       linear_extrude(height = .5) 
-      text(name, halign = "center", size=5.5, font=".SF Compact Rounded:style=Bold");
+      text(name, halign = "center", size=5, font="Nunito:style=Bold");
+      // ".SF Compact Rounded"
+      // ".SF NS Rounded"
   }
   }
 
@@ -141,25 +144,25 @@ module cardtops(i0, i1, cut = false) {
     for (i = [i0: i1]) let (rc = locs[i]) 
       let(r = rc[0], c = rc[1], ry = r == 0 ? 0 : y1)
       // echo("cardtops: ", [c*(cw-t0), r*(ch-t0)+ry, 0])
-      translate([c*(cw-t0), r*(ch-t0)+ry, boxz+1])
+      translate([c*(cw-t0), r*(ch-t0)+ry, cbz+1])
         cutTop(2);
     // cutout grid above sideboxes:
     nc = 3*6; cs = 6; 
     x0 = cutb()-cs/2-1.5*t0;
     xi = (3*(cw-1)+1 - 2*x0 - cs)/(nc-1); // xi?
     xm = (3*(cw-1)+1) - x0;
-    translate([0, 0, boxz-t0]) // we raise this lid up to boxz
+    translate([0, 0, cbz-t0]) // we could raise this lid up to boxz
       gridify([x0+xi, xi, xm-xi], [ch, (y1-2*t0-cs)/3, ch+y1-cs], 2 ) cube([cs, cs, cs]);
   }
-  tw = 1; hw = boxz-cbz+1; hw0 = boxz - ibz-hw+1;
+  tw = 1; hw = cbz-cbz+1; hw0 = cbz - ibz-hw+1;
   // add retainer walls at end of  cardbox:
   for (i = [i0: i1]) let (rc = locs[i]) 
     let(r = rc[0], c = rc[1], ry = r == 0 ? 0 : y1, cz = 11)
     translate([c*(cw-t0), r*(ch-t0)+ry, 0])
-    translate([1.5*t0, 1.5*t0, boxz-hw]) 
+    translate([1.5*t0, 1.5*t0, cbz-hw]) 
     {
-      box([cw - 3*t0, ch-3*t0, hw+pp], [tw, tw, -1.5], [2, 2, 4]);
-      translate([cw/2, t0/2, -hw0/2-p])  cube([10, 1, hw0], true);
+      roundedBox([cw - 3*t0, ch-3*t0, hw+pp], 2, [tw, tw, -1.5], [2, 2, 4]);
+      translate([cw/2, t0/2, -hw0/2-p])  cube([10, 1, hw0], true); // tab in slot
     }
     
 
@@ -167,7 +170,7 @@ module cardtops(i0, i1, cut = false) {
   dr = (true) ? 27/2 : 0; // disk radius
   cylr = (true) ? dr + 1.6: 0; // t0 + 1.2/2
   rr = 3; // reduce radius
-  cylz = 16; kz = 1; cylz2 = boxz-cylz+kz;
+  cylz = 16; kz = 1; cylz2 = cbz-cylz+kz;
   translate([ cylr/2, ch + t0 + cylr, cylz-kz]) 
   cube([cw-cylr, 1.5* t0, cylz2]);
 }
@@ -175,7 +178,7 @@ module cardtops(i0, i1, cut = false) {
 module cardsLid() {
   clw = 3 * (cw) + 4*f;
   clh = 2 * (ch) + 0 + y1 + t0 + 4*f; // bh + 2*t0 + 2*f
-  clz = lz + (boxz-cbz);
+  clz = lz + (cbz-cbz);
   // rotate in place:
   r180 = [0, 180, 0, [clw/2, clh/2, cbz/2]];
   // align lid with box:
@@ -188,7 +191,7 @@ module cardsLid() {
   {
   // add clips:
   cx = 1+2*f; d0 = (t0 + cx/2); 
-  tr = [p0, (lh-f)/2, boxz - clz + 4 -f]; // 4mm up from bottom edge
+  tr = [p0, (lh-f)/2, cbz - clz + 4 -f]; // 4mm up from bottom edge
   clips(tr, [d0, clw-d0], 10, cx);
 
   cardtops()
@@ -321,7 +324,7 @@ cbz = 18;  // cardbox height: independent of bluebox: boxz
 cardw = 54; cw = cardw + 2 + 2 + 2*t0; // cw = cardw + sleeve + gap + box wall
 cardh = 81; ch = cardh + 2 + 6 + 2*t0; // ch = cardh + sleeve + GAP + box wall
 // dice size
-ds = 15;
+ds = 16;
 // robber size
 rs = 15;
 
@@ -379,7 +382,7 @@ atrans(loc, [[bbx0 + (bw + 2) * 2, bby0, -t0],
              [ (bw + 2) * 0, bby0, -t0],
              undef, 
              [bbx0, bby0, t0], undef,  5])
-  partTrays(2,0);  // (0,0);            // partTrays
+  partTrays(0,0);  // (0,0);            // partTrays
 // Roads: 1 X 3/16 X 3/16
 // City: 3/4 X 3/4 X 10mm
 // House: 9 X 14 X 12 mm
