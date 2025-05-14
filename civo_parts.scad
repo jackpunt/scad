@@ -183,7 +183,7 @@ module mainBox() {
       pipe([ rp + t0 + f / 2, rp + t0 + f / 2, bz ]);
 
 }
-loc = 4;
+loc = 0;
 atrans(loc, [[0,0,0], 0, 0, 0])
 mainBox();
 bonusTray(loc);

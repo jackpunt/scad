@@ -330,9 +330,9 @@ module roundedTube(sxy = 10, r = 2, k = 0, t = t0) {
 // a roundedRect divider across the YZ plane of a box:
 // hwx: [z,y,x];
 // r: radius ([r,r,r,r])
-// t: thick (dx = t0)
 // k: (0) k>0 keep bottom/cut top; k<0 cut bottom/keep top
-// k == 0 keep all
+// - k == 0 --> keep all
+// t: thick (dx = t0)
 module div(hwx = 10, r = 2, k, t = t0) {
   dx = is_undef(hwx[2]) ? 0 : hwx[2];
   translate([ dx + t, 0, 0 ])    //
