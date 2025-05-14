@@ -39,7 +39,7 @@ module sidebox(dx = 0, y1 = y1, ss = false) {
       // cut access slot:
       translate([dw/2, 2*cylr - dy, t0]) cube([cw-dw , cylr, boxz]);
       translate([t0, t0, t0]) cube([cylr, cylr, boxz]);
-      translate([t0, cylr, cylz-3.8]) cube([2, 5.5, 4.1]);
+      translate([t0, cylr, cylz-3.8]) cube([2, 6, 4.1]); // for clip-hole
       translate([cw-cylr, t0, t0]) cube([cylr, cylr, boxz]);
     }
   }
@@ -333,7 +333,7 @@ echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
 
 // 0: all, 1: cardboxes, 2: bluebox & partsLid, 3: partTrays, 4: cardsLid,
 // 5: packed, 6: bluebox & partsLid (fit); 7: bluebox & partTrays (fit)
-loc = 3;
+loc = 4;
 
 // CardBox:
 difference() {
@@ -369,7 +369,7 @@ atrans(loc, [[bbx0 + (bw + 2) * 2, bby0, -t0],
              [ (bw + 2) * 0, bby0, -t0],
              undef, 
              [bbx0, bby0, t0], undef,  5])
-  partTrays(0,0);                    // partTrays
+  partTrays();  // (0,0);            // partTrays
 // Roads: 1 X 3/16 X 3/16
 // City: 3/4 X 3/4 X 10mm
 // House: 9 X 14 X 12 mm
