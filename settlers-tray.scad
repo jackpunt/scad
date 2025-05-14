@@ -10,11 +10,13 @@ module robber(tr = [0,0,0]) {
   color("black") 
   translate(v = tr) rotate([0,90,0]) cylinder(r1 = rs/2, r2 = 3, h = 32);
 }
+// 
+ibz = 14;
 module slotbox(ch = ch, ss = false) {
   r1 = .1; r2 = 5;
-  cz = 3; // cut a wide slot
-  slotifyY2([cbz, cw-2*t0, 2*t0, r1], [0, -(ch-t0+p)/2, cbz-cz], undef, undef, ss)
-  slotifyY2([cbz-cz, 25,   2*t0, r2], [0, -(ch-t0+p)/2,      4], undef,     2, ss)
+  cz = 3; // cut a wide slot, reducing height of 'box' for 25mm slot
+  slotifyY2([cbz, cw-2*t0, 2*t0, r1], [0, -(ch-t0+p)/2, ibz], undef, undef, false)
+  slotifyY2([ibz, 25,      2*t0, r2], [0, -(ch-t0+p)/2,   4], undef,     2, ss)
   children(0);
 }
 module sidebox(dx = 0, y1 = y1, ss = false) {
@@ -82,7 +84,7 @@ module cardbox(name, cutaway = false) {
     translate([0, 0, 1.8]) cube([cw, 7, 2.4], true);
       translate([0, -2, 2.55]) 
       linear_extrude(height = .5) 
-      text(name, halign = "center", size=5);
+      text(name, halign = "center", size=5.5, font=".SF Compact Rounded:style=Bold");
   }
   }
 
@@ -139,29 +141,33 @@ module cardtops(i0, i1, cut = false) {
     for (i = [i0: i1]) let (rc = locs[i]) 
       let(r = rc[0], c = rc[1], ry = r == 0 ? 0 : y1)
       // echo("cardtops: ", [c*(cw-t0), r*(ch-t0)+ry, 0])
-      translate([c*(cw-t0), r*(ch-t0)+ry, cbz+1])
+      translate([c*(cw-t0), r*(ch-t0)+ry, boxz+1])
         cutTop(2);
     // cutout grid above sideboxes:
     nc = 3*6; cs = 6; 
     x0 = cutb()-cs/2-1.5*t0;
     xi = (3*(cw-1)+1 - 2*x0 - cs)/(nc-1); // xi?
     xm = (3*(cw-1)+1) - x0;
-    translate([0, 0, cbz-t0])
+    translate([0, 0, boxz-t0]) // we raise this lid up to boxz
       gridify([x0+xi, xi, xm-xi], [ch, (y1-2*t0-cs)/3, ch+y1-cs], 2 ) cube([cs, cs, cs]);
   }
-  tw = 1; hw = 3;
+  tw = 1; hw = boxz-cbz+1; hw0 = boxz - ibz-hw+1;
   // add retainer walls at end of  cardbox:
   for (i = [i0: i1]) let (rc = locs[i]) 
     let(r = rc[0], c = rc[1], ry = r == 0 ? 0 : y1, cz = 11)
     translate([c*(cw-t0), r*(ch-t0)+ry, 0])
-    translate([1.5*t0, 1.5*t0, cbz-hw]) 
-    box([cw - 3*t0, ch-3*t0, hw+pp], [tw, tw, -1.5], [2, 2, 4]);
+    translate([1.5*t0, 1.5*t0, boxz-hw]) 
+    {
+      box([cw - 3*t0, ch-3*t0, hw+pp], [tw, tw, -1.5], [2, 2, 4]);
+      translate([cw/2, t0/2, -hw0/2-p])  cube([10, 1, hw0], true);
+    }
+    
 
   // retainer bar for disks
   dr = (true) ? 27/2 : 0; // disk radius
   cylr = (true) ? dr + 1.6: 0; // t0 + 1.2/2
   rr = 3; // reduce radius
-  cylz = 16; kz = 1; cylz2 = cbz-cylz+kz;
+  cylz = 16; kz = 1; cylz2 = boxz-cylz+kz;
   translate([ cylr/2, ch + t0 + cylr, cylz-kz]) 
   cube([cw-cylr, 1.5* t0, cylz2]);
 }
@@ -169,24 +175,25 @@ module cardtops(i0, i1, cut = false) {
 module cardsLid() {
   clw = 3 * (cw) + 4*f;
   clh = 2 * (ch) + 0 + y1 + t0 + 4*f; // bh + 2*t0 + 2*f
+  clz = lz + (boxz-cbz);
   // rotate in place:
   r180 = [0, 180, 0, [clw/2, clh/2, cbz/2]];
   // align lid with box:
   p0 = -(t0+2*f);
-  atrans(loc, [[-clw-6, 0, t0, r180], // placement to view
+  atrans(loc, [[-clw-6, 0, t0, r180], // 0: placement to view
                2, undef, undef,
-               [0, 0, t0, r180],    // placement to print
-               [0, 0, 0],           // align with box
+               [0, 0, t0, r180],    // 4: placement to print
+               [0, 0, 0],           // 5: align with box
                ])
   {
   // add clips:
   cx = 1+2*f; d0 = (t0 + cx/2); 
-  tr = [p0, (lh-f)/2, cbz - lz + 4 -f]; // 4mm up from bottom edge
+  tr = [p0, (lh-f)/2, boxz - clz + 4 -f]; // 4mm up from bottom edge
   clips(tr, [d0, clw-d0], 10, cx);
 
   cardtops()
-  atrans(0, [[p0, p0, +t0, r180]]) // flip in place; align with cardbox
-    box([clw, clh, lz]);
+  atrans(0, [[p0, p0, clz-lz +t0, r180]]) // flip in place; align with cardbox
+    box([clw, clh, clz]);
   }
 }
 
@@ -336,7 +343,7 @@ echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
 
 // 0: all, 1: cardboxes, 2: bluebox & partsLid, 3: partTrays, 4: cardsLid,
 // 5: packed, 6: bluebox & partsLid (fit); 7: bluebox & partTrays (fit)
-loc = 5;
+loc = 1;
 
 // CardBox:
 difference() {
