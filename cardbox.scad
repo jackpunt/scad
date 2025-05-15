@@ -101,26 +101,31 @@ module ramp(vx = vx, vz = vz, ve = 0)
 
 /** try to hold inline cards, also a "lid" to hold cards in box
  @param dx length of tray
- @param dz height of wings
+ @param dz height of wings (below tsd)
  @ambient w: width of box, t0: thickness
  */
-module topTray(dx = l/4, dz = 6)
+module topTray(dx = l/4, dz = 2)
 {
     f = .43;
     tw = w +.75;
     sw = 2 * t0;
-    atrans(loc, [ [ l+2, 0, dx, [0, 90, 0] ], 
-                [ (l-dx)/2+20, 0, h-dz-tsd+t0 ], 
-                [ (l-dx)/2+20, 0, h-dz-tsd+t0+p ],
+    atrans(loc, [ [ l+4, 0, dx, [0, 90, 0] ], 
+                [ (l-dx)/2+20, 0, h-dz-tsd- t0 ], 
+                1,
+                0,
+                0,
+                0,
           ])
     /* clang-format on */
     {
-        rz = 5;
-        in = f;
-        dw = 3;
+        rz = dz; pz = 3;
+        in = -.05;   // negative: apply pressure to sidewall
+        dw = 3*t0 + f; // width of clip: sidewalls=2*t0 + slot=(t0+ic)
+        iw = t0+in; // indent the tray
         dup([ 0, w, 0], [0,0,180, [dx/2, 0, 0]])
-          color("blue") translate([0, 2-(dw+f/2), rz]) cube([dx, dw, t0]);
-      translate([0, t0-f/2, 0]) box([ dx, w-2*t0+f, rz+1 ], [-t0,t0,t0], [2,2,0]);
+          color("cyan") translate([0, 2*t0-(dw), f/2-pz]) // up=f/2 for visual clarity
+          box([dx, dw+in, rz+pz+2], [0-pp, t0, -t0], [2, 2, 0]);
+      translate([0, iw, 0]) box([ dx, w-2*iw, rz+1 ], [-t0,t0,t0], [2,2,0]);
     }
 }
 
@@ -173,10 +178,11 @@ module vbox()
 // temp union for 'intersection' test
 //   intersection() 
  {
+  // vbox:
   atrans(loc, [
                [0, l0y, 0, [0,0,-90]], 
                [0, l1y, 0, [0,0,-90]], 
-               [0, l1y, 0, [0,0,-90]]
+               [0, l1y, 0, [0,0,-90]],
                ]) 
   { 
 //   echo("vbox2:", hwtr)
@@ -337,15 +343,26 @@ module slottest() {
 use<testRC.scad>;
 // translate([-50, -40, 0])  testRC();
 
+// 0: all, 1: box/cutaway, 2: box & cards & lid, 3: box&lid, 4: lid
 loc = 0;
 ///
 /// MAIN BUILD HERE:
 ///
+atrans(loc, [[0,0,0], 0, 0, 0])
 cutaway() gridaway() mainBox();
 // slottest();
-// topTray();
-//  dup([ 0, -25, 0 ])
-//  vbox();
+
+// topTray:
+// dup([-10, 0, 0])
+// dup([-10, 0, 0])
+// dup([-10, 0, 0])
+// dup([-10, 0, 0])
+topTray(l/6);
+
+// Two vbox:
+dup([ 0, -25, 0 ])
+ atrans(loc, [[0,0,0]])
+ vbox();
 
 dy = 10;
 dr = 5; // rCube test
@@ -355,5 +372,5 @@ dr = 5; // rCube test
 // atan(6/88) = 4;
 // atan(7/88) = 4.5;
 a2 = 3.2; // angle of the card on ramp
-if (loc != 0)
+atrans(loc, [[0, 0, 0], undef, 0])
     translate([ 0, 0, .1 ]) rotatet([ 0, a2, 0 ], [ 90, 0, 1 ]) card([ 4, (w0 - w00) / 2, 1 ]);
