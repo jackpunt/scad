@@ -58,31 +58,59 @@ module oneCol(col = 0, h2 = h2, dz = 5, center = true) {
 // TODO: add hook to one end, subtract it from other
 
 // h2: orther size of hex; x_width (h2)
-// w: x_width of frame piece (h2*33/80)
+// wf: x_width of frame piece (h2*33/80)
 // oz: offset_z
-module frame(h2 = h2, w = 33, oz = -2) {
-  w = def(w, h2*33/80);
+module frame(h2 = h2, wf, oz = -2) {
+  wf = def(wf, h2/3); // width of frame
   dz = 3+pp;       // thickness of frame
   col = 3;         // placement of frame
+  H = h2/2; R = h2/sqrt3;
+  k =  R * (3 * col + 1) / 2; // R/2 + col * 1.5 * R;
+  wt = (k + wf)/1.5;
+  fh = 4*h2; // total frame height
+
+  module fullFrame() {
   // cut the adjacent hexes:
   difference() 
   {
     // make edge piece as trapezoid:
     intersection() 
     {
-      H = h2/2; R = h2/sqrt3;
-      k =  R * (3 * col + 1) / 2; // R/2 + col * 1.5 * R;
-      wt = (k + w)/1.5;
       // echo("frame: col, H, R, k, wt=", [col, H, R, k, wt]);
-      fh = 4*h2;
       translate([k, -fh/2, oz-dz/2+p])
-        cube([w, fh, dz-pp], false);
+        cube([wf, fh, dz-pp], false);
       // color("cyan") 
       triangle([wt, 0, oz, [0, 0, 180]], wt, t=dz, center = true);
     }
     // the adjacent hexes:
     translate([0, 0, oz]) oneCol(col, h2, dz+pp);
   }
+  }
+  // hs: height of straight cut
+  module cutit(hs = 2.5*h2) {
+    echo("cutit: hs=", hs);
+    intersection()  // straight section
+    {
+      children(0);
+      translate([k+wf/2, 0, oz])  cube([wf, hs, dz+pp], true);
+    }
+    color("red")
+    translate([0, 0, pp]) 
+    intersection()   // corner section
+    {
+      es = (fh-hs)/2;  // end size
+      ec = -wf*.66;    // intersects ray from center @ 30', 
+      children(0);
+      translate([k+wf/2, (es+hs)/2, oz]) 
+      dup([0, 0, -p], [0, 0, 60, [ec, 0, 0]])
+        cube([wf, es, dz+pp], true);
+
+    }
+  }
+  cutit()
+  dup([-0*f, 0*f, -pp], [0, 0, 60])
+  fullFrame();
+
 }
 module color1(cname) {
   color(name) children(0);
@@ -94,9 +122,8 @@ module color1(cname) {
 // dup([0,0,0], [0, 0, -60])
 // dup([0,0,0], [0, 0, -60])
 // dup([0,0,0], [0, 0, -60])
+frame(h2, 36);
 
-// dup([0,0,.1], [0, 0, 60], c2="red")
-frame(h2, 38);
 
 // TODO: partition as straight piece & corner piece:
 
