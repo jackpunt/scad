@@ -149,9 +149,10 @@ module rotatet(rot = [ 0, 0, 0 ], cr = [ 0, 0, 0 ]) {
 // suitable inside hull() { ... }
 // tr: translate (after rotate)
 // rott: rotate (with rott[3] as center)
-module dup(tr = [ 0, 0, 0 ], rott = [ 0, 0, 0 ]) {
+module dup(tr = [ 0, 0, 0 ], rott = [ 0, 0, 0 ], c2) {
   children(0);
-  translate(tr) rotatet(rott) children(0);
+  translate(tr) rotatet(rott) 
+  color(c2) children(0);
 }
 
 // New implementation: MCAD
