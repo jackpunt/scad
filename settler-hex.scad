@@ -103,9 +103,10 @@ module frame(h2 = h2, wf, oz = -2) {
     //  - cxyz: [cx, cy, cz] ([0, 0, 0])
     module hook(hr = hr, rtr) {
       rtr = def(rtr, hooktr);
-      trr(rtr) color("cyan")  {
+      trr(rtr)  union() {
         triangle([0, 0, 0], hr, dz+pp, true);
         cube([18, 1, 1], true); // decorate to see dir of rotation
+        cube([1,1,8], true); // to find center
       }
     }
     // child(0)+child(1)-tr(rtr, child(1)*sf)
@@ -116,7 +117,7 @@ module frame(h2 = h2, wf, oz = -2) {
       rtr = def(rtr, [0, 0, 0]);
       sf = def(sf, [1, 1, 1]);
       // unhook = def(sf[3], [0,0,0]);
-      // difference() 
+      difference() 
       {
         union() {
           children(0);
@@ -149,19 +150,6 @@ module frame(h2 = h2, wf, oz = -2) {
       trf = [csp, (es+hs)/2, oz];
       // color("red")
       translate([0, 0, -pp]) // cosmetic
-      // translate([csp, (es+hs)/2, oz]) 
-      // {
-      //   intOne([0,0,0], trf, "red") {  // corner section
-      //     children(0);
-      //     cube([wf, es, dz+pp], true);
-      //   }
-      //   intOne(trt, trf, "purple") {  // corner section
-      //   children(0);
-      //     cube([wf, es, dz+pp], true);
-      //   }
-      // }
-
-      // trr(trf)
       intersection()
       {
         children(0);   // fullFrame
@@ -177,8 +165,8 @@ module frame(h2 = h2, wf, oz = -2) {
     unhook = amul(adif(as3D(hooktr), [-csp, 0, 0]), [-1, -1, -1]);
     echo("unhook=", unhook);
 
-    // dup([0, -hs, .01], undef, "cyan")
-    * addAndCut([0, -hs, 0], 
+    translate([0, -1, 0])
+    addAndCut([0, -hs, 0], 
               [(hr+f)/hr, (hr+f)/hr, 1, unhook]) { 
       tr = [csp, 0, oz]; // translate to location of frame
       straightPart(tr) children(0); 
@@ -186,16 +174,19 @@ module frame(h2 = h2, wf, oz = -2) {
     }
 
     hx = -es-ec; hy = es/2;
-    rtr  = [0, 0, 0, [0, 0, 60, [-es-ec, es/2, 0]]];
-    trf = [wf*.2 + csp, (hs)/2, oz];
-    echo("es-ec, ec, hx = ", -es-ec, ec, hx);
-    addAndCut([0, 0, 0, [0, 0, 0, [csp, hs/2, oz]]], [(hr+f)/hr, (hr+f)/hr, 1]) 
+    rtr = [wf*.2 + csp, hs/2, oz, [0, 0, 60, [-es-ec, es/2, 0]]];  // rotate for second part
+    trf = [wf*.2 + csp, hs/2, oz]; // to location of frame
+    hooktr2 = [0, es, 3, [0, 0, 30]]; f=2;
+    unhook2 = amul(adif(as3D(hooktr2), [-csp-hx+1, -es-53.6, 0]), [-1, -1, -1]);
+    echo("es, ec, hx=es-ec = ", -es, ec, hx);
+    ctr = [csp+ec, hs/2+es/2, oz];
+    color("red") translate(ctr) cube([1,1,9], true);
+    addAndCut([0, 0, -1, [0, 0, -143, ctr]], 
+              [(hr+f)/hr, (hr+f)/hr, 1, unhook2]) 
     {
       cornerPart() children(0);
-
-      trr(trf) 
       trr(rtr)
-      hook(hr, [0, es, 0, [0, 0, -90]]);
+      hook(hr, hooktr2);
 
     }
     
