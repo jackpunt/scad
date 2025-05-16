@@ -145,13 +145,37 @@ module rotatet(rot = [ 0, 0, 0 ], cr = [ 0, 0, 0 ]) {
       children();
 }
 
+// translate to [cx, cy, cz]; scale([sx,sy,sz]); translate[-cx,-cy,-cz]
+// sv: [sx, sy, sz {, cxyz }] ([0, 0, 0 ])
+// - cxyz: [cx, cy, cz] ([0, 0, 0])
+module scalet(sv) {
+  sv = def(sv, [0, 0, 0]);
+  cv = def(sv[3], [0, 0, 0]); // TODO: include inverse rotation
+  c1 = amul(as3D(cv), [-1, -1, -1]);
+  echo("scalet: sv, cv, c1 = ", sv, cv, c1);
+  translate(c1) scale(as3D(sv)) translate(cv) 
+  children();
+}
+
+// translate, with offset rotation
+// rtr: [dx, dy, dz {, rotr}] ([0, 0, 0])
+// - rotr: [rx, ry, rz {, cxyz}] ([0, 0, 0])
+// - cxyz: [cx, cy, cz] ([0, 0, 0])
+module trr(rtr) {
+  rtr = def(rtr, [0, 0, 0]);
+  rotr = def(rtr[3], [0, 0, 0]);
+  translate(as3D(rtr)) rotatet(rotr) children(0);
+}
+
 // duplicate, with translate & rotate:
 // suitable inside hull() { ... }
-// tr: translate (after rotate)
+// tr: translate (after rotate) ([0, 0, 0])
 // rott: rotate (with rott[3] as center)
-module dup(tr = [ 0, 0, 0 ], rott = [ 0, 0, 0 ], c2) {
+module dup(tr, rott, c2) {
+  tr = def(tr, [0, 0, 0 ]);
+  rott = def(rott, [0, 0, 0]);
   children(0);
-  translate(tr) rotatet(rott) 
+  translate(tr) rotatet(rott) // TODO: upgrade to trr(rtr)
   color(c2) children(0);
 }
 
