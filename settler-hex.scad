@@ -91,9 +91,11 @@ module frame(h2 = h2, wf, oz = -2) {
   // position hook at top~center straight part:
   hooktr = [wf*.2, hs/2, 0, [0, 0, 30]];
   // hs: height of straight cut
-  // child(0) straight frame
-  // child(1) tilted frame
+  // children(0) straight frame
+  // children(1) tilted frame
   module cutit(hs = hs) {
+    es = (fh-hs)/2;  // end size
+    ec = -wf*.66;    // intersects ray from center @ 30', 
 
     // hr: size of hook triangle
     // rtr: [dx, dy, dz {, rotr}] ([0, 0, 0])
@@ -101,8 +103,10 @@ module frame(h2 = h2, wf, oz = -2) {
     //  - cxyz: [cx, cy, cz] ([0, 0, 0])
     module hook(hr = hr, rtr) {
       rtr = def(rtr, hooktr);
-      trr(rtr)
+      trr(rtr) color("cyan")  {
         triangle([0, 0, 0], hr, dz+pp, true);
+        cube([18, 1, 1], true); // decorate to see dir of rotation
+      }
     }
     // child(0)+child(1)-tr(rtr, child(1)*sf)
     // for ex: addAndCut([0, -hs, 0]) straightPart() hook();
@@ -119,7 +123,7 @@ module frame(h2 = h2, wf, oz = -2) {
           children(1);
         }
         // move to cut location
-     #   trr(rtr) scalet(sf)  children(1);
+        trr(rtr) scalet(sf)  children(1);
       }
     }
     // extract straight part of child(0) = fullFrame
@@ -131,21 +135,37 @@ module frame(h2 = h2, wf, oz = -2) {
       }
     }
     // intersection{c0, c1} intersection{c0, trt(c1)}
-    module intTwo(trt, c1, c2) {
-      color(c1) intersection() { children(0); children(1); }
-      color(c2) intersection() { children(0); trr(trt) children(1); }
+    module intTwo(trt, trf, c1, c2) {
+      color(c1) intersection() { children(0);translate(trf)  children(1); }
+      color(c2) intersection() { children(0);translate(trf)  trr(trt)  children(1); }
     }
+    module intOne(trt, trf, c1) {
+      color(c1) intersection() { children(0); translate(trf)  trr(trt)  children(1); }
+    }
+
     // child(0) fullFrame
     module cornerPart() {
       trt = [0, 0, p, [0, 0, 60, [ec, 0, 0]]];
+      trf = [csp, (es+hs)/2, oz];
       // color("red")
       translate([0, 0, -pp]) // cosmetic
-      translate([csp, (es+hs)/2, oz]) 
-      // intTwo(trt, "red", "purple")   // corner section
+      // translate([csp, (es+hs)/2, oz]) 
+      // {
+      //   intOne([0,0,0], trf, "red") {  // corner section
+      //     children(0);
+      //     cube([wf, es, dz+pp], true);
+      //   }
+      //   intOne(trt, trf, "purple") {  // corner section
+      //   children(0);
+      //     cube([wf, es, dz+pp], true);
+      //   }
+      // }
+
+      // trr(trf)
       intersection()
       {
         children(0);   // fullFrame
-        translate([csp, (es+hs)/2, oz]) {
+        translate(trf) {
           dup(trt)
           cube([wf, es, dz+pp], true);
         }
@@ -158,24 +178,22 @@ module frame(h2 = h2, wf, oz = -2) {
     echo("unhook=", unhook);
 
     // dup([0, -hs, .01], undef, "cyan")
-  * addAndCut([0, -hs, 0], 
+    * addAndCut([0, -hs, 0], 
               [(hr+f)/hr, (hr+f)/hr, 1, unhook]) { 
       tr = [csp, 0, oz]; // translate to location of frame
       straightPart(tr) children(0); 
       translate(tr) hook();
     }
 
-    es = (fh-hs)/2;  // end size
-    ec = -wf*.66;    // intersects ray from center @ 30', 
     hx = -es-ec; hy = es/2;
-    rtr = [0, 0, 0, [0, 0, 60, [-es-ec, es/2, 0]]];
+    rtr  = [0, 0, 0, [0, 0, 60, [-es-ec, es/2, 0]]];
+    trf = [wf*.2 + csp, (hs)/2, oz];
     echo("es-ec, ec, hx = ", -es-ec, ec, hx);
-    addAndCut([0, -es, 0], [(hr+f)/hr, (hr+f)/hr, 1]) 
+    addAndCut([0, 0, 0, [0, 0, 0, [csp, hs/2, oz]]], [(hr+f)/hr, (hr+f)/hr, 1]) 
     {
-      trr([-wf*.2-csp, -hs/2, 0, [0, 0, 0, [0, 0, 0]]])  
-        cornerPart()  children(0);
+      cornerPart() children(0);
 
-      // translate(tr) 
+      trr(trf) 
       trr(rtr)
       hook(hr, [0, es, 0, [0, 0, -90]]);
 
