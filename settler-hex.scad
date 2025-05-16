@@ -111,7 +111,7 @@ module frame(h2 = h2, wf, oz = -2) {
     module addAndCut(rtr, sf) {
       rtr = def(rtr, [0, 0, 0]);
       sf = def(sf, [1, 1, 1]);
-      unhook = def(sf[3], [0,0,0]);
+      // unhook = def(sf[3], [0,0,0]);
       // difference() 
       {
         union() {
@@ -130,19 +130,20 @@ module frame(h2 = h2, wf, oz = -2) {
         translate(tr) cube([wf, hs, dz+pp], true);
       }
     }
-    // intersection{c0, c1} intersection{c0, c2}
-    module isTwo(c1, c2) {
+    // intersection{c0, c1} intersection{c0, trt(c1)}
+    module intTwo(trt, c1, c2) {
       color(c1) intersection() { children(0); children(1); }
-      color(c2) intersection() { children(0); children(2); }
+      color(c2) intersection() { children(0); trr(trt) children(1); }
     }
+    // child(0) fullFrame
     module cornerPart() {
-      color("red")
+      // color("red")
       translate([0, 0, -pp]) // cosmetic
-      intersection()   // corner section
+      // intersection()   // corner section
       {
         children(0);   // fullFrame
         translate([csp, (es+hs)/2, oz]) {
-          dup([0, 0, -p], [0, 0, 60, [ec, 0, 0]])
+          dup([0, 0, -p], [0, 0, 60, [ec, 0, 0]], "red", "purple")
           cube([wf, es, dz+pp], true);
         }
       }
@@ -154,7 +155,7 @@ module frame(h2 = h2, wf, oz = -2) {
     echo("unhook=", unhook);
 
     // dup([0, -hs, .01], undef, "cyan")
-   addAndCut([0, -hs, 0], 
+  * addAndCut([0, -hs, 0], 
               [(hr+f)/hr, (hr+f)/hr, 1, unhook]) { 
       tr = [csp, 0, oz]; // translate to location of frame
       straightPart(tr) children(0); 
@@ -163,16 +164,16 @@ module frame(h2 = h2, wf, oz = -2) {
 
     es = (fh-hs)/2;  // end size
     ec = -wf*.66;    // intersects ray from center @ 30', 
-    addAndCut([0, -es, 0], 
-              [(hr+f)/hr, (hr+f)/hr, 1]) {
-     trr([-wf*.2-csp, -hs/2, 0, [0, 0, 0, [0, 0, 0]]])  
-      cornerPart()  children(0);
+    hx = -es-ec; hy = es/2;
+    rtr = [0, 0, 0, [0, 0, 60, [-es-ec, es/2, 0]]];
+    echo("es-ec, ec, hx = ", -es-ec, ec, hx);
+    addAndCut([0, -es, 0], [(hr+f)/hr, (hr+f)/hr, 1]) 
+    {
+      trr([-wf*.2-csp, -hs/2, 0, [0, 0, 0, [0, 0, 0]]])  
+        cornerPart()  children(0);
 
-      tr = [csp + wf*.2, hs/2,oz];
-      tr2 = [csp, (es+hs)/2, oz];
-      tr0 = [csp+wf*.2, es+ hs/2, 0, [0, 0, -90]];
       // translate(tr) 
-      // trr([0, 0, 0, [0, 0, 60, [ec, 0, 0]]])
+      trr(rtr)
       hook(hr, [0, es, 0, [0, 0, -90]]);
 
     }
