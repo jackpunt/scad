@@ -174,8 +174,11 @@ module trr(rtr) {
 module dup(tr, rott, c1, c0) {
   tr = def(tr, [0, 0, 0 ]);
   rott = def(rott, [0, 0, 0]);
+  tr3 = def(tr[3], rott);
+  rtr = [tr[0], tr[1], tr[2], tr3];
   color(c0) children(0);
-  translate(tr) rotatet(rott) // TODO: upgrade to trr(rtr)
+  // translate(tr) rotatet(rott) // TODO: upgrade to trr(rtr)
+  trr(rtr)
   color(c1) children(0);
 }
 

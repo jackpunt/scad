@@ -137,13 +137,16 @@ module frame(h2 = h2, wf, oz = -2) {
     }
     // child(0) fullFrame
     module cornerPart() {
+      trt = [0, 0, p, [0, 0, 60, [ec, 0, 0]]];
       // color("red")
       translate([0, 0, -pp]) // cosmetic
-      // intersection()   // corner section
+      translate([csp, (es+hs)/2, oz]) 
+      // intTwo(trt, "red", "purple")   // corner section
+      intersection()
       {
         children(0);   // fullFrame
         translate([csp, (es+hs)/2, oz]) {
-          dup([0, 0, -p], [0, 0, 60, [ec, 0, 0]], "red", "purple")
+          dup(trt)
           cube([wf, es, dz+pp], true);
         }
       }
