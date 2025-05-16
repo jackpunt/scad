@@ -171,12 +171,12 @@ module trr(rtr) {
 // suitable inside hull() { ... }
 // tr: translate (after rotate) ([0, 0, 0])
 // rott: rotate (with rott[3] as center)
-module dup(tr, rott, c2) {
+module dup(tr, rott, c1, c0) {
   tr = def(tr, [0, 0, 0 ]);
   rott = def(rott, [0, 0, 0]);
-  children(0);
+  color(c0) children(0);
   translate(tr) rotatet(rott) // TODO: upgrade to trr(rtr)
-  color(c2) children(0);
+  color(c1) children(0);
 }
 
 // New implementation: MCAD

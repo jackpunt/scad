@@ -91,6 +91,8 @@ module frame(h2 = h2, wf, oz = -2) {
   // position hook at top~center straight part:
   hooktr = [wf*.2, hs/2, 0, [0, 0, 30]];
   // hs: height of straight cut
+  // child(0) straight frame
+  // child(1) tilted frame
   module cutit(hs = hs) {
 
     // hr: size of hook triangle
@@ -100,7 +102,7 @@ module frame(h2 = h2, wf, oz = -2) {
     module hook(hr = hr, rtr) {
       rtr = def(rtr, hooktr);
       trr(rtr)
-        triangle(undef, hr, dz+pp, true);
+        triangle([0, 0, 0], hr, dz+pp, true);
     }
     // child(0)+child(1)-tr(rtr, child(1)*sf)
     // for ex: addAndCut([0, -hs, 0]) straightPart() hook();
@@ -128,17 +130,31 @@ module frame(h2 = h2, wf, oz = -2) {
         translate(tr) cube([wf, hs, dz+pp], true);
       }
     }
+    // intersection{c0, c1} intersection{c0, c2}
+    module isTwo(c1, c2) {
+      color(c1) intersection() { children(0); children(1); }
+      color(c2) intersection() { children(0); children(2); }
+    }
+    module cornerPart() {
+      color("red")
+      translate([0, 0, -pp]) // cosmetic
+      intersection()   // corner section
+      {
+        children(0);   // fullFrame
+        translate([csp, (es+hs)/2, oz]) {
+          dup([0, 0, -p], [0, 0, 60, [ec, 0, 0]])
+          cube([wf, es, dz+pp], true);
+        }
+      }
+      color("cyan") trr([csp+ec, (es+hs)/2, oz]) cube([1, 1, 18], true);
+    }
     
     // hooktr = [wf*.2, hs/2, 0, [0, 0, 30]]; // position on frame
     unhook = amul(adif(as3D(hooktr), [-csp, 0, 0]), [-1, -1, -1]);
     echo("unhook=", unhook);
 
-    // unhook1 = [-(wf*.2), -hs/2, 0];
-    // translate(as3D(unhook1))
-    // hook();
-    
     // dup([0, -hs, .01], undef, "cyan")
-    addAndCut([0, -hs, 0], 
+   addAndCut([0, -hs, 0], 
               [(hr+f)/hr, (hr+f)/hr, 1, unhook]) { 
       tr = [csp, 0, oz]; // translate to location of frame
       straightPart(tr) children(0); 
@@ -147,19 +163,20 @@ module frame(h2 = h2, wf, oz = -2) {
 
     es = (fh-hs)/2;  // end size
     ec = -wf*.66;    // intersects ray from center @ 30', 
-    addAndCut([0, -hs, 0], 
+    addAndCut([0, -es, 0], 
               [(hr+f)/hr, (hr+f)/hr, 1]) {
-    color("red")
-    translate([0, 0, -pp]) // cosmetic
-    intersection()   // corner section
-    {
-      children(0);   // fullFrame
-      translate([csp, (es+hs)/2, oz]) 
-        dup([0, 0, -p], [0, 0, 60, [ec, 0, 0]])
-        cube([wf, es, dz+pp], true);
+     trr([-wf*.2-csp, -hs/2, 0, [0, 0, 0, [0, 0, 0]]])  
+      cornerPart()  children(0);
+
+      tr = [csp + wf*.2, hs/2,oz];
+      tr2 = [csp, (es+hs)/2, oz];
+      tr0 = [csp+wf*.2, es+ hs/2, 0, [0, 0, -90]];
+      // translate(tr) 
+      // trr([0, 0, 0, [0, 0, 60, [ec, 0, 0]]])
+      hook(hr, [0, es, 0, [0, 0, -90]]);
+
     }
-    translate([csp, (es+hs)/2, oz])  hook(hr, [0,0,0]);
-    }
+    
   }
 
   cutit()
