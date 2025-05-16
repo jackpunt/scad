@@ -88,8 +88,6 @@ module frame(h2 = h2, wf, oz = -2) {
     }
   }
 
-  // position hook at top~center straight part:
-  hooktr = [wf*.2, hs/2, 0, [0, 0, 30]];
   // hs: height of straight cut
   // children(0) straight frame
   // children(1) tilted frame
@@ -97,26 +95,25 @@ module frame(h2 = h2, wf, oz = -2) {
     es = (fh-hs)/2;  // end size
     ec = -wf*.66;    // intersects ray from center @ 30', 
 
-    // hr: size of hook triangle
+    // Place a hook (triangle) at rtr.
+    // hr: radius of hook triangle
     // rtr: [dx, dy, dz {, rotr}] ([0, 0, 0])
     //  - rotr: [rx, ry, rz {, cxyz}] ([0, 0, 0])
     //  - cxyz: [cx, cy, cz] ([0, 0, 0])
-    module hook(hr = hr, rtr) {
-      rtr = def(rtr, hooktr);
-      trr(rtr)  union() {
-        triangle([0, 0, 0], hr, dz+pp, true);
-        cube([18, 1, 1], true); // decorate to see dir of rotation
-        cube([1,1,8], true); // to find center
-      }
+    module hook(rtr, hr = hr) {
+      trr(rtr) triangle([0, 0, 0], hr, dz+pp, true);
     }
+    // Given: child(0) is centered, child(1) is positioned at top.
+    // - sf[3] --> center; rtr --> bottom
+    // 
+    // add child(1) then subtract rtr(sf(child(1), -rtr/2))
     // child(0)+child(1)-tr(rtr, child(1)*sf)
-    // for ex: addAndCut([0, -hs, 0]) straightPart() hook();
+    // for ex: addAndCut([0, -hs, 0], [-wf*.2, -hs/2, 0]) straightPart() trr([wf*.2, hs/2, 0]) hook();
     // sf: [sx, sy, sz {, cxyz }] ([0, 0, 0])
     // - cxyz: [cx, cy, cz] ([1, 1, 1])
     module addAndCut(rtr, sf) {
       rtr = def(rtr, [0, 0, 0]);
       sf = def(sf, [1, 1, 1]);
-      // unhook = def(sf[3], [0,0,0]);
       difference() 
       {
         union() {
@@ -129,66 +126,43 @@ module frame(h2 = h2, wf, oz = -2) {
     }
     // extract straight part of child(0) = fullFrame
     module straightPart(tr) {
+      trh = [wf*.2, hs/2, 0, [0, 0, 30]];
+      mtrh = amul(as3D(trh), [-1, -1, -1]);
       intersection()  // straight section
       {
         children(0);
-        translate(tr) cube([wf, hs, dz+pp], true);
+        translate(tr) 
+        addAndCut([0, -hs, 0], [(hr+f)/hr, (hr+f)/hr, 1, mtrh]) {
+          cube([wf, hs, dz+pp], true);
+          hook(trh);
+        }
       }
-    }
-    // intersection{c0, c1} intersection{c0, trt(c1)}
-    module intTwo(trt, trf, c1, c2) {
-      color(c1) intersection() { children(0);translate(trf)  children(1); }
-      color(c2) intersection() { children(0);translate(trf)  trr(trt)  children(1); }
-    }
-    module intOne(trt, trf, c1) {
-      color(c1) intersection() { children(0); translate(trf)  trr(trt)  children(1); }
     }
 
     // child(0) fullFrame
-    module cornerPart() {
+    module cornerPart(trf) {
       trt = [0, 0, p, [0, 0, 60, [ec, 0, 0]]];
-      trf = [csp, (es+hs)/2, oz];
-      // color("red")
-      translate([0, 0, -pp]) // cosmetic
+      trf = def(trf, [csp, (es+hs)/2, oz]);
+      trh = [wf*.2, es/2, 0, [0, 0, 30]]; // place hook at top of cube
+      mtrh = amul(as3D(trh), [-1, -1, -1]); // unhook
+
+      translate([p, p, pp]) // cosmetic
+      color("red")
       intersection()
       {
         children(0);   // fullFrame
         translate(trf) {
           dup(trt)
-          cube([wf, es, dz+pp], true);
+          addAndCut([0, -es, 0], [(hr+f)/hr, (hr+f)/hr, 1, mtrh]) {
+            cube([wf, es, dz+pp], true);   // cube @ (0,0)
+            hook(trh);        // hook at top
+          }
         }
       }
-      color("cyan") trr([csp+ec, (es+hs)/2, oz]) cube([1, 1, 18], true);
-    }
-    
-    // hooktr = [wf*.2, hs/2, 0, [0, 0, 30]]; // position on frame
-    unhook = amul(adif(as3D(hooktr), [-csp, 0, 0]), [-1, -1, -1]);
-    echo("unhook=", unhook);
-
-    translate([0, -1, 0])
-    addAndCut([0, -hs, 0], 
-              [(hr+f)/hr, (hr+f)/hr, 1, unhook]) { 
-      tr = [csp, 0, oz]; // translate to location of frame
-      straightPart(tr) children(0); 
-      translate(tr) hook();
     }
 
-    hx = -es-ec; hy = es/2;
-    rtr = [wf*.2 + csp, hs/2, oz, [0, 0, 60, [-es-ec, es/2, 0]]];  // rotate for second part
-    trf = [wf*.2 + csp, hs/2, oz]; // to location of frame
-    hooktr2 = [0, es, 3, [0, 0, 30]]; f=2;
-    unhook2 = amul(adif(as3D(hooktr2), [-csp-hx+1, -es-53.6, 0]), [-1, -1, -1]);
-    echo("es, ec, hx=es-ec = ", -es, ec, hx);
-    ctr = [csp+ec, hs/2+es/2, oz];
-    color("red") translate(ctr) cube([1,1,9], true);
-    addAndCut([0, 0, -1, [0, 0, -143, ctr]], 
-              [(hr+f)/hr, (hr+f)/hr, 1, unhook2]) 
-    {
-      cornerPart() children(0);
-      trr(rtr)
-      hook(hr, hooktr2);
-
-    }
+    straightPart([csp, 0, oz]) children(0); // translate to location of frame
+    cornerPart([csp, (es+hs)/2, oz]) children(0);
     
   }
 

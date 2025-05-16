@@ -152,7 +152,7 @@ module scalet(sv) {
   sv = def(sv, [0, 0, 0]);
   cv = def(sv[3], [0, 0, 0]); // TODO: include inverse rotation
   c1 = amul(as3D(cv), [-1, -1, -1]);
-  echo("scalet: sv, cv, c1 = ", sv, cv, c1);
+  // echo("scalet: sv, cv, c1 = ", sv, cv, c1);
   translate(c1) scale(as3D(sv)) translate(cv) 
   children();
 }
