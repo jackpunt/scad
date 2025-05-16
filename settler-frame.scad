@@ -59,7 +59,7 @@ module oneCol(col = 0, h2 = h2, dz = 5, center = true) {
 // h2: orther size of hex; x_width (h2)
 // wf: x_width of frame piece (h2*33/80)
 // oz: offset_z
-module frame(h2 = h2, wf, oz = -2) {
+module frame(h2 = h2, wf, oz = 1) {
   wf = def(wf, h2*.5); // width of frame
   dz = 3+pp;       // thickness of frame
   col = 3;         // placement of frame
@@ -161,15 +161,18 @@ module frame(h2 = h2, wf, oz = -2) {
       }
     }
 
+    translate([0, -hr*.7, 0]) 
     straightPart([csp, 0, oz]) children(0); // translate to location of frame
     cornerPart([csp, (es+hs)/2, oz]) children(0);
     
   }
-
+  intersection() 
+  {
   cutit()
   dup([-0*f, 0*f, -pp], [0, 0, 60])
   fullFrame();
-
+  trr([csp+2, hs/2, 2*abs(oz)]) color("cyan") cube([wf, wf, 8*abs(oz)], true);
+  }
 }
 
 // translate(v = [-250, 0, -4]) 
