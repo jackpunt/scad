@@ -11,7 +11,7 @@ h0 = 3.125*25.4;    // "ideal" size of cardboard hex (3 1/8 inch)
 h2 = h0 + f ;       // 2H; H = 15.625 + fudge or shrinkage; + .9 mm / 5 gaps
 echo("hs=", 2.5*h2, ">", 2.5*h0, "=", 2.5*(h2-h0), "per 2.5", "5 * (h2-h0)", 8*(h2-h0));
 // radius of each hex; h2 is the measured ortho size (+ ~f)
-r = h2/2 *2 * sqrt3;
+r = h2/2 * 2 * sqrt3;
 
 // 3.125 = 2H; R, H=sqrt3*R/2; R = H*2/sqrt3
 
@@ -68,10 +68,10 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = false) {
   oz = def(oz, 1);
   tf = 3+pp;           // thickness of frame
   col = nCol;          // placement of frame
-  H = h2/2; R = h2/sqrt3;
+  R = h2/sqrt3;  H = h2/2; 
   // kx: x-displacement of edge; NNE/SSE corner of hex in col
   kx =  R * (3 * col + 1) / 2; // R/2 + col * 1.5 * R;
-  wt = (kx + wf)/1.5;  // 'radius' of intersecting triangle
+  rt = (kx + wf)/1.5;  // 'radius' of intersecting triangle
   fh = (col + 1) * h2; // total frame height
   hr = 8;              // radius of hook triangle
   hs = (col - .5) * h2;// height of straight part
@@ -85,11 +85,11 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = false) {
       // make edge piece as trapezoid:
       intersection() 
       {
-        // echo("frame: col, H, R, kx, wt=", [col, H, R, kx, wt]);
+        // echo("frame: col, H, R, kx, rt=", [col, H, R, kx, rt]);
         translate([kx, -fh/2, oz-tf/2+p])
           cube([wf, fh, tf-pp], false);
         // color("cyan") 
-        triangle([wt, 0, oz, [0, 0, 180]], wt, t=tf, center = true);
+        triangle([rt, 0, oz, [0, 0, 180]], rt, t=tf, center = true);
       }
       // the adjacent hexes:
       translate([0, 0, oz]) hexCol(col+1, col, h2, tf+pp, h2); // col=3 --> 4 hexes
