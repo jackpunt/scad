@@ -12,7 +12,8 @@ h2 = h0 + f ;       // 2H; H = 15.625 + fudge or shrinkage; + .9 mm / 5 gaps
 // radius of each hex; h2 is the measured ortho size (+ ~f)
 r = h2 * sqrt3_2;
 
-dr = 1; // 1 mm 
+dr = 1; // 1 mm, enlarge hex radius of box
+dz = 26/19;  // thickness of tile
 
 // 3.125 = 2H; R, H=sqrt3*R/2; R = H*2/sqrt3
 
@@ -23,25 +24,42 @@ module hexagon(tr=[0,0,0], r = r, t = t0, center = true) {
   trr(tr) cylinder(h = t, r=r, $fn=6, center = center);
 }
 
-  
-module hexwall(dir = "N", h = 10, r = r, t = t0, center = true) {
-  x0 = 0; x1 = r * .75; 
-  y1 = r * sqrt3_2; y2 = y1/2;
-  z0 = h/2; 
-  function edges(i, r = r) = [
-    [+x1, +y2, z0, [0, 0,  300], "EN"],
-    [+x1, -y2, z0, [0, 0,  240], "ES"],
-    [+x0, -y1, z0, [0, 0,  180],  "S"],
-    [-x1, -y2, z0, [0, 0,  120], "WS"],
-    [-x1, +y2, z0, [0, 0,   60], "WN"],
-    [+x0, +y1, z0, [0, 0,    0],  "N"],
-    ][i];
-  trr(edges(dir)) cube([r, t, h], true);
+function edges(i, r = r, h = 10) =
+  let(
+    x0 = 0,
+    x1 = r * .75,
+    y1 = r * sqrt3_2,
+    y2 = y1/2,
+    z0 = h/2
+  )
+  [
+    [+x0, +y1, z0, [0, 0,     0],  "N"],
+    [+x1, +y2, z0, [0, 0,   -60], "EN"],
+    [+x1, -y2, z0, [0, 0,  -120], "ES"],
+    [+x0, -y1, z0, [0, 0,  -180],  "S"],
+    [-x1, -y2, z0, [0, 0,  -240], "WS"],
+    [-x1, +y2, z0, [0, 0,  -300], "WN"],
+  ][i];
+
+module hexwall(dir = 0, h = 10, r = r, t = t0, center = true) {
+  trr(edges(dir, r, h)) cube([r+.57*t, t, h], true);
+}
+
+module splitwall(dir = 0, h = 10, r = r, t = t0) {
+  dx = .57 * t;
+  xl = r + dx; dy = 1+f/2;
+  trr(edges(dir, r, h)) 
+  union() {
+    translate ([+xl/4+dx*2, 0, 0]) cube([xl/2, t, h], true);
+    translate ([-xl/4+dx, +dy, 0]) cube([xl/2, t, h], true);
+  }
 }
 
 
 color("pink") hexagon([0,0, 1], r);
 
-hexagon([0,0, 0], r+2*dr);
-for (i = [0 : 5] ) 
-  hexwall(i, 10, r + 2 );
+color("cyan") hexagon([0,0, 0], r+2*dr);
+for (i = [0 : 3] ) 
+  splitwall(i, 20, r+2*dr );
+
+// astack(19, [0,0,dz]) color("pink") hexagon([0,0,0], r);

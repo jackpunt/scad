@@ -13,11 +13,11 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
  k = is_undef(k0) ? -rm : k0;
  translate([s[0], 0, 0])
  rotate([0, -90, 0])
- roundedTube([s[2], s[1], s[0]], rt, k, t);
+ roundedTube([s.z, s.y, s.x], rt, k, t);
 
  // endcaps
- hw0 = [s[2], s[1], 0];
- hwx = [s[2], s[1], s[0]];
+ hw0 = [s.z, s.y, 0];
+ hwx = [s.z, s.y, s.x];
  div(hw0, rc, k);
  div(hwx, rc, k);
 }
