@@ -11,7 +11,7 @@ h0 = 3.125*25.4;    // "ideal" size of cardboard hex (3 1/8 inch)
 h2 = h0 + f ;       // 2H; H = 15.625 + fudge or shrinkage; + .9 mm / 5 gaps
 echo("hs=", 2.5*h2, ">", 2.5*h0, "=", 2.5*(h2-h0), "per 2.5", "5 * (h2-h0)", 8*(h2-h0));
 // radius of each hex; h2 is the measured ortho size (+ ~f)
-r = h2/2 * 2 * sqrt3;
+r = h2 * sqrt3_2;
 
 // 3.125 = 2H; R, H=sqrt3*R/2; R = H*2/sqrt3
 
@@ -33,10 +33,10 @@ module triangle(rtr=[0,0,0, [0,0,0, [0,0,0]]], r=10, t=1, center = false) {
 }
 
 module hexCol(n = 1, col = 0, h2 = h2, t = 1, h0 = h0, center = true) {
-  r = h2 * sqrt3; // radius of hex with ortho x_width = h2 (~79 -> ~46)
+  r = h2 * sqrt3_2; // radius of hex with ortho x_width = h2 (~79 -> ~46)
   ne = (n % 2) == 0;
   y0 = (ne ? 0 : .5) * h2;
-  for (ri = [(1-n)/2 : 1 : (n-1)/2]) let (x = col * r/2, y = ri * h2)
+  for (ri = [(1-n)/2 : 1 : (n-1)/2]) let (x = col * r, y = ri * h2)
     color(x == 0 && y == 0 ? "blue" : ["green","yellow","tan"][abs(ri*2-col)%3])
       hexagon([x, y, 0], h0/sqrt3+p, t = t, center = center );
 }
@@ -47,7 +47,6 @@ module hexCol(n = 1, col = 0, h2 = h2, t = 1, h0 = h0, center = true) {
 // h0: ortho size of actual hex (h2)
 // center: (true)
 module oneCol(col = 0, h2 = h2, t = 1, h0 = h2, center = true) {
-  r = h2 * sqrt3; // radius of hex with ortho x_width = h2 (~79 -> ~46)
   let(ac = abs(col), n = 2 * nCol + 1 - ac)
     hexCol(n, col, h2, t, h0);
 }
