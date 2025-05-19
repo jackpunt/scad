@@ -7,7 +7,7 @@ pp = 2 * p;
 // default value
 function def(var, val) = is_undef(var) ? val : var;
 // pairwise multiplication
-function amul(a, b) = [for (i = [0:len(a) - 1]) a[i] * b[i]];
+function amul(a, b) = [for (i = [0:len(a) - 1]) a[i] * (is_list(b) ? b[i] : b)];
 // pairwise subtraction
 function adif(a, b) = [for (i = [0:len(a) - 1]) a[i] - b[i]];
 // select element from array:
@@ -102,7 +102,7 @@ module repeat(xyz = [ 0, 0, 0 ], dxyz = [ 0, 10, 0 ], n = 1) {
   n = is_undef(n) ? 1 : n;
   // echo("repeat: xyz, dxyz, n =", xyz, dxyz, n);
   for (i = [0 : n-1])
-    translate([ xyz[0] + i * dxyz[0], xyz[1] + i * dxyz[1], xyz[2] + i * dxyz[2] ])  //
+    translate([ xyz.x + i * dxyz.x, xyz.y + i * dxyz.y, xyz.z + i * dxyz.y ])  //
       children();
 }
 
@@ -129,7 +129,7 @@ module astack(n, d, rot) {
   rxyz = is_list(r) ? r : [ 0, 0, 0 ];
   // echo("dxyz=", dxyz) 
   for (i = [0:n - 1]) {
-    rotate(rxyz) dup([ i * dxyz[0], i * dxyz[1], i * dxyz[2] ]) children();
+    rotate(rxyz) dup([ i * dxyz.x, i * dxyz.y, i * dxyz.z ]) children(); // amul(dxyz, i)
   }
 }
 
@@ -175,7 +175,7 @@ module dup(tr, rott, c1, c0) {
   tr = def(tr, [0, 0, 0 ]);
   rott = def(rott, [0, 0, 0]);
   tr3 = def(tr[3], rott);
-  rtr = [tr[0], tr[1], tr[2], tr3];
+  rtr = [tr.x, tr.y, tr.z, tr3];
   color(c0) children(0);
   // translate(tr) rotatet(rott) // TODO: upgrade to trr(rtr)
   trr(rtr)
@@ -192,23 +192,23 @@ module roundedCube(dxyz, r, sidesonly, center) {
   // echo("roundedCube: s=", s, "r=", r);
   translate(center ? amul(s, [-.5, -.5, -.5]) : [ 0, 0, 0 ]) {
     if (sidesonly) {
-      *linear_extrude(s[2]) roundedRect([ s[0], s[1] ], r);
+      *linear_extrude(s.z) roundedRect([ s.x, s.y ], r);
       hull() {
-        translate([ r, r ]) cylinder(r = r, h = s[2]);
-        translate([ r, s[1] - r ]) cylinder(r = r, h = s[2]);
-        translate([ s[0] - r, r ]) cylinder(r = r, h = s[2]);
-        translate([ s[0] - r, s[1] - r ]) cylinder(r = r, h = s[2]);
+        translate([ r, r ]) cylinder(r = r, h = s.z);
+        translate([ r, s.y - r ]) cylinder(r = r, h = s.z);
+        translate([ s.x - r, r ]) cylinder(r = r, h = s.z);
+        translate([ s.x - r, s.y - r ]) cylinder(r = r, h = s.z);
       }
     } else {
       hull() {
         translate([ r, r, r ]) sphere(r = r);
-        translate([ r, r, s[2] - r ]) sphere(r = r);
-        translate([ r, s[1] - r, r ]) sphere(r = r);
-        translate([ r, s[1] - r, s[2] - r ]) sphere(r = r);
-        translate([ s[0] - r, r, r ]) sphere(r = r);
-        translate([ s[0] - r, r, s[2] - r ]) sphere(r = r);
-        translate([ s[0] - r, s[1] - r, r ]) sphere(r = r);
-        translate([ s[0] - r, s[1] - r, s[2] - r ]) sphere(r = r);
+        translate([ r, r, s.z - r ]) sphere(r = r);
+        translate([ r, s.y - r, r ]) sphere(r = r);
+        translate([ r, s.y - r, s.z - r ]) sphere(r = r);
+        translate([ s.x - r, r, r ]) sphere(r = r);
+        translate([ s.x - r, r, s.z - r ]) sphere(r = r);
+        translate([ s.x - r, s.y - r, r ]) sphere(r = r);
+        translate([ s.x - r, s.y - r, s.z - r ]) sphere(r = r);
       }
     }
   }
@@ -304,8 +304,8 @@ module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
 module roundedRect(sxy = 10, rc = 2, k = 0) {
   s = is_list(sxy) ? sxy : [ sxy, sxy ];
   k = is_undef(k) ? 0 : k;
-  dx = s[0];
-  dy = s[1];
+  dx = s.x;
+  dy = s.y;
   r = is_list(rc) ? rc : [ rc, rc, rc, rc ];
   intersection() {
     hull() {
@@ -314,7 +314,7 @@ module roundedRect(sxy = 10, rc = 2, k = 0) {
       translate([ dx - r[2], dy - r[2] ]) circle(r = max(p, r[2]));
       translate([ dx - r[3], r[3] ]) circle(r = max(p, r[3]));
     }
-    translate([ k - p, -p ]) square([ s[0] + pp, s[1] + pp ]);
+    translate([ k - p, -p ]) square([ s.x + pp, s.y + pp ]);
   }
 }
 
@@ -337,8 +337,8 @@ module pipe(rrh = 10, t = t0) {
 // r: radius (2), k: keep/cut (0), t = thick (t0)
 module roundedTube(sxy = 10, r = 2, k = 0, t = t0) {
   s = is_list(sxy) ? sxy : [ sxy, sxy, sxy ];
-  dx = s[0];
-  dy = s[1];
+  dx = s.x;
+  dy = s.y;
   rs = [ dx, dy ];
   linear_extrude(height = s[2]) {
     sx = (dx - 2 * t) / dx;

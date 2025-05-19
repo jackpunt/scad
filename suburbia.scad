@@ -168,7 +168,7 @@ module starterBox(loc = 0) {
 // t: height of text
 module hexText(name= "hex", tr, rx = 30, t = t0/2) {
   rxx = (rx >= 0) ? [rx, 0, 0] : [-rx, 0, 180];
-  trr = (rx >= 0) ? tr : [tr[0], -tr[1], tr[2]];
+  trr = (rx >= 0) ? tr : [tr.x, -tr.y, tr.z];
   translate(trr)
   rotate(rxx)
   linear_extrude(t)
