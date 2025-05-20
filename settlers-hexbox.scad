@@ -1,7 +1,7 @@
 use <mylib.scad>;
 p = .001;
 pp = 2 * p;
-t0 = 1.1;
+t0 = 1.2;
 f = .06;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
@@ -13,7 +13,7 @@ r = (h2/2) / sqrt3_2;
 echo("h2 =", h2, "r = ", r);
 
 dr = t0/2; // ~1 mm, enlarge hex radius of box
-dz = 26/19;  // thickness of tile
+dz = 25/19;  // thickness of tile
 
 // 3.125 = 2H; R, H=sqrt3*R/2; R = H*2/sqrt3
 
@@ -78,17 +78,6 @@ module hexbox(r = r) {
   for (i = [0 : 3] ) 
     splitwall(i, 20, r + dr/2, t0, f );
 }
-
-
-loc = 2;
-
-*atrans(loc, [[0,0,0], [0,0,0], [h2+4*t0, 0, 0]])
-  dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [+26-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
-    hexbox(r + 3);
-atrans(loc, [[0,0, 2*t0], undef, undef, 0])
-  astack(19, [0,0,dz]) color("pink") hexagon([0,0,0], r);
-
-
 //
 module polycylinder(h, fn = 6, r=10, cz = false) {
   $fn = fn;
@@ -106,6 +95,7 @@ hr = hr0+min(hr0,da(30, hr0)); // extend to hold rotated hexes +da(hr0, 30)
 module hexBox(h=10, r=5, t=t0, cz = false) {
   rr = r + 1.5*t0; 
   hh = h + 2*t0; h2 = rr * sqrt3;
+  k = .9;
   difference() 
   {
     translate([0, 0, -p])  
@@ -114,10 +104,22 @@ module hexBox(h=10, r=5, t=t0, cz = false) {
     polycylinder(h, 6, r);  // interior space: h X r
 
     // cut off two sides of hexbox:
-  #  translate([rr*.75, 0, hh/2]) cube([rr*.5, h2+pp, hh+2*pp], true);
-    translate([-rr*.99, 0, hh/2]) cube([rr*.5, h2+pp, hh+2*pp], true);
+    translate([rr*(1-k/2), 0, hh/2]) cube([rr*k, h2+pp, hh+2*pp], true);
+    translate([rr*(0-1),   0, hh/2]) cube([rr*.5, h2+pp, hh+2*pp], true);
+    //  flat the end
+    translate([-rr*.6, 0, hh/2]) cube([rr*.5, r*k, h], true);
   }
 }
-atrans(loc, [[0,0,0], [0, 0, 0, [0, 90, 0, [r/2, 0, 0]]], [0,0,0], [0, 0, -.5]])
+
+
+loc = 1;
+
+*atrans(loc, [[0,0,0], [0,0,0], [h2+4*t0, 0, 0]])
+  dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [+26-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
+    hexbox(r + 3);
+atrans(loc, [[0,0, 1.*t0], undef, undef, 0])
+  astack(19, [0,0,dz]) color("pink") hexagon([0,0,0], r);
+
+atrans(loc, [[.5*t0,0,0], [0, 0, 0, [0, 90, 0, [r/2, 0, 0]]], [0,0,0], [0, 0, -.5]])
   // color("skyblue")
   hexBox(dz*17.8, r+2, 1, false);
