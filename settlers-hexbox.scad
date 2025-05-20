@@ -2,7 +2,7 @@ use <mylib.scad>;
 p = .001;
 pp = 2 * p;
 t0 = 1;
-f = .18;
+f = .12;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
@@ -45,21 +45,33 @@ module hexwall(dir = 0, h = 10, r = r, t = t0, center = true) {
   trr(edges(dir, r, h)) cube([r+.57*t, t, h], true);
 }
 
-module splitwall(dir = 0, h = 10, r = r, t = t0) {
-  dx = .57 * t;
-  xl = r + dx; dy = 1+f/2;
+module splitwall(dir = 0, h = 10, r = r, t = t0, f = f) {
+  dx = -1.5 * t;
+  xl = r + dx; dy = t + f;
   trr(edges(dir, r, h)) 
   union() {
-    translate ([+xl/4+dx*2, 0, 0]) cube([xl/2, t, h], true);
-    translate ([-xl/4+dx, +dy, 0]) cube([xl/2, t, h], true);
+    translate ([+xl/4+f, 0, 0]) cube([xl/2, t, h], true);
+    translate ([-xl/4-f, +dy, 0]) cube([xl/2, t, h], true);
   }
 }
 
+module hexbox() {
+  rr = r+2*(2*dr+f);
+union() {
+  difference() {
+    color("cyan") hexagon([0, 0, 0], rr);
+    translate([-rr*.75, 0, 0]) cube([rr/2, 2*h2, 1.2], true);
+  }
+  for (i = [0 : 3] ) 
+    splitwall(i, 20, r+2*dr, t0, .12 );
+}
+}
 
-color("pink") hexagon([0,0, 1], r);
 
-color("cyan") hexagon([0,0, 0], r+2*dr);
-for (i = [0 : 3] ) 
-  splitwall(i, 20, r+2*dr );
+loc = 1;
 
-// astack(19, [0,0,dz]) color("pink") hexagon([0,0,0], r);
+atrans(loc, [[0,0,0], [0,0,0], [h2+4, 0, 0]])
+dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
+  hexbox();
+atrans(loc, [[0,0, 1.1]])
+  astack(19, [0,0,dz]) color("pink") hexagon([0,0,0], r);
