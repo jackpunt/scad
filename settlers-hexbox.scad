@@ -2,7 +2,7 @@ use <mylib.scad>;
 p = .001;
 pp = 2 * p;
 t0 = 1.2;
-f = .06;
+f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
@@ -46,12 +46,13 @@ module hexwall(dir = 0, h = 10, r = r, t = t0, center = true) {
 }
 
 module splitwall(dir = 0, h = 10, r = r, t = t0, f = f) {
+  ff = f/3;
   dx = -1.5 * t; xl = r + dx; 
-  dy = t + f;
+  dy = t + ff;
   trr(edges(dir, r, h)) 
   union() {
-    translate ([+xl/4+f,  0, 0]) cube([xl/2, t, h], true);
-    translate ([-xl/4-f, dy, 0]) cube([xl/2, t, h], true);
+    translate ([+xl/4+ff,  0, 0]) cube([xl/2, t, h], true);
+    translate ([-xl/4-ff, dy, 0]) cube([xl/2, t, h], true);
   }
 }
 
@@ -65,8 +66,10 @@ module hexring(r0 = r, r2 = r + dr) {
   }
 }
 
+// hexbox with splitwall
 module hexbox(r = r) {
-  rr = r + 2 * (2*dr + f);
+  ff = f/3;  // try make tight
+  rr = r + 2 * (2*dr + ff);
   difference() {
     union() {
       color("cyan") hexagon([0, 0, 0], rr);
@@ -76,9 +79,10 @@ module hexbox(r = r) {
     translate([-rr*.75, 0, 0]) cube([rr/2, 2*h2, 1.2*t0], true);
   }
   for (i = [0 : 3] ) 
-    splitwall(i, 20, r + dr/2, t0, f );
+    splitwall(i, 20, r + dr/2, t0, ff );
 }
-//
+
+// solid cylinder with fn sides:
 module polycylinder(h, fn = 6, r=10, cz = false) {
   $fn = fn;
   // rotate([0, 0, 30])
@@ -112,14 +116,17 @@ module hexBox(h=10, r=5, t=t0, cz = false) {
 }
 
 
-loc = 1;
+loc = 0; nt = 19;
 
-*atrans(loc, [[0,0,0], [0,0,0], [h2+4*t0, 0, 0]])
-  dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [+26-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
-    hexbox(r + 3);
 atrans(loc, [[0,0, 1.5*t0], undef, undef, 0])
-  astack(18, [0,0,dz]) color("pink") hexagon([0,0,0], r);
+  astack(nt, [0,0,dz]) color("pink") hexagon([0,0,0], r);
 
 atrans(loc, [[.5*t0,0,0], [0, 0, 0, [0, 90, 0, [r/2, 0, 0]]], [0,0,0], [0, 0, -.5]])
   // color("skyblue")
-  hexBox(dz*18.8, r+2, 1, false);
+  hexBox(dz*(nt - f), r+2, 1, false);
+
+
+// not using splitwall hexbox
+// *atrans(loc, [[0,0,0], [0,0,0], [h2+4*t0, 0, 0]])
+//   dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [+26-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
+//     hexbox(r + 3);
