@@ -8,9 +8,9 @@ sqrt3_2 = sqrt3/2;  // .866
 
 h0 = 3.125*25.4;    // "ideal" size of cardboard hex (3 1/8 inch)
 h2 = h0 + f ;       // 2H; H = 15.625 + fudge or shrinkage; + .9 mm / 5 gaps
-// echo("hs=", 2.5*h2, ">", 2.5*h0, "=", 2.5*(h2-h0), "per 2.5", "5 * (h2-h0)", 8*(h2-h0));
 // radius of each hex; h2 is the measured ortho size (+ ~f)
-r = h2 * sqrt3_2;
+r = (h2/2) / sqrt3_2;
+echo("h2 =", h2, "r = ", r);
 
 dr = 1; // 1 mm, enlarge hex radius of box
 dz = 26/19;  // thickness of tile
@@ -56,8 +56,7 @@ module splitwall(dir = 0, h = 10, r = r, t = t0, f = f) {
 }
 
 module hexbox() {
-  rr = r+2*(2*dr+f);
-union() {
+  rr = r + 2 * (2*dr + f);
   difference() {
     color("cyan") hexagon([0, 0, 0], rr);
     translate([-rr*.75, 0, 0]) cube([rr/2, 2*h2, 1.2], true);
@@ -65,13 +64,12 @@ union() {
   for (i = [0 : 3] ) 
     splitwall(i, 20, r+2*dr, t0, .12 );
 }
-}
 
 
 loc = 1;
 
 atrans(loc, [[0,0,0], [0,0,0], [h2+4, 0, 0]])
-dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
+dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [28-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
   hexbox();
 atrans(loc, [[0,0, 1.1]])
   astack(19, [0,0,dz]) color("pink") hexagon([0,0,0], r);
