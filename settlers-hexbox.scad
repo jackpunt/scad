@@ -1,7 +1,7 @@
 use <mylib.scad>;
 p = .001;
 pp = 2 * p;
-t0 = 1.2;
+t0 = 1.1;
 f = .06;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
@@ -80,10 +80,44 @@ module hexbox(r = r) {
 }
 
 
-loc = 1;
+loc = 2;
 
-atrans(loc, [[0,0,0], [0,0,0], [h2+4*t0, 0, 0]])
-dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [+26-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
-  hexbox(r + 3);
-atrans(loc, [[0,0, 1.5]])
+*atrans(loc, [[0,0,0], [0,0,0], [h2+4*t0, 0, 0]])
+  dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [+26-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
+    hexbox(r + 3);
+atrans(loc, [[0,0, 2*t0], undef, undef, 0])
   astack(19, [0,0,dz]) color("pink") hexagon([0,0,0], r);
+
+
+//
+module polycylinder(h, fn = 6, r=10, cz = false) {
+  $fn = fn;
+  // rotate([0, 0, 30])
+  linear_extrude(h )
+  circle(r);
+}
+// function da(a, r) = (sin(60+a)-sin(60))*r;
+function da(a, r, r0 = 60) = (sin(r0+a)-sin(r0))*r;
+
+hr0 = r;
+hr = hr0+min(hr0,da(30, hr0)); // extend to hold rotated hexes +da(hr0, 30)
+
+// hexagonal tube
+module hexBox(h=10, r=5, t=t0, cz = false) {
+  rr = r + 1.5*t0; 
+  hh = h + 2*t0; h2 = rr * sqrt3;
+  difference() 
+  {
+    translate([0, 0, -p])  
+    polycylinder(hh, 6, rr); // outer shell: h+2*t0 X r+2*t0
+    translate([1.2*t0+p, 0, t0])
+    polycylinder(h, 6, r);  // interior space: h X r
+
+    // cut off two sides of hexbox:
+  #  translate([rr*.75, 0, hh/2]) cube([rr*.5, h2+pp, hh+2*pp], true);
+    translate([-rr*.99, 0, hh/2]) cube([rr*.5, h2+pp, hh+2*pp], true);
+  }
+}
+atrans(loc, [[0,0,0], [0, 0, 0, [0, 90, 0, [r/2, 0, 0]]], [0,0,0], [0, 0, -.5]])
+  // color("skyblue")
+  hexBox(dz*17.8, r+2, 1, false);
