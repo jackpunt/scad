@@ -107,7 +107,7 @@ module hexBox(h=10, r=5, t=t0, cz = false) {
     translate([rr*(1-k/2), 0, hh/2]) cube([rr*k, h2+pp, hh+2*pp], true);
     translate([rr*(0-1),   0, hh/2]) cube([rr*.5, h2+pp, hh+2*pp], true);
     //  flat the end
-    translate([-rr*.6, 0, hh/2]) cube([rr*.5, r*k, h], true);
+    translate([-rr*.6, 0, hh/2]) cube([rr*.5, r*k-4, h], true);
   }
 }
 
@@ -117,9 +117,9 @@ loc = 1;
 *atrans(loc, [[0,0,0], [0,0,0], [h2+4*t0, 0, 0]])
   dup([[0, 0, 10, [ 180, 0, 0, [0, 0, 9]]], [+26-h2, 0, 0, [ 0, 0, 180, [0, 0, 00]]]][loc])
     hexbox(r + 3);
-atrans(loc, [[0,0, 1.*t0], undef, undef, 0])
-  astack(19, [0,0,dz]) color("pink") hexagon([0,0,0], r);
+atrans(loc, [[0,0, 1.5*t0], undef, undef, 0])
+  astack(18, [0,0,dz]) color("pink") hexagon([0,0,0], r);
 
 atrans(loc, [[.5*t0,0,0], [0, 0, 0, [0, 90, 0, [r/2, 0, 0]]], [0,0,0], [0, 0, -.5]])
   // color("skyblue")
-  hexBox(dz*17.8, r+2, 1, false);
+  hexBox(dz*18.8, r+2, 1, false);
