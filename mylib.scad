@@ -169,13 +169,13 @@ module trr(rtr) {
 
 // duplicate, with translate & rotate:
 // suitable inside hull() { ... }
-// tr: translate (after rotate) ([0, 0, 0])
+// trr: translate (after rotate) ([0, 0, 0])
 // rott: rotate (with rott[3] as center)
-module dup(tr, rott, c1, c0) {
-  tr = def(tr, [0, 0, 0 ]);
+module dup(trr, rott, c1, c0) {
+  trr = def(trr, [0, 0, 0 ]);
   rott = def(rott, [0, 0, 0]);
-  tr3 = def(tr[3], rott);
-  rtr = [tr.x, tr.y, tr.z, tr3];
+  tr3 = def(trr[3], rott);
+  rtr = [trr.x, trr.y, trr.z, tr3];
   color(c0) children(0);
   // translate(tr) rotatet(rott) // TODO: upgrade to trr(rtr)
   trr(rtr)
@@ -301,6 +301,7 @@ module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
 // 2D shape:
 // sxy: [dx = sxy, dy = sxy]
 // rc:  [(0,0), (0,dy), (dx, dy), (dx, 0)]
+// k: k<0 cut k from top (keep bottom) k>0 cut k from bottom (keep top)
 module roundedRect(sxy = 10, rc = 2, k = 0) {
   s = is_list(sxy) ? sxy : [ sxy, sxy ];
   k = is_undef(k) ? 0 : k;
@@ -355,18 +356,31 @@ module roundedTube(sxy = 10, r = 2, k = 0, t = t0) {
 *translate([ 0, -60, 0 ]) rotate([ 0, -90, 0 ])
     roundedTube([ 40, 40, 8 ], [ 15, 4, 2, 2 ], -15, 1);
 
-// a roundedRect divider across the YZ plane of a box:
-// hwx: [z,y,x];
+// a roundedRect divider (@x) across the YZ plane of a box:
+// hwx: [z,y,x] --> z-height, y-depth, x-translation
 // r: radius ([r,r,r,r])
-// k: (0) k>0 keep bottom/cut top; k<0 cut bottom/keep top
+// k: (0) k<0 cut k from top; k>0 cut k from bottom (keep top)
 // - k == 0 --> keep all
 // t: thick (dx = t0)
-module div(hwx = 10, r = 2, k, t = t0) {
-  dx = is_undef(hwx[2]) ? 0 : hwx[2];
+module div(zyx = 10, r = 2, k, t = t0) {
+  dx = is_undef(zyx[2]) ? 0 : zyx[2];
   translate([ dx + t, 0, 0 ])    //
       rotate([ 0, -90 ])         //
       linear_extrude(height = t) //
-      roundedRect([ hwx[0], hwx[1] ], r, k);
+      roundedRect([ zyx[0], zyx[1] ], r, k);
+}
+
+// on the XZ plane, displaced by y
+// zxy -> z-height, x-width, y-translation
+// t: thickness of extrusion
+module divXZ(zxy = 10, r = 2, k, t = t0) {
+  dy = is_undef(zxy[2]) ? 0 : zxy[2];
+  translate([ zxy[1], dy + t, 0 ])    //
+      translate([zxy[2], 0, 0])
+      rotate([ 90, 0, 0 ])       //
+      rotate([ 0, 0, 90 ])       //
+      linear_extrude(height = t) //
+      roundedRect([ zxy[0], zxy[1] ], r, k);
 }
 
 // a slot shaped hull; (in XY plane -> rot(-Y) -> ZY)
@@ -546,18 +560,11 @@ module align(tr = [0,0,0], rottr = [0,0,0], ss = false) {
 }
 
 
-// array of children(0, suitable for poking holes in the y axis.
-// xy: [x0, step, xm] (step in x or y direction)
-// zz: [z0, step, zm] (step in z direction)
-// tr: select axiis to translate ([1,0,1]) vs [0,1,1]
-module gridify0(xy, zz, tr = [ 1, 0, 1 ])
-{
-    for (xa = [xy[0]:xy[1]:xy[2]], za = [zz[0]:zz[1]:zz[2]])
-    {
-        // echo("x,y,z=", [xa, xa, za]);
-        translate(amul([ xa, xa, za ], tr)) children(0);
-    }
-}
+// array of children(0) suitable for poking holes.
+// d1: [a0, ainc, alimit]
+// d2: [b0, binc, blimit]
+// rid: translation plane -> zy | xz | xy | 00
+// children(0) the item to be placed at each grid point
 module gridify(d1, d2, rid = 0)
 {
   for (a = [d1[0]:d1[1]:d1[2]], b = [d2[0]:d2[1]:d2[2]])
@@ -567,23 +574,34 @@ module gridify(d1, d2, rid = 0)
             : [0, 0, 0])
     translate(tr) children(0);
 }
-module grid(nx, nz, k, tr = [ 1, 0, 1 ])
+
+// diagonal grid on XZ for civ0_cardbox sidewall
+module gridDXZ(nx, nz, k, tr = [ 1, 0, 1 ])
 {
-    gridify0([ k, 2 * k, nx ], [ 0, 2 * k, nz ], tr) children(0);
-    gridify0([ 0, 2 * k, nx ], [ k, 2 * k, nz ], tr) children(0);
+    gridify([ k, 2 * k, nx ], [ 0, 2 * k, nz ], 1) children(0);
+    gridify([ 0, 2 * k, nx ], [ k, 2 * k, nz ], 1) children(0);
 }
 
 // grid test:
-*translate([ 0, -40, 0 ])
+module gridTest() {
+translate([ 0, -40, 0 ])
 {
     nx = 50;
     nz = 30;
     y = 1;
     s = 10;
+    s2 = s / 2;
     difference()
     {
         cube([ nx, y, nz ]);
-        grid(nx, nz, s / 2) scale([ 1, 1, .7 ]) translate([ -s / 2, 0, -s / 2 ]) pat(s / 2, y);
+        gridDXZ(nx, nz, s / 2) 
+        scale([ 1, 1, .7 ]) 
+        translate([ -s / 2, 0, -s2 ]) 
+        // scale([1, 1, .7])
+        rotatet([ 0, 45, 0 ], [ s2/2, 0, s2/2 ]) 
+        translate([ 0, -p, 0 ])
+        cube([s2, y + pp, s2])
+        ;
     }
 }
-
+}

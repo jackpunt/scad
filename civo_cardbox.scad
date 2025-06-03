@@ -66,7 +66,7 @@ module card(tr = [ (l0 - l00) / 2, (w0 - w00) / 2, 0 ])
 }
 
 // vz: height of ramp @ vx: bump @
-vz = 4.;
+vz = 4.0;
 vx = .4 * l;
 fl = 2;
 vy = 5.6; // fl: flat length
@@ -236,50 +236,31 @@ module cutaway(loc = loc)
 {
     cutaway0(loc, [ lt + 10, 10, h + 10 ], [ -5 - xb, -5, -5 ]) children();
 }
+
+// diagonal pattern
 module pat(s = 5, l = 30)
 {
     rotatet([ 0, 45, 0 ], [ s / 2, 0, s / 2 ]) translate([ 0, -p, 0 ]) cube([ s, l + pp, s ]);
 }
 
+// diagonal pattern tweaked for cardbox
 module paty(s = 5, l = w)
 {
     scale([ 1, 1, .7 ]) translate([ -s / 4, 0, -s / 2.8 ]) pat(s / 2, l);
 }
-module patx(s = 5, l = w)
+
+module gridawayXZ(x0 = 40, l = l * .65, h = 25)
 {
-    scale([ 1, 1, .7 ]) translate([ 0, -s / 4, -s / 2.8 ]) rotatet([ 45, 0, 0 ], [ 0, s / 2, s / 2 ])
-        translate([ -p, 0, 0 ]) cube([ l + pp, s, s ]);
+    s = 10;
+    difference()
+    {
+        children(0);
+        translate([ x0, 0, t0 + s * .8 ]) 
+        gridDXZ(l - s - x0, h - s - 5, 5) 
+        paty(s, w);
+    }
 }
 
-module gridaway(x0 = 40, l = l * .65, h = 25)
-{
-    s = 10;
-    difference()
-    {
-        children(0);
-        translate([ x0, 0, t0 + s * .8 ]) grid(l - s - x0, h - s - 5, 5) paty(s, w);
-    }
-}
-module gridawayy(x0 = 20, l = l)
-{
-    s = 10;
-    difference()
-    {
-        children(0);
-        translate([ x0, 0, t0 + s ]) grid(l - s - x0, h - s - 5, 5) paty(s, w);
-    }
-}
-module gridawayx(x0 = 20, w = w)
-{
-    s = 10;
-    difference()
-    {
-        children(0);
-        translate([ -10, x0, t0 + s ])
-            // rotatet([0, 0, -90], [-20, 0, 20])
-            grid(w - s - x0, h - s - 5, 5, [ 0, 1, 1 ]) patx(s / 2, 20);
-    }
-}
 
 module mainBox()
 {
@@ -349,7 +330,7 @@ loc = 0;
 /// MAIN BUILD HERE:
 ///
 atrans(loc, [[0,0,0], 0, 0, 0])
-cutaway() gridaway() mainBox();
+cutaway() gridawayXZ() mainBox();
 // slottest();
 
 // topTray:
