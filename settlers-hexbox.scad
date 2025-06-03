@@ -83,23 +83,33 @@ module hexbox(r = r) {
 }
 
 // solid cylinder with fn sides:
-module polycylinder(h, fn = 6, r=10, cz = false) {
+module polycylinder(h, fn = 6, r=10, trr) {
+  trr = def(trr, [0, 0, 0]); // or [0, 0, -h/2]; to center-z
+
   $fn = fn;
-  // rotate([0, 0, 30])
+  trr(trr)
   linear_extrude(h )
   circle(r);
 }
-// function da(a, r) = (sin(60+a)-sin(60))*r;
+
 function da(a, r, r0 = 60) = (sin(r0+a)-sin(r0))*r;
 
 hr0 = r;
 hr = hr0+min(hr0,da(30, hr0)); // extend to hold rotated hexes +da(hr0, 30)
 
-// hexagonal tube
-module hexBox(h=10, r=5, t=t0, cz = false) {
+/**
+4 sided hex box; truncated on x
+@param h: interior height
+@param r: interior radius
+@param t: wall/end thickness
+@param trr: tr & rot & ctr
+*/
+module hexBox(h=10, r=5, t=t0, trr) {
+  trr = def(trr, [0, 0, 0]); // or [0, 0, -h/2]; to center-z
   rr = r + 1.5*t0; 
   hh = h + 2*t0; h2 = rr * sqrt3;
   k = .9;
+  trr(trr)
   difference() 
   {
     translate([0, 0, -p])  
@@ -110,20 +120,20 @@ module hexBox(h=10, r=5, t=t0, cz = false) {
     // cut off two sides of hexbox:
     translate([rr*(1-k/2), 0, hh/2]) cube([rr*k, h2+pp, hh+2*pp], true);
     translate([rr*(0-1),   0, hh/2]) cube([rr*.5, h2+pp, hh+2*pp], true);
-    //  flat the end
+    //  flat the end (approx; needs tweaking if k changes)
     translate([-rr*.6, 0, hh/2]) cube([rr*.5, r*k-4, h], true);
   }
 }
 
 
-loc = 0; nt = 19;
+loc = 1; nt = 19; hz = dz*(nt - f);
 
 atrans(loc, [[0,0, 1.5*t0], undef, undef, 0])
   astack(nt, [0,0,dz]) color("pink") hexagon([0,0,0], r);
 
 atrans(loc, [[.5*t0,0,0], [0, 0, 0, [0, 90, 0, [r/2, 0, 0]]], [0,0,0], [0, 0, -.5]])
   // color("skyblue")
-  hexBox(dz*(nt - f), r+2, 1, false);
+  hexBox(hz, r+2, 1);
 
 
 // not using splitwall hexbox
