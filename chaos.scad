@@ -13,10 +13,6 @@ h0 = R * sqrt3_2;
 h2 = 2 * h0;
 echo("R, h0, h2", R, h0, h2);
 
-height = 75;
-width = 75;
-r = 15;
-
 module cbox(r = r, h = height, w = width, k) {
   k = is_undef(k) ? -r : k;
   z = 2 * r;
@@ -96,22 +92,27 @@ function sumt(ary, i = 0, t0 = t0) = sumi(ary, i) + i * t0;
 
 // four trasy stacked by dzz
 module fourTrays(dzz = dzz, rzz = rzz) {
-  aloc = [[0, -.94], [0, .94], [-1, .94], [0, 0]];
+  aloc = [[0, 1], [1, 1], [1, -1], [1, 0]];
   for (i = [0 : len(dzz)-1])
     let(z = sumt(dzz, i), rz = rzz[i]) echo("z = ", z)
-    atrans(loc, [[aloc[i][0]*(width+1), aloc[i][1]*(height+1)+5,0], [-xoff, 0, z]])
+    atrans(loc, [[aloc[i][0]*(width), aloc[i][1]*(height-4),0], [-xoff, 0, z]])
     ctray(r, height, width, -r*rz*.9);
 }
 
 xoff = 0;
 loc = 0;
+
+height = 75;
+width = 80;
+r = 15;
+
 module lid(h = sumt(dzz, 3, t0+f) + 3 * t0) {
   d = t0+.2; lw = width+2*d; lh = height+2*d;
   zt = dzz[0] + sumt(dzz, 3) + t0 ; // z_offset to display
   echo("lid: zt = ", zt);
 
   atrans(loc, [
-    [- width - 4, -8, 0], 
+    [- 4, -10, 0], 
     [-d-xoff, -d, zt+p, [0, 180, 0, [lw/2, 0, 0]]],
     [-d-xoff, -d, 0, ],
     ]) 
