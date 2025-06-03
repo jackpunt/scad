@@ -91,7 +91,7 @@ module cardbox(name, cutaway = false) {
   }
   }
 
-  a2 = -3.; 
+  a2 = -3.0; // angle of cards on fulcrum
   trt = [0, 0, 0, [ a2, 0, 0, [0, cardh/2, 1 ]]];
   // Stack of cards:
   atrans(loc, [trt, undef, undef, undef, undef, 0])
@@ -246,8 +246,10 @@ module partTrays(mr = ny-1, mc = nx-1) {
       partstray([x, y, +p]); // above the blue box
 }
 
-module partsGrid() {
-  cs = 5; nc = 10; nr = 20;
+// cs: child size; begin grid @ (cs, cs+1)
+// nc: columns
+// nr: rows
+module partsGrid(cs = 5, nc = 10, nr = 20) {
   x0 = cs;
   xi = (bw - cs) / nc;
   xm = bw - cs;
@@ -283,8 +285,8 @@ lz = 11;
 // depth to clips/holes
 sd = 7;
 
-module partsLid() {
-  sd = 7;
+module partsLid(lw = lw, lh = lh, lz = lz, sd = sd) {
+  sd = is_undef(sd) ? 7 : sd;
   union() {
   translate([f, -f, 0])
   difference() {
@@ -295,7 +297,7 @@ module partsLid() {
   // add clips:
   cx = 1+f; d0 = (t0+cx/2);
   tr = [f, (lh-f)/2, t0+sd+f];
-  clips(tr, [00+d0, lw-d0], 30, cx);
+  color("red") clips(tr, [00+d0, lw-d0], 30, cx);
   }
 }
 
