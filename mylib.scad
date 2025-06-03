@@ -47,10 +47,10 @@ module atrans(ndx = 0, atran = [[ 0, 0, 0 ]]) {
 }
 
 // A hollow box:
-// lwh: [length_x, width_y, height_z],
-// t: ([t0,t0,t0]) thick 'translate'
-// d: delta --> reduction to create inner box ([2, 2, 1-p])
-// cxy: center XY, z = 0
+// lwh: [length_x, width_y, height_z], exterior size
+// t: ([t0,t0,t0]) thickness of x_wall, y_wall, z_floor 
+// d: ([2, 2, 1-p]) delta --> reduction to create inner box: lwh-d*t 
+// cxy: (false) center XY, z = 0
 // -
 // diff() { cube(lwh); tr(txyz) cube(adif(lwh, amul(d, txyz))) }
 module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
