@@ -35,7 +35,7 @@ module hexBox(h=10, r=5, t=t0, cz = false) {
   difference() {
     translate([0, 0, -p])  
     polycylinder(h+pp, 6, r);
-    translate([t0*1., t0*1.5, -t0])  // make thicker on bottom
+    translate([t0*1.0, t0*1.5, -t0])  // make thicker on bottom
     polycylinder(h+2*t0, 6, r);
   }
 }
@@ -270,7 +270,7 @@ ht = hr + hr0 + t0; // height of box
 // t0: endcaps & sidewalls
 module hextray(n = 10, parms, size = size) {
   dx = n * d0;      // interior length
-  tl = dx + 2 * t0; // n*d0 interior + 2*t0 endcaps
+  tl = dx + 2 * t0; // total length = n*d0 interior + 2*t0 endcaps
   echo("hextray: n=",n, "parms=", parms, "hr=", hr, " size=", size, "ht=", ht, "tl=", tl);
   module pos() {
     translate([0, 0, -.18]) rotate ([90, 0, 90]) children();

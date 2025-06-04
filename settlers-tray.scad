@@ -352,16 +352,16 @@ loc = 3;
 
 // CardTray-1:
 difference() {
-atrans(loc, [[cw/2, ch/2, 0], 0, undef, undef, undef, 0])
-{
-  cardboxes();
-  for (i = [0 : 2]) sidebox((cw-1)*i);
-}
-{
-  // cut holes for clips:
-  dx = 1.5*t0; 
-  holes([0, (lh-f)/2, cbz - lz + 4], [-t0 + dx, tw+2*t0 - dx], 10, 4);
-}
+  atrans(loc, [[cw/2, ch/2, 0], 0, undef, undef, undef, 0])
+  {
+    cardboxes();
+    for (i = [0 : 2]) sidebox((cw-1)*i);
+  }
+  {
+    // cut holes for clips:
+    dx = 1.5*t0; 
+    holes([0, (lh-f)/2, cbz - lz + 4], [-t0 + dx, tw+2*t0 - dx], 10, 4);
+  }
 }
 // cardsLid-4
 cardsLid();
