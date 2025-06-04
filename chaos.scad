@@ -18,24 +18,24 @@ echo("R, h0, h2", R, h0, h2);
 // cr: scoop radius (bz)
 // h: y_height (height)
 // w: x_width (width)
-// k: keep/cut (-bz)
-module cbox(cr = bz, h = height, w = width, k) {
-  k = is_undef(k) ? -bz : k;
+// k: keep/cut (-cr)
+module cbox(bz = bz, cr = bz, h = height, w = width, k) {
+  k = is_undef(k) ? -cr : k;
   z = 2 * bz;
   intersection() 
   {
-  div([z, h, 0], cr, k, w);
-  divXZ([z, w, 0], cr, k, h);
+    div([z, h, 0], cr, k, w);
+    divXZ([z, w, 0], cr, k, h);
   }
 }
 
-module ctray(bz = bz, h = height, w = width, k) {
+module ctray(bz = bz, cr = bz, h = height, w = width, k) {
   k = is_undef(k) ? -bz * 1.2 : k;
   difference() 
   {
-    cbox(bz, h, w, k);
+    cbox(bz, cr, h, w, k);
     trr([t0, t0, t0])
-    cbox(bz, h-2*t0, w-2*t0, k);
+    cbox(bz, cr, h-2*t0, w-2*t0, k);
   }
 }
 // cs: child size; begin grid @ (cs, cs+1)
@@ -66,7 +66,7 @@ module holes(tr, xa, dy = 30, wx = 2, ly = 3, hz = 2) {
 // holes to match with clips
 // hole at [tr] + each [xz, dy] location
 // cube [wx, ly, hz]
-module holesIf(cond = false, tr, xa, dy = 30, wx = 2, ly = 3, hz = 2) {
+module holesIf(cond = false, tr, xa, dy = 20, wx = 2, ly = 3, hz = 2) {
   if (cond) {
     difference()
     {
@@ -79,9 +79,12 @@ module holesIf(cond = false, tr, xa, dy = 30, wx = 2, ly = 3, hz = 2) {
 }
 
 // place clips at [tr] + each [xa, dy] location
+// xa: [left, right] edges
+// dy: [-dy, 0, dy] (3 clips) or supply y_array
 // cube([wx, ly, hz], true)
-module clips(tr, xa, dy = 30, wx = 2, ly = 3, hz = 2) {
-  for (x = xa, iy = [-dy: dy: dy]) 
+module clips(tr, xa, dy = 30, wx = 2, ly = 4, hz = 2) {
+  ya = is_list(dy) ? dy : [-dy, 0, dy];
+  for (x = xa, iy = ya) 
   {
     translate([tr[0]+x, tr[1]+iy, tr[2]]) cube([wx, ly, hz], true);
   }
@@ -91,13 +94,13 @@ module clips(tr, xa, dy = 30, wx = 2, ly = 3, hz = 2) {
 // sd: depth of clips when lid is inverted
 // f = (~.18) fudge to provide friction
 module partsLid(lw, lh, lz, sd, f = f) {
-  sd = is_undef(sd) ? 7 : sd;
+  sd = is_undef(sd) ? 8 : sd;
   sw = 16; // apparently, half-width
-  sh = 10;
+  sh = 8;
   sr = 2;
   // hwtr, tr, rot, riq, ss
-  slotifyY([sh, sw, 2*t0, sr], [lw/2, 00 + t0/2, lz-sh/2+sr], undef, 1, false)
-  slotifyY([sh, sw, 2*t0, sr], [lw/2, lh - t0/2, lz-sh/2+sr], undef, 1, false)
+  // slotifyY([sh, sw, 2*t0, sr], [lw/2, 00 + t0/2, lz-sh/2+sr], undef, 1, false)
+  // slotifyY([sh, sw, 2*t0, sr], [lw/2, lh - t0/2, lz-sh/2+sr], undef, 1, false)
 
   union() {
     difference() {
@@ -106,15 +109,17 @@ module partsLid(lw, lh, lz, sd, f = f) {
     }
 
     // add clips:
-    wx = 1 + 2 * f; 
+    wx = 1 + 2 * f; ly = 2.75; hz = 1.75; // holes @ 4.0 overhanging span...
     d0 = t0 + wx / 2 - f;
     
     // color("red") 
-    //   base [x_locs      ],[dy], wx
-    clips([0, lh/2, t0+sd+p], [00+d0, lw-d0], bz+5, wx);
+    //     [trx, try, trz],   [x_locs...      ]   ,[dy], wx
+    clips([0, lh/2, sd+p+.0], [00+d0,    lw-d0]   , 15, wx, ly, hz);
+    clips([0, lh/2, sd+p+.5], [00+d0-.5, lw-d0+.5], 15, wx, ly, hz);
   }
 }
 
+// set at beginning of radius: bz
 module blocks(y = bz) {
   colors = selectNth(0, parts);
   for (i = [0 : len(dzz)-1]) 
@@ -135,16 +140,18 @@ module fourTrays() {
   dzz = selectNth(1, parts);
   crr = selectNth(2, parts);
   rzz = selectNth(3, parts);
+  bzz = selectNth(4, parts);
   aloc = [[0, 1], [1, 1], [1, -1], [1, 0]];
   for (i = [0 : len(dzz)-1])
-    let(z = sumt(dzz, i), cr = crr[i], rz = -bz * rzz[i])
+    let(z = sumt(dzz, i), cr = crr[i], bz = bzz[i], rz = -bz * rzz[i])
     atrans(loc, [[aloc[i][0]*(width+1), aloc[i][1]*(height-2),0], [-xoff, 0, z], 1])
-    holesIf(i == 0, [0, height/2, bz-4+p], [0, width], bz+5, 3, 5, 1.5)
-    // color(clr[i])
-    ctray(cr, height, width, rz);
+    holesIf(i == 0, [0, height/2, bz-4+p], [0, width], 15, 3, 4, 2.65)
+    color(clr[i])
+    ctray(bz, cr, height, width, rz);
 }
 
-module lid(lz = sumt(dzz, 4) - sumt(dzz, 1) + 6.2 * t0) {
+loh = 1.5;
+module lid(lz = sumt(dzz, 4) - sumt(dzz, 1) + loh * t0) {
   d = t0+.2; lw = width+2*d; lh = height+2*d;
   zt = sumt(dzz, 4) + 1.2 * t0 ; // z_offset to display
   echo("lid: lw, lh, zt = ", lw, lh, zt);
@@ -155,11 +162,11 @@ module lid(lz = sumt(dzz, 4) - sumt(dzz, 1) + 6.2 * t0) {
     1,
     [-d-xoff, -d, 0, ],
     ]) 
-    partsLid(lw, lh, lz, lz-2*t0, .2);
+    partsLid(lw, lh, lz, lz - (loh + 2.0)*t0, .2);
 }
 
 // 0: printable, 1: assembled with blocks& cutaway, 2: assembled, 3: lid only
-loc = 1;
+loc = 0;
 
 xoff = 0;
 
@@ -167,11 +174,12 @@ height = 72; // leave room for 20mm dice. 93mm at bottom of cell; - 2mm lid;
 width = 80;
 bz = 13; // height of cbox, default corner radius
 parts = [ // color, cr, boxr, boxk
-  ["brown", 12, 2, 1], // Mtn
-  ["red", 10, bz, 1],   // Gem
-  ["yellow", 5, bz, 1], // E-1
-  ["yellow", 7, bz, 1.45], // E-5
+  ["brown", 12,  2, 1, 20], // Mtn
+  [  "red", 10, bz, 1, bz],   // Gem
+  ["yellow", 5, bz, 1, bz], // E-1
+  ["yellow", 7, bz, 1.45, bz], // E-5
   ];
+// ambient value: dzz
 dzz = selectNth(1, parts);
 for (i = [0 : len(parts)]) echo(i, "sumi() = ", sumi(dzz, i), "sumt() = ", sumt(dzz,i));
 
@@ -184,7 +192,9 @@ difference()
     lid();
   }
   atrans(loc, [undef, [0,0,0]])
-  trr([-3-xoff, -4, -1]) cube([width+6, bz+5, 50]) // cutaway view
+  trr([-3-xoff, -4, -1]) cube([width+6, bz+5, 50]); // cutaway view
+  *atrans(loc, [undef, [0,0,0]])
+  trr([-3-xoff, -4, -1]) cube([bz+5, height+6, 50]) // cutaway view
   ;
 }
 
