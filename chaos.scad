@@ -137,19 +137,20 @@ function sumt(ary, i = 0, t0 = t0) = sumi(ary, i) + i * t0;
 // four trasy stacked by dzz
 module fourTrays() {
   clr = selectNth(0, parts);
-  dzz = selectNth(1, parts);
+  dzz = selectNth(1, parts); // block size (delta-z in stack)
   crr = selectNth(2, parts);
-  rzz = selectNth(3, parts);
-  bzz = selectNth(4, parts);
-  aloc = [[0, 1], [1, 1], [1, -1], [1, 0]];
+  rzz = selectNth(3, parts); // k
+  bzz = selectNth(4, parts); // box z (wall height)
+  aloc = [[1, 1], [0, 0], [1, 0], [0, 1]];
   for (i = [0 : len(dzz)-1])
     let(z = sumt(dzz, i), cr = crr[i], bz = bzz[i], rz = -bz * rzz[i])
-    atrans(loc, [[aloc[i][0]*(width+1), aloc[i][1]*(height-2),0], [-xoff, 0, z], 1])
+    atrans(loc, [[aloc[i][0]*(width+1), aloc[i][1]*(height+1),0], [-xoff, 0, z], 1])
     holesIf(i == 0, [0, height/2, bz-4+p], [0, width], 15, 3, 4, 2.65)
     color(clr[i])
     ctray(bz, cr, height, width, rz);
 }
 
+// Lid Overhang (below clips)
 loh = 1.5;
 module lid(lz = sumt(dzz, 4) - sumt(dzz, 1) + loh * t0) {
   d = t0+.2; lw = width+2*d; lh = height+2*d;
@@ -157,7 +158,7 @@ module lid(lz = sumt(dzz, 4) - sumt(dzz, 1) + loh * t0) {
   echo("lid: lw, lh, zt = ", lw, lh, zt);
 
   atrans(loc, [
-    [- 4, -10, 0], 
+    undef, // [ 8, height + 2, 0], 
     [-d-xoff, -d, zt+p, [0, 180, 0, [lw/2, 0, 0]]],
     1,
     [-d-xoff, -d, 0, ],
@@ -166,17 +167,18 @@ module lid(lz = sumt(dzz, 4) - sumt(dzz, 1) + loh * t0) {
 }
 
 // 0: printable, 1: assembled with blocks& cutaway, 2: assembled, 3: lid only
-loc = 0;
+loc = 3;
 
 xoff = 0;
 
-height = 72; // leave room for 20mm dice. 93mm at bottom of cell; - 2mm lid; 
-width = 80;
+height = 92; // 93mm at bottom of cell; - 2mm lid; (no room for dice)
+width = 80;  // full size
 bz = 13; // height of cbox, default corner radius
-parts = [ // color, cr, boxr, boxk
+parts = [ 
+  // color, dz, cr, k, bz
   ["brown", 12,  2, 1, 20], // Mtn
-  [  "red", 10, bz, 1, bz],   // Gem
-  ["yellow", 5, bz, 1, bz], // E-1
+  ["yellow", 5, bz, 1.5, bz+7], // E-1
+  [  "red", 10, bz, 1.5, bz+7],   // Gem
   ["yellow", 7, bz, 1.45, bz], // E-5
   ];
 // ambient value: dzz
