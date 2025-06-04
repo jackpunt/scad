@@ -114,7 +114,6 @@ module topTray(dx = l/4, dz = 2)
                 1,
                 0,
                 0,
-                0,
           ])
     /* clang-format on */
     {
@@ -153,8 +152,11 @@ module vbox()
     tt = t0*1.2; bt = sh+tt; fx = .25; fy = .25;
     atrans(loc, [
         [-vw/2-2*t0, l0y-vl/2,       0, [0, 0, 90]], 
-        [-vw/2-2*t0, l1y-vl/2,       0, [0, 0, 90]],
+        0,
         [ vw/2     , l1y-vl/2, vh+tt+p, [180,0,90]],
+        undef,
+        undef,
+        0,
         ])
     {
     // color("cyan")
@@ -182,7 +184,8 @@ module vbox()
   atrans(loc, [
                [0, l0y, 0, [0,0,-90]], 
                [0, l1y, 0, [0,0,-90]], 
-               [0, l1y, 0, [0,0,-90]],
+               2, undef, undef, 1
+               
                ]) 
   { 
 //   echo("vbox2:", hwtr)
@@ -324,13 +327,14 @@ module slottest() {
 use<testRC.scad>;
 // translate([-50, -40, 0])  testRC();
 
-// 0: all, 1: box/cutaway, 2: box & cards & lid, 3: box&lid, 4: lid
+// mainBox (w/cutaway), cards, vbox, topTray (cards 'lid')
+// 0: all, 1: box/cutaway, 2: box & cards & lid, 3: box, 4: trayTop, 5: vbox[2]
 loc = 0;
 ///
 /// MAIN BUILD HERE:
 ///
 atrans(loc, [[0,0,0], 0, 0, 0])
-cutaway() gridawayXZ() mainBox();
+  cutaway() gridawayXZ() mainBox();
 // slottest();
 
 // topTray:
@@ -340,9 +344,9 @@ cutaway() gridawayXZ() mainBox();
 // dup([-10, 0, 0])
 topTray(l/6);
 
-// Two vbox:
+// Two vbox: 5
 dup([ 0, -25, 0 ])
- atrans(loc, [[0,0,0]])
+ atrans(loc, [[0,0,0], undef, undef, undef, undef, 0])
  vbox();
 
 dy = 10;
@@ -353,5 +357,5 @@ dr = 5; // rCube test
 // atan(6/88) = 4;
 // atan(7/88) = 4.5;
 a2 = 3.2; // angle of the card on ramp
-atrans(loc, [[0, 0, 0], undef, 0])
+atrans(loc, [undef, [0, 0, 0], undef, 0]) // show pink Cards
     translate([ 0, 0, .1 ]) rotatet([ 0, a2, 0 ], [ 90, 0, 1 ]) card([ 4, (w0 - w00) / 2, 1 ]);

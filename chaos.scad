@@ -167,7 +167,7 @@ module lid(lz = sumt(dzz, 4) - sumt(dzz, 1) + loh * t0) {
 }
 
 // 0: printable, 1: assembled with blocks& cutaway, 2: assembled, 3: lid only
-loc = 3;
+loc = 1;
 
 xoff = 0;
 
