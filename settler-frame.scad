@@ -9,6 +9,7 @@ nCol = 3;           // determines metaSize of map & frame
 
 h0 = 3.125*25.4;    // "ideal" size of cardboard hex (3 1/8 inch)
 h2 = h0 + f ;       // 2H; H = 15.625 + fudge or shrinkage; + .9 mm / 5 gaps
+// hs = (col-.5)*h2 for col = 3
 echo("hs=", 2.5*h2, ">", 2.5*h0, "=", 2.5*(h2-h0), "per 2.5", "5 * (h2-h0)", 8*(h2-h0));
 // radius of each hex; h2 is the measured ortho size (+ ~f)
 r = h2 * sqrt3_2;
@@ -61,10 +62,11 @@ module fullMap(h2 = h2, t = 1, h0 = h0, z0 = -2) {
 // wf: x_width of frame piece (h2 / 2)
 // oz: offset_z (1)
 // ring: make a ring of six fullFrame (false)
-module frame(nsnc, wf = h2/2, oz = 1, ring = false) {
+module frame(nsnc, wf = h2/2, oz = 1, ring = false, solid = false) {
   nsnc = def(nsnc, [1, 1]);
   wf = def(wf, h2/2); // width of frame
   oz = def(oz, 1);
+  ring = def(ring, false);
   tf = 3+pp;           // thickness of frame
   col = nCol;          // placement of frame
   R = h2/sqrt3;  H = h2/2; 
@@ -95,6 +97,10 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = false) {
     }
   }
 
+  // given two fullFrams connected: 
+  // - cut to 2 frames (for straightPart & cornerPart)
+  // - trim cornerPart to size
+  // - addHooks to each
   // hs: height of straight cut
   // children(0) straight frame
   // children(1) tilted frame
@@ -110,6 +116,9 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = false) {
     module hook(rtr, hr = hr) {
       trr(rtr) triangle([0, 0, 0], hr, tf+pp, true);
     }
+
+    // Add a hook (triangle) at one end; cut a hook (triangle) on the other end.
+    //
     // Given: child(0) is centered, child(1) is positioned at top.
     // - sf[3] --> center; rtr --> bottom
     // 
@@ -120,14 +129,14 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = false) {
     // - cxyz: [cx, cy, cz] ([1, 1, 1])
     module addAndCut(rtr, sf) {
       rtr = def(rtr, [0, 0, 0]);
-      sf = def(sf, [1, 1, 1]);
+      sf = def(sf, [1, 1, 1]); // scale factors [sx, sy, sz]
       difference() 
       {
         union() {
           children(0);
-          children(1);
+          children(1); // add child(1)
         }
-        // move to cut location
+        // move to cut location, to subtract child(1)
         trr(rtr) scalet(sf)  children(1);
       }
     }
@@ -186,22 +195,54 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = false) {
         }
       }
     }
-  }
-    if (ring) {
-      dup([0,0,0], [0, 0, -60]) 
-      dup([0,0,0], [0, 0, -60]) 
-      dup([0,0,0], [0, 0, -60]) 
-      dup([0,0,0], [0, 0, -60]) 
-      dup([0,0,0], [0, 0, -60]) 
+  } // end of module cutit()
+
+  // extract a piece of fullFrame that straddles the straightPart & cornerPart
+  // --> given: child(0) is a fullFrame <-- Ehh, just make a fullFrame()
+  module weld(solid = solid) {
+    hw = solid ? hs/3 : 0;
+    echo("weld: solid=", solid, "hw = ", hw);
+    intersection() 
+    {
       fullFrame();
-    } else {
-      cutit(nsnc[0], nsnc[1])
+      translate([kx, hw, -0]) cube([wf, hs/3, tf+pp]);
+    }
+  }
+
+  if (ring) 
+  {
+    dup([0,0,0], [0, 0, -60]) 
+    dup([0,0,0], [0, 0, -60]) 
+    dup([0,0,0], [0, 0, -60]) 
+    dup([0,0,0], [0, 0, -60]) 
+    dup([0,0,0], [0, 0, -60]) 
+    fullFrame();
+  } else 
+  if (solid) {
+    dup([21-3*wf, 0, 0])
+    dup([21-3*wf, 0, 0])
+    trr([0,30,0, [0, 0, -5.6]])
+    dup([2*kx+h0+1, h0/2+36, 0], [0, 0, -180]) 
+    union() 
+    {
+      color("green") weld(solid);
+      cutit(nsnc[0], nsnc[1], hs)
+        dup([-0*f, 0*f, -pp], [0, 0, 60])
+        fullFrame();
+    }
+    color("cyan")
+    trr([kx -56, 42, -3]) cube([12 * 25.4, 12 * 25.4, t0], true);
+
+  }
+  else
+  {
+    cutit(nsnc[0], nsnc[1], hs)
       dup([-0*f, 0*f, -pp], [0, 0, 60])
       fullFrame();
-    }
+  }
 }
 
-frame();
+frame(undef, undef, undef, undef, true);
 // frame([0, 6]);  // corners
 // frame([3, 0]);  // straight (< 220 printer plate)
 //frame(undef, undef, undef, true) fullMap(h2, 2, h0, .5);
