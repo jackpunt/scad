@@ -1,3 +1,5 @@
 OpenSCAD*
 *~
 *.3mf
+*.svg
+3mf/*

@@ -133,7 +133,8 @@ module astack(n, d, rot) {
   }
 }
 
-function as3D(ary, a2) = [ ary[0], ary[1], is_undef(ary[2]) ? a2 : ary[2] ];
+function as2D(ary, a1) = [ ary[0], def(ary[1], a1)];
+function as3D(ary, a2) = [ ary[0], ary[1], def(ary[2], a2) ];
 // shift center of rotation, then rotate, shift back
 // rot: [ax, ay, az {, [cx, cy, cz]}] the rotation
 // cr:  [cx, cy, cz] the center of rotation (if not in rot[3])
