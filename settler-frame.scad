@@ -235,6 +235,20 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
     makePart(trf, trt, es, "red") children(0);
   }
 
+  // add hook to small section of child(0) [which is typically a fullFrame]
+  module testHook() {
+    trr([-csp-hr, -hs/2, 0]) // center at (0,0)
+    intersection() 
+    {
+      trr([csp, hs/2, 2*abs(oz)]) color("cyan") aCube([wf, wf, 8*abs(oz)], true);
+      union () {
+        cornerPart([csp, (es+hs)/2, oz]) children(0);
+        // trr([0, -hr/2-2, 0]) // separate for printing
+        straightPart([csp, 0, oz]) children(0); // translate to location of frame
+      }
+    }
+}
+
   // given two fullFrames connected: 
   // - cut to 2 frames (for straightPart & cornerPart)
   // - trim cornerPart to size
@@ -245,33 +259,18 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
   module cutit(hs = hs) {
     if (solid) {
       ww = wf*.5; wh=wf*.75;
-      for (i = [0 : nc -1]) {
-        // another weld to make a single piece for laser cut:
-        color("cyan") trr([kx+ww, hs*.74, tf/2, [0,0,30]]) aCube([ww, wh, tf], true);
-        trr([i * -30, i *-20, 0]) cornerPart([csp, (es+hs)/2, oz]) children(0);
-        trr([i * -(wf+3), 0, 0]) straightPart([csp, 0, oz]) children(0); // translate to location of frame
-      }
+      // another weld to make a single piece for laser cut:
+      color("cyan") trr([kx+ww, hs*.74, tf/2, [0,0,30]]) aCube([ww, wh, tf], true);
+      cornerPart([csp, (es+hs)/2, oz]) children(0);
+      straightPart([csp, 0, oz]) children(0); // translate to location of frame
     } else {
-    if (nc > 0) for (i = [0 : nc-1])
-    trr([i * -30, i *-20, 0])
-    cornerPart([csp, (es+hs)/2, oz]) children(0);
+      if (nc > 0) for (i = [0 : nc-1])
+      trr([i * -30, i *-20, 0])
+      cornerPart([csp, (es+hs)/2, oz]) children(0);
 
-    if (ns > 0) for (i = [0 : ns-1])
-    trr([i * -(wf+3), 0, 0])
-    straightPart([csp, 0, oz]) children(0); // translate to location of frame
-
-    // small test of hook:
-    if (nc == 0 && ns == 0) {
-      intersection() 
-      {
-        trr([csp+2, hs/2, 2*abs(oz)]) color("cyan") aCube([wf, wf, 8*abs(oz)], true);
-        union () {
-          cornerPart([csp, (es+hs)/2, oz]) children(0);
-          trr([0, -hr/2-2, 0])
-          straightPart([csp, 0, oz]) children(0); // translate to location of frame
-        }
-      }
-    }
+      if (ns > 0) for (i = [0 : ns-1])
+      trr([i * -(wf+3), 0, 0])
+      straightPart([csp, 0, oz]) children(0); // translate to location of frame
     }
   } // end of module cutit()
 
@@ -307,19 +306,23 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
     ringit(ring)
     frameCutAndRepeat(hs);
   } else 
+  if (solid && nc == 0 && ns == 0) {
+    echo("frame: testHook")
+    testHook() fullFrame();;
+  } else
   if (solid) {
     echo("frame: solid");
     // for 6 on 12 x 12 board
-    // color("cyan")
-    // trr([kx -56, 42, -3]) cube([12 * 25.4, 12 * 25.4, t0], true);
-    // dup([21-3*wf, 0, 0])
-    // dup([21-3*wf, 0, 0])
-    trr([0, 30, 0, [0, 0, -5.6]])
+    color("cyan")
+    trr([kx -56, 42, -3]) cube([12 * 25.4, 12 * 25.4, t0], true);
+    for (i = [0 : max(ns, nc)-1]) {
+    trr([i * (21 - 3*wf), 30, 0, [0, 0, -5.6]])
     dup([2*kx+h0+1, h0/2+36, 0], [0, 0, -180]) 
     union() 
     {
       color("green") weld();
       frameCutAndRepeat(hs);
+    }
     }
   }
   else
@@ -328,9 +331,9 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
   }
 }
 // frame(nsnc, wf=h2/2, oz=1, ring=0, solid=false)
-// frame([1, 0], undef, 0, 0); // debug: simple full frame
+frame([0, 3], undef, 0, undef, is2D); // debug: simple full frame
 // frame(undef, undef, undef, undef, is2D); // for laser cutting; solid && is2D
 // frame([0, 3]);  // corners
 // frame([3, 0]);  // straight (< 220 printer plate)
-frame([1, 1], undef, undef, undef, true); //fullMap(h2, 2, h0, .5);
+// frame([1, 1], undef, undef, undef, is2d); //fullMap(h2, 2, h0, .5);
 // aHexagon();
