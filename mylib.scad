@@ -9,7 +9,7 @@ function def(var, val) = is_undef(var) ? val : var;
 // pairwise multiplication
 function amul(a, b) = [for (i = [0:len(a) - 1]) a[i] * (is_list(b) ? b[i] : b)];
 // pairwise subtraction
-function adif(a, b) = [for (i = [0:len(a) - 1]) a[i] - b[i]];
+function adif(a, b) = [for (i = [0:len(a) - 1]) is_num(a[i]) ? (a[i] - (is_num(b[i]) ? b[i] : 0)) : a[i]];
 // select element from array:
 function selectNth(n, ary) = [for(elt = ary) elt[n]];
 

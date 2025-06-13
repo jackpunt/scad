@@ -134,6 +134,8 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
   hr = 8;              // radius of hook triangle
   hs = (col - .5) * h2;// height of straight part
   csp = kx+wf/2;       // center of straight part (x-coord)
+  hsf = (hr+f)/hr;     // hook scale factor
+  echo("frame: f=", f, "hsf = ", hsf, "solid =", solid);
 
   ns = nsnc[0];    // number of straightParts to make
   nc = nsnc[1];    // number of cornerParts to make
@@ -171,32 +173,15 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
     aTriangle(rtr, hr, tf+pp, true);
   }
 
-
   // Add a hook (triangle) at one end; cut a hook (triangle) on the other end.
   //
-  // Given: child(0) is centered, child(1) is positioned at top.
-  // - sf[3] --> center; rtr --> bottom
-  // 
-  // add child(1) then subtract rtr(sf(child(1), -rtr/2))
-  // child(0)+child(1)-tr(rtr, child(1)*sf)
-  // for ex: addAndCut([0, -hs, 0], [-wf*.2, -hs/2, 0]) straightPart() trr([wf*.2, hs/2, 0]) hook();
-  // sf: [sx, sy, sz {, cxyz }] ([0, 0, 0])
-  // - cxyz: [cx, cy, cz] ([1, 1, 1])
-  module addAndCut(rtr, sf) {
-    rtr = def(rtr, [0, 0, 0]);
-    sf = def(sf, [1, 1, 1, [0, 0, 0]]); // scale factors [sx, sy, sz]
-    difference() 
-    {
-      union() {
-        children(0); // aCube()
-        trr([-.25, -.4, 0]) children(1); // aTriangle(), the hook
-      }
-      // move to cut location, to subtract child(1)
-      trr(rtr) scalet(sf)  children(1);
-    }
-  }
+  // child(0): fullFrame
+  // child(1): hook
+  // rtr0: place hook to add
+  // rtr1: place hook to subtract
+  // sf: scale hook to subtract
   // (child(0) + rtr0() child(1)) - (rtr1() scalet(sf) child(1))
-  module addAndCut2(rtr0, rtr1, sf) {
+  module addAndCut(rtr0, rtr1, sf) {
     sf = def(sf, [1, 1, 1]); // scale factors [sx, sy, sz]
     difference() 
     {
@@ -220,24 +205,27 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
   // trt: rotate cutoff part (for corner)
   // child(0) = fullFrame
   module makePart(trf, trt, ys, colr = undef) {
-    // hook is placed at trh; we move it (-trh) back to (0,0) to scale it
+    hsf = solid ? (hr+.06)/hr : hsf;
     trh = [wf*.2, ys/2, 0, [0, 0, 30]];
+    trh1 = adif(trh, [0, ys, 0]);
+
     mtrh = amul(as3D(trh), [-1, -1, -1]); // minus(trh)
-    hsf = (hr+f)/hr; // hook scale factor (enlarge hole)
     color(colr)
     intersection()  // straight section
     {
       children(0);  // fullFrame - straight up
       translate(trf) 
       maybe_dup_trt(trt)
-      addAndCut([0, -ys, 0], [hsf, hsf, 1, mtrh]) {
+      addAndCut(trh, trh1, [hsf, hsf, 1] )
+      {
         aCube([wf, ys, tf+pp], true);
-        hook(trh);
+        hook([0,0,0], hr);
       }
     }
   }
   // cut & hook a straightPart from child(0) = fullFrame
   module straightPart(trf = [csp, 0, oz]) {
+    // dup([0, -hs -f/4, 0], undef, "red")
     makePart(trf, undef, hs) children(0); // hs: cut fullFrame at +/- hs/2
   }
 
@@ -313,13 +301,14 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
       dup([0,0,0], [0, 0, 60 * i]) children(0);
     }
   }
-
+  echo("frame: ring=", ring, "solid=",solid);
   if (!is_undef(ring)) 
   {
     ringit(ring)
     frameCutAndRepeat(hs);
   } else 
   if (solid) {
+    echo("frame: solid");
     // for 6 on 12 x 12 board
     // color("cyan")
     // trr([kx -56, 42, -3]) cube([12 * 25.4, 12 * 25.4, t0], true);
@@ -343,5 +332,5 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
 // frame(undef, undef, undef, undef, is2D); // for laser cutting; solid && is2D
 // frame([0, 3]);  // corners
 // frame([3, 0]);  // straight (< 220 printer plate)
-frame([1, 1], undef, undef, 1); //fullMap(h2, 2, h0, .5);
+frame([1, 1], undef, undef, undef, true); //fullMap(h2, 2, h0, .5);
 // aHexagon();
