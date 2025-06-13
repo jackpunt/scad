@@ -9,10 +9,10 @@ sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 nCol = 3;           // determines metaSize of map & frame
 
-h0 = 3.125*25.4;    // "ideal" size of cardboard hex (3 1/8 inch)
+h0 = 3.125*25.4;    // "ideal" size of cardboard hex (3 1/8 inch = 79.375mm)
 h2 = h0 + f ;       // 2H; H = 15.625 + fudge or shrinkage; + .9 mm / 5 gaps
 // hs = (col-.5)*h2 for col = 3
-echo("hs=", 2.5*h2, ">", 2.5*h0, "=", 2.5*(h2-h0), "per 2.5", "5 * (h2-h0)", 8*(h2-h0));
+echo("h2=", h2, "hs=", 2.5*h2, ">", 2.5*h0, "=", 2.5*(h2-h0), "per 2.5", "5 * (h2-h0)", 8*(h2-h0));
 // radius of each hex; h2 is the measured ortho size (+ ~f)
 r = h2 * sqrt3_2;
 
@@ -130,12 +130,21 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
   // kx: x-displacement of edge; NNE/SSE corner of hex in col
   kx =  R * (3 * col + 1) / 2; // R/2 + col * 1.5 * R;
   rt = (kx + wf)/1.5;  // 'radius' of intersecting triangle
-  fh = (col + 1) * h2; // total frame height
+  hf = (col + 1) * h2; // total frame height
   hr = 8;              // radius of hook triangle
   hs = (col - .5) * h2;// height of straight part
   csp = kx+wf/2;       // center of straight part (x-coord)
 
-  // one edge of external (fh) x MetaHex:
+  ns = nsnc[0];    // number of straightParts to make
+  nc = nsnc[1];    // number of cornerParts to make
+  es = (hf-hs)/2;  // end size = heightOfFullFrame - heightOfStraightPart
+  // (es + hs)/2 => hf/2/2 - hs/2/2 + hs/2 => hf/4 + hs/2; h2 + hs/2
+  ec = -wf*.667;    // intersects ray from center @ 30', 
+
+  // one edge of external (hf) x MetaHex:
+  // - make a long cube
+  // - interect with sector triangle to make trapezoid
+  // - subtract hexCol
   module fullFrame() {
     // cut the adjacent hexes:
     difference() 
@@ -144,8 +153,7 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
       intersection() 
       {
         // echo("frame: col, H, R, kx, rt=", [col, H, R, kx, rt]);
-        translate([kx, -fh/2, oz-tf/2+p])
-          aCube([wf, fh, tf-pp], false);
+        translate([kx, -hf/2, oz-tf/2+p]) aCube([wf, hf, tf-pp], false);
         // color("cyan") 
         aTriangle([rt, 0, oz, [0, 0, 180]], rt, t=tf, center = true);
       }
@@ -154,25 +162,15 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
     }
   }
 
-  // given two fullFrames connected: 
-  // - cut to 2 frames (for straightPart & cornerPart)
-  // - trim cornerPart to size
-  // - addHooks to each
-  // hs: height of straight cut
-  // children(0) straight frame
-  // children(1) tilted frame
-  module cutit(ns=1, nc=1, hs = hs) {
-    es = (fh-hs)/2;  // end size
-    ec = -wf*.66;    // intersects ray from center @ 30', 
-
     // Place a hook (triangle) at rtr.
     // hr: radius of hook triangle
     // rtr: [dx, dy, tf {, rotr}] ([0, 0, 0])
     //  - rotr: [rx, ry, rz {, cxyz}] ([0, 0, 0])
     //  - cxyz: [cx, cy, cz] ([0, 0, 0])
     module hook(rtr, hr = hr) {
-      trr(rtr) aTriangle([0, 0, 0], hr, tf+pp, true);
+      aTriangle(rtr, hr, tf+pp, true);
     }
+
 
     // Add a hook (triangle) at one end; cut a hook (triangle) on the other end.
     //
@@ -186,15 +184,28 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
     // - cxyz: [cx, cy, cz] ([1, 1, 1])
     module addAndCut(rtr, sf) {
       rtr = def(rtr, [0, 0, 0]);
+      sf = def(sf, [1, 1, 1, [0, 0, 0]]); // scale factors [sx, sy, sz]
+      difference() 
+      {
+        union() {
+          children(0); // aCube()
+          trr([-.25, -.4, 0]) children(1); // aTriangle(), the hook
+        }
+        // move to cut location, to subtract child(1)
+        trr(rtr) scalet(sf)  children(1);
+      }
+    }
+    // (child(0) + rtr0() child(1)) - (rtr1() scalet(sf) child(1))
+    module addAndCut2(rtr0, rtr1, sf) {
       sf = def(sf, [1, 1, 1]); // scale factors [sx, sy, sz]
       difference() 
       {
         union() {
-          children(0);
-          children(1); // add child(1)
+          children(0); // aCube() ?
+          trr(rtr0) children(1); // aTriangle(), the hook
         }
         // move to cut location, to subtract child(1)
-        trr(rtr) scalet(sf)  children(1);
+        trr(rtr1) scalet(sf) children(1);
       }
     }
     module maybe_dup_trt(trt) {
@@ -205,33 +216,45 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
       }
     }
     // ys = hs or es; zr = 30 or 60
+    // trf: move part to final location
+    // trt: rotate cutoff part (for corner)
+    // child(0) = fullFrame
     module makePart(trf, trt, ys, colr = undef) {
+      // hook is placed at trh; we move it (-trh) back to (0,0) to scale it
       trh = [wf*.2, ys/2, 0, [0, 0, 30]];
-      mtrh = amul(as3D(trh), [-1, -1, -1]);
+      mtrh = amul(as3D(trh), [-1, -1, -1]); // minus(trh)
+      hsf = (hr+f)/hr; // hook scale factor (enlarge hole)
       color(colr)
       intersection()  // straight section
       {
-        children(0);
+        children(0);  // fullFrame - straight up
         translate(trf) 
         maybe_dup_trt(trt)
-        addAndCut([0, -ys, 0], [(hr+f)/hr, (hr+f)/hr, 1, mtrh]) {
+        addAndCut([0, -ys, 0], [hsf, hsf, 1, mtrh]) {
           aCube([wf, ys, tf+pp], true);
           hook(trh);
         }
       }
     }
-    // extract straight part of child(0) = fullFrame
-    module straightPart(trf) {
-      makePart(trf, undef, hs) children(0);
+    // cut & hook a straightPart from child(0) = fullFrame
+    module straightPart(trf = [csp, 0, oz]) {
+      makePart(trf, undef, hs) children(0); // hs: cut fullFrame at +/- hs/2
     }
 
-    // child(0) fullFrame
-    module cornerPart(trf) {
+    // cut, dup_trt, & hook a cornerPart from child(0) = fullFrame
+    module cornerPart(trf = [csp, (es+hs)/2, oz]) {
       trt = [0, 0, p, [0, 0, 60, [ec, 0, 0]]];
-      trf = def(trf, [csp, (es+hs)/2, oz]);
       makePart(trf, trt, es, "red") children(0);
     }
 
+  // given two fullFrames connected: 
+  // - cut to 2 frames (for straightPart & cornerPart)
+  // - trim cornerPart to size
+  // - addHooks to each
+  // hs: height of straight cut
+  // children(0) straight frame
+  // children(1) tilted frame
+  module cutit(hs = hs) {
     if (solid) {
       ww = wf*.5; wh=wf*.75;
       for (i = [0 : nc -1]) {
@@ -264,6 +287,13 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
     }
   } // end of module cutit()
 
+  // make 2 fullFrames (straight & tilted), cut, hook, weld...
+  module frameCutAndRepeat(hs) {
+      cutit(hs)
+      dup([0, 0, -pp], [0, 0, 60])
+        fullFrame();
+  }
+
   // extract a piece of fullFrame that straddles the straightPart & cornerPart
   // --> given: child(0) is a fullFrame <-- Ehh, just make a fullFrame()
   module weld(y0 = hs/3) {
@@ -287,7 +317,7 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
   if (!is_undef(ring)) 
   {
     ringit(ring)
-    fullFrame();
+    frameCutAndRepeat(hs);
   } else 
   if (solid) {
     // for 6 on 12 x 12 board
@@ -300,22 +330,18 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
     union() 
     {
       color("green") weld();
-      cutit(nsnc[0], nsnc[1], hs)
-        dup([0, 0, -pp], [0, 0, 60])
-        fullFrame();
+      frameCutAndRepeat(hs);
     }
   }
   else
   {
-    cutit(nsnc[0], nsnc[1], hs)
-      dup([0, 0, -pp], [0, 0, 60])
-      fullFrame();
+    frameCutAndRepeat(hs);
   }
 }
 // frame(nsnc, wf=h2/2, oz=1, ring=0, solid=false)
 // frame([1, 0], undef, 0, 0); // debug: simple full frame
-frame(undef, undef, undef, undef, true); // for laser cutting; solid && is2D
+// frame(undef, undef, undef, undef, is2D); // for laser cutting; solid && is2D
 // frame([0, 3]);  // corners
 // frame([3, 0]);  // straight (< 220 printer plate)
-// frame(undef, undef, undef, 5); fullMap(h2, 2, h0, .5);
+frame([1, 1], undef, undef, 1); //fullMap(h2, 2, h0, .5);
 // aHexagon();
