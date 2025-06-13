@@ -162,90 +162,90 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
     }
   }
 
-    // Place a hook (triangle) at rtr.
-    // hr: radius of hook triangle
-    // rtr: [dx, dy, tf {, rotr}] ([0, 0, 0])
-    //  - rotr: [rx, ry, rz {, cxyz}] ([0, 0, 0])
-    //  - cxyz: [cx, cy, cz] ([0, 0, 0])
-    module hook(rtr, hr = hr) {
-      aTriangle(rtr, hr, tf+pp, true);
-    }
+  // Place a hook (triangle) at rtr.
+  // hr: radius of hook triangle
+  // rtr: [dx, dy, tf {, rotr}] ([0, 0, 0])
+  //  - rotr: [rx, ry, rz {, cxyz}] ([0, 0, 0])
+  //  - cxyz: [cx, cy, cz] ([0, 0, 0])
+  module hook(rtr, hr = hr) {
+    aTriangle(rtr, hr, tf+pp, true);
+  }
 
 
-    // Add a hook (triangle) at one end; cut a hook (triangle) on the other end.
-    //
-    // Given: child(0) is centered, child(1) is positioned at top.
-    // - sf[3] --> center; rtr --> bottom
-    // 
-    // add child(1) then subtract rtr(sf(child(1), -rtr/2))
-    // child(0)+child(1)-tr(rtr, child(1)*sf)
-    // for ex: addAndCut([0, -hs, 0], [-wf*.2, -hs/2, 0]) straightPart() trr([wf*.2, hs/2, 0]) hook();
-    // sf: [sx, sy, sz {, cxyz }] ([0, 0, 0])
-    // - cxyz: [cx, cy, cz] ([1, 1, 1])
-    module addAndCut(rtr, sf) {
-      rtr = def(rtr, [0, 0, 0]);
-      sf = def(sf, [1, 1, 1, [0, 0, 0]]); // scale factors [sx, sy, sz]
-      difference() 
-      {
-        union() {
-          children(0); // aCube()
-          trr([-.25, -.4, 0]) children(1); // aTriangle(), the hook
-        }
-        // move to cut location, to subtract child(1)
-        trr(rtr) scalet(sf)  children(1);
+  // Add a hook (triangle) at one end; cut a hook (triangle) on the other end.
+  //
+  // Given: child(0) is centered, child(1) is positioned at top.
+  // - sf[3] --> center; rtr --> bottom
+  // 
+  // add child(1) then subtract rtr(sf(child(1), -rtr/2))
+  // child(0)+child(1)-tr(rtr, child(1)*sf)
+  // for ex: addAndCut([0, -hs, 0], [-wf*.2, -hs/2, 0]) straightPart() trr([wf*.2, hs/2, 0]) hook();
+  // sf: [sx, sy, sz {, cxyz }] ([0, 0, 0])
+  // - cxyz: [cx, cy, cz] ([1, 1, 1])
+  module addAndCut(rtr, sf) {
+    rtr = def(rtr, [0, 0, 0]);
+    sf = def(sf, [1, 1, 1, [0, 0, 0]]); // scale factors [sx, sy, sz]
+    difference() 
+    {
+      union() {
+        children(0); // aCube()
+        trr([-.25, -.4, 0]) children(1); // aTriangle(), the hook
+      }
+      // move to cut location, to subtract child(1)
+      trr(rtr) scalet(sf)  children(1);
+    }
+  }
+  // (child(0) + rtr0() child(1)) - (rtr1() scalet(sf) child(1))
+  module addAndCut2(rtr0, rtr1, sf) {
+    sf = def(sf, [1, 1, 1]); // scale factors [sx, sy, sz]
+    difference() 
+    {
+      union() {
+        children(0); // aCube() ?
+        trr(rtr0) children(1); // aTriangle(), the hook
+      }
+      // move to cut location, to subtract child(1)
+      trr(rtr1) scalet(sf) children(1);
+    }
+  }
+  module maybe_dup_trt(trt) {
+    if (is_undef(trt)) {
+      children();
+    } else {
+      dup(trt) children();
+    }
+  }
+  // ys = hs or es; zr = 30 or 60
+  // trf: move part to final location
+  // trt: rotate cutoff part (for corner)
+  // child(0) = fullFrame
+  module makePart(trf, trt, ys, colr = undef) {
+    // hook is placed at trh; we move it (-trh) back to (0,0) to scale it
+    trh = [wf*.2, ys/2, 0, [0, 0, 30]];
+    mtrh = amul(as3D(trh), [-1, -1, -1]); // minus(trh)
+    hsf = (hr+f)/hr; // hook scale factor (enlarge hole)
+    color(colr)
+    intersection()  // straight section
+    {
+      children(0);  // fullFrame - straight up
+      translate(trf) 
+      maybe_dup_trt(trt)
+      addAndCut([0, -ys, 0], [hsf, hsf, 1, mtrh]) {
+        aCube([wf, ys, tf+pp], true);
+        hook(trh);
       }
     }
-    // (child(0) + rtr0() child(1)) - (rtr1() scalet(sf) child(1))
-    module addAndCut2(rtr0, rtr1, sf) {
-      sf = def(sf, [1, 1, 1]); // scale factors [sx, sy, sz]
-      difference() 
-      {
-        union() {
-          children(0); // aCube() ?
-          trr(rtr0) children(1); // aTriangle(), the hook
-        }
-        // move to cut location, to subtract child(1)
-        trr(rtr1) scalet(sf) children(1);
-      }
-    }
-    module maybe_dup_trt(trt) {
-      if (is_undef(trt)) {
-        children();
-      } else {
-        dup(trt) children();
-      }
-    }
-    // ys = hs or es; zr = 30 or 60
-    // trf: move part to final location
-    // trt: rotate cutoff part (for corner)
-    // child(0) = fullFrame
-    module makePart(trf, trt, ys, colr = undef) {
-      // hook is placed at trh; we move it (-trh) back to (0,0) to scale it
-      trh = [wf*.2, ys/2, 0, [0, 0, 30]];
-      mtrh = amul(as3D(trh), [-1, -1, -1]); // minus(trh)
-      hsf = (hr+f)/hr; // hook scale factor (enlarge hole)
-      color(colr)
-      intersection()  // straight section
-      {
-        children(0);  // fullFrame - straight up
-        translate(trf) 
-        maybe_dup_trt(trt)
-        addAndCut([0, -ys, 0], [hsf, hsf, 1, mtrh]) {
-          aCube([wf, ys, tf+pp], true);
-          hook(trh);
-        }
-      }
-    }
-    // cut & hook a straightPart from child(0) = fullFrame
-    module straightPart(trf = [csp, 0, oz]) {
-      makePart(trf, undef, hs) children(0); // hs: cut fullFrame at +/- hs/2
-    }
+  }
+  // cut & hook a straightPart from child(0) = fullFrame
+  module straightPart(trf = [csp, 0, oz]) {
+    makePart(trf, undef, hs) children(0); // hs: cut fullFrame at +/- hs/2
+  }
 
-    // cut, dup_trt, & hook a cornerPart from child(0) = fullFrame
-    module cornerPart(trf = [csp, (es+hs)/2, oz]) {
-      trt = [0, 0, p, [0, 0, 60, [ec, 0, 0]]];
-      makePart(trf, trt, es, "red") children(0);
-    }
+  // cut, dup_trt, & hook a cornerPart from child(0) = fullFrame
+  module cornerPart(trf = [csp, (es+hs)/2, oz]) {
+    trt = [0, 0, p, [0, 0, 60, [ec, 0, 0]]];
+    makePart(trf, trt, es, "red") children(0);
+  }
 
   // given two fullFrames connected: 
   // - cut to 2 frames (for straightPart & cornerPart)
