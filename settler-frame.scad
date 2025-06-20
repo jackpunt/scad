@@ -120,9 +120,9 @@ module fullMap(h2 = h2, t = 1, h0 = h0, z0 = -2) {
 // wf: x_width of frame piece (h2 / 2)
 // oz: offset_z (1)
 // ring: make a ring of six fullFrame (0)
-module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
+module frame(nsnc, wf = h2*.45, oz = 1, ring = undef, solid = false) {
   nsnc = def(nsnc, [1, 1]);
-  wf = def(wf, h2/2); // width of frame
+  wf = def(wf, h2*.45); // width of frame
   oz = def(oz, is2D ? 0 : 1);
   tf = is2D ? 0 : 3+pp;// thickness of frame
   col = nCol;          // placement of frame
@@ -200,13 +200,14 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
       dup(trt) children();
     }
   }
+  hsf0 = solid ? -0.1 : 0.06; // reduce by 2D beam width; increase by 3D-fudge
   // ys = hs or es; zr = 30 or 60
   // trf: move part to final location
   // trt: rotate cutoff part (for corner)
   // child(0) = fullFrame
   module makePart(trf, trt, ys, colr = undef) {
-    hsf = solid ? (hr+.06)/hr : hsf;
-    trh = [wf*.2, ys/2, 0, [0, 0, 30]];
+    hsf = solid ? (hr+hsf0)/hr : hsf;
+    trh = [wf*.15, ys/2, 0, [0, 0, 30]];
     trh1 = adif(trh, [0, ys, 0]);
 
     mtrh = amul(as3D(trh), [-1, -1, -1]); // minus(trh)
@@ -243,7 +244,7 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
       trr([csp, hs/2, 2*abs(oz)]) color("cyan") aCube([wf, wf, 8*abs(oz)], true);
       union () {
         cornerPart([csp, (es+hs)/2, oz]) children(0);
-        // trr([0, -hr/2-2, 0]) // separate for printing
+        trr([0, -hr/2-2, 0]) // separate for printing
         straightPart([csp, 0, oz]) children(0); // translate to location of frame
       }
     }
@@ -300,6 +301,16 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
       dup([0,0,0], [0, 0, 60 * i]) children(0);
     }
   }
+  // given a single piece, dup & mirror it
+  module layout2() {
+    trr([kx+80,0,0]) mirror([1,0,0]) trr([-kx, 0, 0]) children(0);
+    children(0);
+  }
+  module layout(i) {
+    dup([2*kx+h0-7, h0/2+36, 0], [0, 0, -180]) 
+    children(0);
+  }
+
   echo("frame: ring=", ring, "solid=",solid);
   if (!is_undef(ring)) 
   {
@@ -313,16 +324,20 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
   if (solid) {
     echo("frame: solid");
     // for 6 on 12 x 12 board
-    color("cyan")
-    trr([kx -56, 42, -3]) cube([12 * 25.4, 12 * 25.4, t0], true);
+    // color("cyan") trr([kx -56, 42, -3]) aCube([12 * 25.4, 12 * 25.4, t0], true);
+    // trr([1.5*wf, -wf, 0, [0, 0, 45]])
+    // trr([-.8*wf, 0, 0])
     for (i = [0 : max(ns, nc)-1]) {
-    trr([i * (21 - 3*wf), 30, 0, [0, 0, -5.6]])
-    dup([2*kx+h0+1, h0/2+36, 0], [0, 0, -180]) 
-    union() 
-    {
-      color("green") weld();
-      frameCutAndRepeat(hs);
-    }
+      trr([i * (18 - 3*wf), 30, 0, [0, 0, -5.6]])
+      // trr([i * (21 - 3*wf), 30, 0, [0, 0, -5.6]])
+      // dup([i * (21 - 3*wf), h0/2+36, 0], [0, 0, -i*180]) 
+      // dup([i * (-2.18 * wf - (i%2)*40), (i%2)*19, 0], [0, 0, i * -180, [csp+wf, h0/4, 0]]) 
+      layout(i)
+      union() 
+      {
+        color("green") weld();
+        frameCutAndRepeat(hs);
+      }
     }
   }
   else
@@ -331,7 +346,7 @@ module frame(nsnc, wf = h2/2, oz = 1, ring = undef, solid = false) {
   }
 }
 // frame(nsnc, wf=h2/2, oz=1, ring=0, solid=false)
-frame([0, 3], undef, 0, undef, is2D); // debug: simple full frame
+frame([1, 3], undef, 0, undef, is2D); // debug: simple full frame
 // frame(undef, undef, undef, undef, is2D); // for laser cutting; solid && is2D
 // frame([0, 3]);  // corners
 // frame([3, 0]);  // straight (< 220 printer plate)
