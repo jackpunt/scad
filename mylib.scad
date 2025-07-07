@@ -184,11 +184,11 @@ module dup(trr, rott, c1, c0) {
 }
 
 // New implementation: MCAD
-// dxyz: [dx, dy, dz]
+// dxyz: [dx, dy, dz] ()
 // r: corner radius
 // sidesonly: round xy, flat on z?
 // center:
-module roundedCube(dxyz, r, sidesonly, center) {
+module roundedCube(dxyz = 10, r = 1, sidesonly = false, center) {
   s = is_list(dxyz) ? dxyz : [ dxyz, dxyz, dxyz ];
   // echo("roundedCube: s=", s, "r=", r);
   translate(center ? amul(s, [-.5, -.5, -.5]) : [ 0, 0, 0 ]) {

@@ -8,35 +8,29 @@ f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
-l00 = 87; // official card size (+2mm for sleeves)
-w00 = 56; // sleeves bring thickness to ~.625 per card. (from min .4mm)
-l0 = 92.4;
-w0 = 60.4; // w00 + 2mm (sleeves) + 2mm (slack); retain 60.4 for slider compat
-h0 = 27;
-h1 = h0 + 3; // extend for ramp!
+l00 = 87;  // official card size (+2mm for sleeves)
+w00 = 56;  // sleeves bring thickness to ~.625 per card. (from min .4mm)
+l0 = 92.4; // l00 + 5.4mm, sleeves & some slack
+w0 = 60.4; // w00 + 2mm (sleeves) + 2mm (slack); retain 60.4 for box top compat
 l = l0 + 2 * t0; // total length of box (y-extent @ loc = 2)
 w = w0 + 2 * t0; // width of civo_cardbox
-h = h1 + t0;
-tsd = 1.7;      // top_slot depth of topTray
+
+lmax = 285/4;    // 95 (l0=92.4)
+hmax = 285/3;    // 71 (w =62.4)
 
 // box for setup (Events, VICI, markers, chips) cards:
-module vbox()
+module vbox(v0 = 20, vw = l)
 {
-  sh = 3.4; // center slot reduction & lid size
-  vw = l + 2; // more slack for lid...
-  vl = 20+2*t0; // x-extent (width to stack cards)
-  vh = w0 + sh + t0 +t0; // about as high as main box is wide (+2 for lid?)
-  sw = 55;// width of slot
-  dh = 39+sh; // depth of slot
-  sr = min(5, dh/2, sw/2); // radius of slot
+  // vw = l + 2;   // more y-slack for card guides
+  vl = v0+2*t0; // x-extent (width to stack cards)
+  vh = w;       // height of vcard holder
+  sw = vw-2;    // width of slot (the whole width for this one)
+  dh = 10;      // depth of slot (below the radius of tray)
+  sr = 1;//min(5, dh/2, sw/2); // radius of slot
   hwtr = [dh, sw, 2*t0, sr]; // ]height, width, translate, rotate]
-  h2 = w0;  // center slot height
-  sz = 11/32 * vl; // 11 +/- 1
-  ss = false;
+  ss = false;   // show slot
 
-  l1y = w + 2 * (vl + 3*t0); // l1y = w+vh
-  l0y = l1y; // 0 -3*t0; 
-  echo("------h2=", h2, "vh=", vh);
+  echo("------vh=", vh);
 
   module cardGuide() {
     up = 10; h1 = 10; h2 = 10; cy=0; a = 6; df = 4;
@@ -60,18 +54,47 @@ module vbox()
                
                ]) 
   { 
-  //   echo("vbox2:", hwtr)
-    slotify(hwtr, [vl-t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
+    //   echo("vbox2:", hwtr)
+    // slotted box with card guides:
+    slotify(hwtr, [00+t0/2, vw/2, vh-(dh/2-sr)], 1, 0, ss)
     box([vl, vw, vh], t0);
-    dh2 = dh-(vh-h2); hwtr2 = [dh2, sw, 2*t0, sr];
-    // slotify(hwtr2, [sz+t0/2, vw/2, h2-(dh2/2-sr)], 1, 3, false)
-    // div([h2, vw, sz], 2, 0, t0);
     translate([vl/2,     (t0+.6), 0 ]) rotate([0,0, 90]) cardGuide();
     translate([vl/2, vw- (t0+.6), 0 ]) rotate([0,0,-90]) cardGuide();
   }
-  // vboxTop();
  }
 }
+
+// tray is a rounded tube (kut) with end caps [from civo_tray]
+// size: [x: length, y: width_curved, z: height_curved]
+// rt: radii of tray [bl, tl, tr, br]
+// rc: radii of caps
+// k0: cut_end default: cut max(top radii) -> k
+module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
+ s = is_list(size) ? size : [size,size,size]; // tube_size
+ rm = is_list(rt) ? max(rt[1], rt[2]) : rt;   // round_max
+ k = is_undef(k0) ? -rm : k0;
+ translate([s[0], 0, 0])
+ rotate([0, -90, 0])
+ roundedTube([s.z, s.y, s.x], rt, k, t);
+
+ // endcaps
+ hw0 = [s.z, s.y, 0];
+ hwx = [s.z, s.y, s.x];
+ div(hw0, rc, k);
+ div(hwx, rc, k);
+}
+module die(trr = [0,0,0]) {
+  trr(trr)
+  color("red") roundedCube(12);
+}
+
 loc = 0;
-// atrans(loc, [[0,0,0], undef, undef, undef, undef, 0])
+atrans(loc, [[0,0,0], undef, undef, undef, undef, 0])
 vbox();
+tl = l0+t0;
+atrans(loc, [[t0+p,tl+t0,0,[90, 0, -90]], [0,0,0,[0,0,90]]])
+tray([tl, w, 26], 9, 0);
+
+dup([0, 15, 0])
+atrans(loc, [[-50, t0, t0]])
+die();
