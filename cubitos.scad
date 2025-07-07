@@ -8,20 +8,23 @@ f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
-l00 = 88;  // official card size [long dimension]
-w00 = 63;  // official card size [short dimension]
+// box size and placement constraint (3x4 grid in square box)
+wmax = 285/4;    // 95 (w0 < wmax)
+hmax = 285/3;    // 71 (h0 < hmax)
+
+w00 = 88;  // official card size [long dimension]
+h00 = 63;  // official card size [short dimension]
+
 t00 = .4;  // card thickness: sleeves bring thickness to ~.625 per card. (from min .4mm)
 t01 = .625; // thickness when stacking sleeved cards 
 
 // euroPoker size (with sleeves):
-l0 = 90.5;   // 
-w0 = 66;     // 
+w0 = 90.5;   // 
+h0 = 66;     // 
 bt = 10 * t01 + 2 * t0; //
-bw = l0 + 2 * t0; // total length of box (y-extent @ loc = 2)
-bh = w0 + 2 * t0; // height of box (short dimension of card + bottom(t0) + top(3mm))
+bw = w0 + 2 * t0; // total length of box (y-extent @ loc = 2)
+bh = h0 + 2 * t0; // height of box (short dimension of card + bottom(t0) + top(3mm))
 
-wmax = 285/4;    // 95 (l0=90.5)
-hmax = 285/3;    // 71 (w0=66.0)
 
 // box for setup (Events, VICI, markers, chips) cards:
 // vt = box thick (~ t01 * number of cards + 2*t0) x-extent
@@ -107,7 +110,7 @@ loc = 0;
 atrans(loc, [[0,0,0], 0])
 vbox(10*t01);
 
-tl = l0+t0;
+tl = w0+t0;
 rt = 18;
 zt = 18+rt;
 atrans(loc, [[t0 - p, tl + t0, 0, [90, 0, -90]], [0, tl + t0, 0, [0, 0, -90]]])
