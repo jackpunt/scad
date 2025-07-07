@@ -15,7 +15,8 @@ echo("R, h0, h2", R, h0, h2);
 
 
 // chaos box: 
-// cr: scoop radius (bz)
+// bz: box z (ambient bz)
+// cr: scoop radius (ambient bz)
 // h: y_height (height)
 // w: x_width (width)
 // k: keep/cut (-cr)

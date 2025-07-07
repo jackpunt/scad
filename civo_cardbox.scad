@@ -130,6 +130,10 @@ module topTray(dx = l/4, dz = 2)
 
 
 // box for setup (Events, VICI, markers, chips) cards:
+// ambient:
+// l length of box
+// w width of box
+//
 module vbox()
 {
   sh = 3.4; // center slot reduction & lid size
@@ -177,9 +181,9 @@ module vbox()
     cube([t0+2, vl, df+t0, ], true);
     }
   }
-// temp union for 'intersection' test
-//   intersection() 
- {
+  // temp union for 'intersection' test
+  // intersection() 
+  {
   // vbox:
   atrans(loc, [
                [0, l0y, 0, [0,0,-90]], 
@@ -188,7 +192,7 @@ module vbox()
                
                ]) 
   { 
-//   echo("vbox2:", hwtr)
+  //   echo("vbox2:", hwtr)
     slotify(hwtr, [00+t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
     slotify(hwtr, [vl-t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
     box([vl, vw, vh], t0);
@@ -199,7 +203,7 @@ module vbox()
     translate([vl/2, vw- (t0+.6), 0 ]) rotate([0,0,-90]) cardGuide();
   }
   vboxTop();
- }
+  }
 }
 
 // add horizontal slot to children(0)
@@ -329,7 +333,7 @@ use<testRC.scad>;
 
 // mainBox (w/cutaway), cards, vbox, topTray (cards 'lid')
 // 0: all, 1: box/cutaway, 2: box & cards & lid, 3: box, 4: trayTop, 5: vbox[2]
-loc = 0;
+loc = 5;
 ///
 /// MAIN BUILD HERE:
 ///
