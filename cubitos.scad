@@ -8,41 +8,48 @@ f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
-l00 = 87;  // official card size (+2mm for sleeves)
-w00 = 56;  // sleeves bring thickness to ~.625 per card. (from min .4mm)
-l0 = 92.4; // l00 + 5.4mm, sleeves & some slack
-w0 = 60.4; // w00 + 2mm (sleeves) + 2mm (slack); retain 60.4 for box top compat
-l = l0 + 2 * t0; // total length of box (y-extent @ loc = 2)
-w = w0 + 2 * t0; // width of civo_cardbox
+l00 = 88;  // official card size [long dimension]
+w00 = 63;  // official card size [short dimension]
+t00 = .4;  // card thickness: sleeves bring thickness to ~.625 per card. (from min .4mm)
+t01 = .625; // thickness when stacking sleeved cards 
 
-lmax = 285/4;    // 95 (l0=92.4)
-hmax = 285/3;    // 71 (w =62.4)
+// euroPoker size (with sleeves):
+l0 = 90.5;   // 
+w0 = 66;     // 
+bt = 10 * t01 + 2 * t0; //
+bw = l0 + 2 * t0; // total length of box (y-extent @ loc = 2)
+bh = w0 + 2 * t0; // height of box (short dimension of card + bottom(t0) + top(3mm))
+
+wmax = 285/4;    // 95 (l0=90.5)
+hmax = 285/3;    // 71 (w0=66.0)
 
 // box for setup (Events, VICI, markers, chips) cards:
-module vbox(v0 = 20, vw = l)
+// vt = box thick (~ t01 * number of cards + 2*t0) x-extent
+// vw = box width (long dimension of card + 2*t0)  y-extent
+// vh = box height (short dimension of card + bottom(t0) + top(3mm)) z-extent
+module vbox(vt = bt, vw = bw, vh = bh)
 {
-  // vw = l + 2;   // more y-slack for card guides
-  vl = v0+2*t0; // x-extent (width to stack cards)
-  vh = w;       // height of vcard holder
-  sw = vw-2;    // width of slot (the whole width for this one)
-  dh = 10;      // depth of slot (below the radius of tray)
-  sr = 1;//min(5, dh/2, sw/2); // radius of slot
-  hwtr = [dh, sw, 2*t0, sr]; // ]height, width, translate, rotate]
-  ss = false;   // show slot
-
-  echo("------vh=", vh);
-
+  echo("------ vbox: vt= ", vt, "vw=", vw, "vh=", vh);
   module cardGuide() {
-    up = 10; h1 = 10; h2 = 10; cy=0; a = 6; df = 4;
+    up = 10; h1 = 10; h2 = 10; cy=0; a = 7; df = 4;
+    vh2 = vh * .59;
     union() {
-    translate([0, 0, vh/2+up+df/2 ])
-    rotate([0, 90-a, 0]) color("green") cube([h1, vl, t0+1], true);
-    translate([0, 0, vh/2+up-df/2-(h2+h1)/2, ])
-    rotate([0, 90+a, 0]) color("green") cube([h2, vl, t0+1], true);
-    translate([.0, 0, vh/2+up/2, ])
-    cube([t0+2, vl, df+t0, ], true);
+    translate([0, 0, vh2+up+df/2 ])
+    rotate([0, 90-a, 0]) color("green") cube([h1, vt, t0+1], true);
+    translate([0, 0, vh2+up-df/2-(h2+h1)/2, ])
+    rotate([0, 90+a, 0]) color("green") cube([h2, vt, t0+1], true);
+    translate([0, 0, vh2+up/2, ])       cube([t0+2, vt, df+t0, ], true);
     }
   }
+
+  // slotify the walls:
+  vl = vt;
+  sw = vw-30;   // width of slot 
+  dh = 50;      // depth of slot (below the radius of tray)
+  sr = min(5, dh/2, sw/2); // radius of slot
+  hwtr0 = [dh, vw- 2, 2*t0, 1]; // ]height, width, translate, rotate]
+  hwtr1 = [dh, vw-30, 2*t0, sr]; // ]height, width, translate, rotate]
+  ss = false;   // show slot
  // temp union for 'intersection' test
  //   intersection() 
  {
@@ -56,7 +63,8 @@ module vbox(v0 = 20, vw = l)
   { 
     //   echo("vbox2:", hwtr)
     // slotted box with card guides:
-    slotify(hwtr, [00+t0/2, vw/2, vh-(dh/2-sr)], 1, 0, ss)
+    slotify(hwtr0, [00+t0/2, vw/2, vh-(dh/2-1)], 1, 0, ss)
+    slotify(hwtr1, [vl-t0/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
     box([vl, vw, vh], t0);
     translate([vl/2,     (t0+.6), 0 ]) rotate([0,0, 90]) cardGuide();
     translate([vl/2, vw- (t0+.6), 0 ]) rotate([0,0,-90]) cardGuide();
@@ -71,7 +79,7 @@ module vbox(v0 = 20, vw = l)
 // k0: cut_end default: cut max(top radii) -> k
 module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
  s = is_list(size) ? size : [size,size,size]; // tube_size
- rm = is_list(rt) ? max(rt[1], rt[2]) : rt;   // round_max
+ rm = is_list(rt) ? max(rt[1], rt[2]) : rt;   // round_max of tl, bl
  k = is_undef(k0) ? -rm : k0;
  translate([s[0], 0, 0])
  rotate([0, -90, 0])
@@ -88,13 +96,23 @@ module die(trr = [0,0,0]) {
   color("red") roundedCube(12);
 }
 
+module lid( ) {
+  union() {
+    cube([]);
+  }
+}
+
+// allow for 12 cards per color, * .625 = 7.5mm
 loc = 0;
-atrans(loc, [[0,0,0], undef, undef, undef, undef, 0])
-vbox();
+atrans(loc, [[0,0,0], 0])
+vbox(10*t01);
+
 tl = l0+t0;
-atrans(loc, [[t0+p,tl+t0,0,[90, 0, -90]], [0,0,0,[0,0,90]]])
-tray([tl, w, 26], 9, 0);
+rt = 18;
+zt = 18+rt;
+atrans(loc, [[t0 - p, tl + t0, 0, [90, 0, -90]], [0, tl + t0, 0, [0, 0, -90]]])
+tray([tl, bh, zt], [0, rt, 1, 1], 0);
 
 dup([0, 15, 0])
-atrans(loc, [[-50, t0, t0]])
+atrans(loc, [undef, [2, 2* t0, t0]])
 die();

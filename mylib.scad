@@ -301,7 +301,7 @@ module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
 
 // 2D shape:
 // sxy: [dx = sxy, dy = sxy]
-// rc:  [(0,0), (0,dy), (dx, dy), (dx, 0)]
+// rc:  [(0,0), (0,dy), (dx, dy), (dx, 0)] ([2, 2, 2, 2])
 // k: k<0 cut k from top (keep bottom) k>0 cut k from bottom (keep top)
 module roundedRect(sxy = 10, rc = 2, k = 0) {
   s = is_list(sxy) ? sxy : [ sxy, sxy ];

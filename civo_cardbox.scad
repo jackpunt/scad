@@ -3,7 +3,9 @@ p = .001;
 pp = 2 * p;
 t0 = 1;
 l00 = 87; // official card size (+2mm for sleeves)
-w00 = 56; // sleeves bring thickness to ~.625 per card. (from min .4mm)
+w00 = 56; // official card size (+2mm for sleeves)
+t00 = .4; // card thickness: sleeves bring thickness to ~.625 per card. (from min .4mm)
+t01 = .625; // thickness when stacking sleeved cards
 l0 = 92.4;
 w0 = 60.4; // w00 + 2mm (sleeves) + 2mm (slack); retain 60.4 for slider compat
 h0 = 27;
@@ -62,12 +64,12 @@ module holder(a = a)
 
 module card(tr = [ (l0 - l00) / 2, (w0 - w00) / 2, 0 ])
 {
-    translate(tr) astack(32, [ -.03, 0, .625 ]) color("pink") roundedCube([ l00, w00, .4 ], 3, true);
+    translate(tr) astack(32, [ -.03, 0, t01 ]) color("pink") roundedCube([ l00, w00, t00 ], 3, true);
 }
 
 // vz: height of ramp @ vx: bump @
 vz = 4.0;
-vx = .4 * l;
+vx = t00 * l;
 fl = 2;
 vy = 5.6; // fl: flat length
 module ramp(vx = vx, vz = vz, ve = 0)
