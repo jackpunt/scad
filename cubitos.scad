@@ -105,50 +105,61 @@ module die(trr = [0,0,0]) {
 // square blocks 2*r + dxy
 // height = dz, cone height = ~2 * r
 // trr: final placement
-// dxyz: size of block
-// r: size of cone
-module hinge(trr=[0,0,0], dxyz = [2, 2, 3], r = 1.5, t = 2, mnt = .01, sep = .2) {
+// ht: height of each block (3)
+// r: size of cone (1.5)
+// dr: incremental thickness around cone (2)
+// mnt: extend a mounting block +y 
+module hinge(trr=[0,0,0], ht = 3, r = 1.5, dr = 2, mnt = 1.5, sep = .2) {
   trr = def(trr, [0,0,0]);
-  dxyz = def(dxyz, [2, 2, 3]);
+  ht = def(ht, 3); 
   r = def(r, 1.5);
-  t = def(t, 2.0);
-  mnt = def(mnt, 0.1);
+  dr = def(dr, 2.0);
+  mnt = def(mnt, r);
   sep = def(sep, .2);
-
-  dz = dxyz.z;
-  ht = dz+r-sep/2;
-  zs = dz+r/2+sep;
+  echo("hinge: ht, r, dr, mnt, sep =", [ht, r, dr, mnt, sep]);
   fn = 30;
 
   module mountblock(h = dz, z = 0) {
     if (mnt > 0) {
-      rt = r + t;
-      trr([0, -(rt+mnt)/2, z]) cube([2 * rt, rt + mnt, h], true);
+      rt = r + dr;
+      trr([0, (rt+mnt)/2, z+h/2]) cube([2 * rt, rt + mnt, h], true);
     }
   }
   module coneblock(r = r) {
-    r1 = r * 1.5;
-    r2 = r + t;
-    cylinder(h = dz, r = r2, center = true, $fn = fn);
-    trr([0, 0, dz/2]) {
-      cylinder(r, r1, r, $fn = fn); // frustrum of cone
-      trr([0, 0, r*.9]) sphere(r, $fn = fn); // sphere on top
+    trr([0, 0, ht/2, [180, 0,0]])
+    union() {
+      cylinder(h = dz, r = r + dr, center = true, $fn = fn);
+      trr([0, 0, dz/2-p]) 
+      union() {
+        cylinder(r, r * 1.5, r, $fn = fn); // frustrum of cone
+        trr([0, 0, r*.7]) sphere(r*1.05, $fn = fn); // sphere on top
+      }
+    }
+  }
+  module section() {
+    color("cyan") intersection() { 
+      cube([r+dr+dr, r+dr+dr, 2*ht]); 
+      difference() { 
+        cylinder(h = 2*ht, r = r+dr);
+        children();
+      }
     }
   }
   trr(trr)
-  trr([0, 0, zs+ht/2, [180, 0, 0]])
   union() {
-    mountblock(dz, 0); // bottom block
-    difference() // top socket
+    // section() {
+    *difference() // bottom socket
     {
       union() {
-      mountblock(ht, zs); // top block
-      trr([0, 0, zs]) cylinder(h = ht, r = r+t, center = true, $fn = fn);
+        mountblock(ht, 0); // bottom socket block
+        trr([0, 0, ht/2]) cylinder(h = ht, r = r+dr, center = true, $fn = fn);
       }
-      coneblock(r + sep);
+      trr([0,0,ht+p]) scale([(r+sep)/r, (r+sep)/r, 1]) coneblock(r); // or +cos(30)*sep
     }
-    coneblock(r); // bottom ball
-  }
+    mountblock(ht, ht+sep); // top ball block
+    trr([0,0,ht+sep]) coneblock(r); // top ball
+    }
+// }
 }
 
 // make hole for axle 
@@ -202,8 +213,10 @@ dz = 3;
 th = 2;           // 'thickness' for hinge
 zh = ht - 5;      // z for hinge
 hx = dz+hr-sep/2; // 3 = hinge.dz
+hinge(undef, undef, 3,undef, 0);
+
 // atrans(loc, [[0 - p, tl, 0, [90, 0, -90]], [0, tl, 0, [0, 0, -90]], 0])
-union() {
+*union() {
   // difference() 
   {
   color("blue")
