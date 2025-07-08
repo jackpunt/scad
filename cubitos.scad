@@ -100,40 +100,93 @@ module die(trr = [0,0,0]) {
   color("red") roundedCube(12);
 }
 
-module lid(h = h0, w = w0 ) {
-  module hinge() {
-    bs = 4; // base size
-    az = 2; // axle z
-    inset = 6; tabl = 4;
-    trr([h - bs, 0, 1]) cube([bs, w, bs]); // offset
-    color ("green") trr([h+inset , -1-p, bs, [-90, 0,0]]) cylinder(h = w+pp, r = 2);
-    // trr([h+inset, -1-p, bs])  cube([tabl, w+2*t0+pp, az]); // axle
-    trr([h - bs, 0, bs]) cube([bs+inset, w, az]);
+// two pieces: ball & socket
+// socket on bottom, ball on top
+// square blocks 2*r + dxy
+// height = dz, cone height = ~2 * r
+// trr: final placement
+// dxyz: size of block
+// r: size of cone
+module hinge(trr=[0,0,0], dxyz = [2, 2, 3], r = 1.5, t = 2) {
+  dz = dxyz.z;
+  fn = 30;
+  module mountblock(h = dz, z = 0) {
+    rt = r + t;
+    trr([0, -rt/2, z]) cube([2 * rt, rt, h], true);
   }
-  
-    color ("pink") cube([h, w, 1]); // base
-    hinge();
+  module coneblock(r = r) {
+    r1 = r * 1.5;
+    r2 = r + t;
+    cylinder(h = dz, r = r2, center = true, $fn = fn);
+    trr([0, 0, dz/2]) cylinder(r, r1, r, $fn = fn); // frustrum of cone
+    trr([0, 0, dz/2+r*.9])sphere(r, $fn = fn);
+  }
+  sep = .2;
+  ht = dz+r-sep/2;
+  zs = dz+r/2+sep;
+  trr(trr)
+  union() {
+    mountblock(dz, 0); // bottom block
+    difference() // top socket
+    {
+      union() {
+      mountblock(ht, zs); // top block
+      trr([0, 0, zs]) cylinder(h = ht, r = r+t, center = true, $fn = fn);
+      }
+      coneblock(r + sep);
+    }
+    coneblock(r); // bottom ball
+  }
+}
 
+// make hole for axle 
+// TODO: use conical axle & hole; so no overhang!
+// trr: location of hinge point [x, y, z]
+// ar: radius of hole (1.5)
+// f: extra radius (.1)
+// child(0) 
+module hole(trr, h = t0, ar = 1.5, f=.1) {
+  difference() 
+  {
+    children(0);
+   # trr(trr) cylinder(h, ar+f/2, ar+f/2, true);
+  }
+}
+
+// h: (height of a card)
+// w: (width of a card)
+// dxz: location of hinge point [x, ty, z]
+// hw: hinge width (with ty increment to axle)
+module lid(h = h0, w = w0, dxyz = [], hw = 5 ) {
+  // offset from tray:
+  trr([-.1, 0, 0]) union() {
+    color ("pink") cube([h, w, 1]); // base
+  }
 }
 
 // allow for 12 cards per color, * .625 = 7.5mm
 loc = 0;
-ty = t0;
-atrans(loc, [[-t0, 0, 0], [0, 0, 0, [0, 90, 0]], 0])
+ty = 1;
+tt = 1;
+tl = w0 + 2 * tt; // total y-length
+
+*atrans(loc, [[-t0, 0, 0], [0, 0, 0, [0, 90, 0]], 0])
 vbox(10 * t01, bw, bh, [t0, ty, t0]);
 
-tt = 1;
-tl = w0 + 2 * tt;
 ht = 15;   // height of tray
 rt = 18;   // radius of scoop
 zt = ht+rt;// z-extent before kut
-atrans(loc, [[0 - p, tl, 0, [90, 0, -90]], [0, tl, 0, [0, 0, -90]], 0])
-color("blue") 
+*atrans(loc, [[0 - p, tl, 0, [90, 0, -90]], [0, tl, 0, [0, 0, -90]], 0])
+color("blue")
+hole([tl-ty/2, 3, ht-5, [0, 90, 0]], ty+2) 
+hole([ 0+ty/2, 3, ht-5, [0, 90, 0]], ty+2) 
 tray([tl, bh+2*ty, zt], [0, rt, 1, 1], 0, undef, [ty, tt, tt]);
 
-atrans(loc, [[-h0-ht-5, t0, 0], 0, 0])
-lid(h0, w0);
+hinge([0, 0, 3.5, [90, 0, 0]]); // 3.5 = r:1.5 + t:2
+
+*atrans(loc, [[-h0-ht, t0, 0], 0, 0])
+lid(h0, w0, [-(ht-5), ty, 5], 5);
 
 dup([0, 15, 0])
-atrans(loc, [undef, [2, 2* t0, t0], 0])
+atrans(loc, [undef, [2, 25, tt], 0])
 die();

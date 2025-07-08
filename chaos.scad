@@ -135,7 +135,7 @@ function sumi(ary, i = 0, t0 = t0) = (i > 0 ? (t0 + ary[i-1] + sumi(ary, i-1)) :
 // bottom of the i-th layer
 function sumt(ary, i = 0, t0 = t0) = sumi(ary, i) + i * t0;
 
-// four trasy stacked by dzz
+// four trays stacked by dzz
 module fourTrays() {
   clr = selectNth(0, parts);
   dzz = selectNth(1, parts); // block size (delta-z in stack)
