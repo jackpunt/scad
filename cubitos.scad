@@ -32,9 +32,9 @@ bh = h0; // height of box (short dimension of card + bottom(t0) + top(3mm))
 // vt = box thick (~ t01 * number of cards + 2*t0) x-extent
 // vw = box width (long dimension of card + 2*t0)  y-extent
 // vh = box height (short dimension of card + bottom(t0) + top(3mm)) z-extent
-module vbox(vt0 = bt, vw0 = bw, vh0 = bh, t00 = t0)
+module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
 {
-  ta = is_list(t00) ? t00 : [t00, t00, t00];
+  ta = is_list(txyz) ? txyz : [txyz, txyz, txyz];
   tx = ta.x; ty = ta.y; tz = ta.z;
   vt = vt0 + 2 * tx; // external x-extent
   vw = vw0 + 2 * ty;
@@ -59,7 +59,7 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, t00 = t0)
   sw = vw-30;   // width of slot 
   dh = 50;      // depth of slot (below the radius of tray)
   sr = min(5, dh/2, sw/2); // radius of slot
-  hwtr0 = [dh, vw-2*tx, 2*tz, 1]; // ]height, width, translate, rotate]
+  hwtr0 = [dh, vw-2*ty, 2*tz, 1]; // ]height, width, translate, rotate]
   hwtr1 = [dh, vw-30, 2*tz, sr]; // ]height, width, translate, rotate]
   ss = false;   // show slot
 
@@ -78,20 +78,22 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, t00 = t0)
 // rt: radii of tray [bl, tl, tr, br]
 // rc: radii of caps
 // k0: cut_end default: cut max(top radii) -> k
-module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
- s0 = is_list(size) ? size : [size,size,size]; // tube_size
- s = [s0.x + 2*t, s0.y + 2*t, s0.z + 2*t];
+// txyz: (t0 -> [t0, t0, t0])
+module tray(size = 10, rt = 2, rc = 0, k0, txyz = t0) {
+ ta = is_list(txyz) ? txyz : [txyz, txyz, txyz];
+ s0 = is_list(size) ? size : [size, size, size]; // tube_size
+ s = [s0.x, s0.y, s0.z];
  rm = is_list(rt) ? max(rt[1], rt[2]) : rt;   // round_max of tl, bl
  k = is_undef(k0) ? -rm : k0;
  translate([s[0], 0, 0])
  rotate([0, -90, 0])
- roundedTube([s.z, s.y, s.x], rt, k, t);
+ roundedTube([s.z, s.y, s.x], rt, k, ta);
 
  // endcaps
  hw0 = [s.z, s.y, 0];
  hwx = [s.z, s.y, s.x];
- div(hw0, rc, k, t);
- div(hwx, rc, k, t);
+ div(hw0, rc, k, ta.x);
+ div(hwx, rc, k, ta.x);
 }
 module die(trr = [0,0,0]) {
   trr(trr)
@@ -117,18 +119,19 @@ module lid(h = h0, w = w0 ) {
 // allow for 12 cards per color, * .625 = 7.5mm
 loc = 2;
 tv = 2;
-atrans(loc, [[-tv,0,0], [0, 0, 0, [0, 90,0]], 0])
+atrans(loc, [[-t0, 0, 0], [0, 0, 0, [0, 90, 0]], 0])
 vbox(10 * t01, bw, bh, [t0, tv, t0]);
 
 tl = w0;
 ht = 15;   // height of tray
 rt = 18;   // radius of scoop
 zt = ht+rt;   // z-extent before kut
-atrans(loc, [[0 - p, tl + t0, 0, [90, 0, -90]], [0, tl + t0, 0, [0, 0, -90]], 0])
+tt = 1;
+atrans(loc, [[0 - p, tl+2*tv, 0, [90, 0, -90]], [0, tl, 0, [0, 0, -90]], 0])
 color("blue") 
-tray([tl, bh, zt], [0, rt, 1, 1], 1, undef, t0);
+tray([tl+2*tt, bh+2*tt, zt], [0, rt, 1, 1], 0, undef, [tv, tt, tt]);
 
-atrans(loc, [[-h0-ht-5, t0, 0], 0, 0])
+*atrans(loc, [[-h0-ht-5, t0, 0], 0, 0])
 lid(h0, w0);
 
 dup([0, 15, 0])

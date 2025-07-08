@@ -335,21 +335,23 @@ module pipe(rrh = 10, t = t0) {
 }
 
 // A Z-extruded roundedRect: (kut across the YZ plane)
-// sxy: [dx, dy, dz]
-// r: radius (2), k: keep/cut (0), t = thick (t0)
-module roundedTube(sxy = 10, r = 2, k = 0, t = t0) {
+// sxy: [dx, dy, dz] EXTERNAL SIZE
+// r: radius (2), k: keep/cut (0), 
+// txyz = thick ([t0, t0, t0])
+module roundedTube(sxy = 10, r = 2, k = 0, txyz = t0) {
   s = is_list(sxy) ? sxy : [ sxy, sxy, sxy ];
+  t = is_list(txyz) ? txyz : [txyz, txyz, txyz];
   dx = s.x;
   dy = s.y;
   rs = [ dx, dy ];
-  linear_extrude(height = s[2]) {
-    sx = (dx - 2 * t) / dx;
-    sy = (dy - 2 * t) / dy;
-    dt = k < 0 ? t + pp : -(t + pp);
+  linear_extrude(height = s.z) {
+    sx = (dx - 2 * t.x) / dx; // 
+    sy = (dy - 2 * t.y) / dy;
+    dt = k < 0 ? t.x + pp : -(t.x + pp);
     kd = (k + dt) / sx;
     difference() {
       roundedRect(rs, r, k);
-      translate([ t, t ]) scale([ sx, sy ]) roundedRect(rs, r, kd);
+      translate([ t.x, t.y ]) scale([ sx, sy ]) roundedRect(rs, r, kd);
     }
   }
 }
