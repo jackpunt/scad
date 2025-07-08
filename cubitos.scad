@@ -59,14 +59,14 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
   sw = vw-30;   // width of slot 
   dh = 50;      // depth of slot (below the radius of tray)
   sr = min(5, dh/2, sw/2); // radius of slot
-  hwtr0 = [dh, vw-2*ty, 2*tz, 1]; // ]height, width, translate, rotate]
-  hwtr1 = [dh, vw-30, 2*tz, sr]; // ]height, width, translate, rotate]
+  hwtr0 = [dh, vw -2*ty, 2*tz, .1]; // ]height, width, translate, radius]
+  hwtr1 = [dh, sw      , 2*tz, sr]; // ]height, width, translate, radius]
   ss = false;   // show slot
 
   { 
     // slotted box with card guides:
-    slotify(hwtr0, [00+tx/2, vw/2, vh-(dh/2-tz)], 1, 0, ss)
-    slotify(hwtr1, [vl-tx/2, vw/2, vh-(dh/2-sr)], 1, 3, ss)
+    slotify(hwtr0, [00+tx/2, vw/2, vh-(dh/2-tz)], 1, 0, ss) // tray bottom
+    slotify(hwtr1, [vl-tx/2, vw/2, vh-(dh/2-sr)], 1, 3, ss) // outer slot
     box([vt, vw, vh], ta);
     translate([vt/2,  0+ty, 0 ]) rotate([0,0, 90]) cardGuide();
     translate([vt/2, vw-ty, 0 ]) rotate([0,0,-90]) cardGuide();
@@ -91,7 +91,7 @@ module tray(size = 10, rt = 2, rc = 0, k0, txyz = t0) {
 
  // endcaps
  hw0 = [s.z, s.y, 0];
- hwx = [s.z, s.y, s.x];
+ hwx = [s.z, s.y, s.x-ta.x];
  div(hw0, rc, k, ta.x);
  div(hwx, rc, k, ta.x);
 }
@@ -117,21 +117,21 @@ module lid(h = h0, w = w0 ) {
 }
 
 // allow for 12 cards per color, * .625 = 7.5mm
-loc = 2;
-tv = 2;
+loc = 0;
+ty = t0;
 atrans(loc, [[-t0, 0, 0], [0, 0, 0, [0, 90, 0]], 0])
-vbox(10 * t01, bw, bh, [t0, tv, t0]);
+vbox(10 * t01, bw, bh, [t0, ty, t0]);
 
-tl = w0;
+tt = 1;
+tl = w0 + 2 * tt;
 ht = 15;   // height of tray
 rt = 18;   // radius of scoop
-zt = ht+rt;   // z-extent before kut
-tt = 1;
-atrans(loc, [[0 - p, tl+2*tv, 0, [90, 0, -90]], [0, tl, 0, [0, 0, -90]], 0])
+zt = ht+rt;// z-extent before kut
+atrans(loc, [[0 - p, tl, 0, [90, 0, -90]], [0, tl, 0, [0, 0, -90]], 0])
 color("blue") 
-tray([tl+2*tt, bh+2*tt, zt], [0, rt, 1, 1], 0, undef, [tv, tt, tt]);
+tray([tl, bh+2*ty, zt], [0, rt, 1, 1], 0, undef, [ty, tt, tt]);
 
-*atrans(loc, [[-h0-ht-5, t0, 0], 0, 0])
+atrans(loc, [[-h0-ht-5, t0, 0], 0, 0])
 lid(h0, w0);
 
 dup([0, 15, 0])
