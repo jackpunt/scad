@@ -345,7 +345,7 @@ module roundedTube(sxy = 10, r = 2, k = 0, t = t0) {
   linear_extrude(height = s[2]) {
     sx = (dx - 2 * t) / dx;
     sy = (dy - 2 * t) / dy;
-    dt = k < 0 ? 1 + pp : -(1 + pp);
+    dt = k < 0 ? t + pp : -(t + pp);
     kd = (k + dt) / sx;
     difference() {
       roundedRect(rs, r, k);
