@@ -188,20 +188,21 @@ module partsGrid(bw, bh, cs = 5, nc = 10, nr = 20) {
 // rt: radius of hinge (hr + dr = 3)
 // zh: ambient z-coord of hinge
 module lid(h = h0, w = w0, t = 2, rt = hr + dr ) {
+  et = tt * .8;
   ym = ht - zh + rt + sep;   // push out to clear (7.3)
-  lh = h - ym + tt;          // lid height - pink part [+ tt to clear top edge when closed]
+  lh = h - ym + et;          // lid height - pink part [+ tt to clear top edge when closed]
   lhh = lh - 2.9;            // TODO: correct formula for '2.9' axis of hinge; zh = 11.9
   echo("[ht, zh, rt, sep, ym, lh, lhh] =", [ht, zh, rt, sep, ym, lh, lhh]);
 
   // offset from tray: (hy & zd are both 4.1; zh = (15-4.1) = 11.9)
-  trr([tt, -zh -lhh, 0]) { // +tt is on the y-axis after rotation, inset from edge of tray
+  trr([et, -zh -lhh, 0]) { // +tt is on the y-axis after rotation, inset from edge of tray
     trr([0, -ym, 0])
     color ("pink") 
      difference()
     {
       trr([w/2, lh/2, t/2]) {
         cube([w, lh, t], true); // base lid
-        trr([0, 3-(lh)/2, tt/2 ]) cube([tl, 3*tt, tt], true); // clips
+        trr([0, 5-(lh)/2, tt/2 ]) cube([tl, 2.5*tt, tt], true); // clips
       }
       if (w0 > 80) {
         partsGrid(w, lh, 8, 6, 5);     // perforate
@@ -237,7 +238,7 @@ module trayAndLid() {
     // front edge
     trr([tl/2, bh + tt, ht-tt+pp ]) cube([tl-2*tt, 2*tt, 2.2*tt], true);
     // hole for clip:
-    trr([tl/2, bh - 3*tt, ht-1.6*tt+pp ]) cube([tl+2*tt, 4*tt, 1.2*tt], true);
+    trr([tl/2, bh - 3*tt, ht-1.57*tt+pp ]) cube([tl+2*tt, 3*tt, 1.2*tt], true);
   }
     hinge([ 0, hy, zh, [0, 90, 0]], dz, undef, dr, mnts, sep );
     hinge([tl, hy, zh, [0, -90, 0]], dz, undef, dr, mnts, sep );
