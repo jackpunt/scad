@@ -247,8 +247,9 @@ module trayAndLid() {
     trr([tl/2, bh + tt, ht-tt+pp ]) cube([tl-2*tt, 2*tt, 2.2*tt], true);
     // hole for clip:
     trr([tl/2, bh - 3*tt, ht-1.57*tt+pp ]) cube([tl+2*tt, 3*tt, 1.2*tt], true);
+    trr([tl/2, bh - .8*tt, ht-.57*tt+pp ]) cube([tl+2*tt, 6*tt, 1.2*tt], true);
     // top side cut to hold card bottom
-    color ("cyan") trr([-p, -p, ht-cc+p]) cube([tl+pp, zd, cc+pp]);
+    trr([-p, -p, ht-cc+p]) cube([tl+pp, zd, cc+pp]);
   }
     hinge([ 0, hy, zh, [0, 90, 0]], dz, undef, dr, mnts, sep );
     hinge([tl, hy, zh, [0, -90, 0]], dz, undef, dr, mnts, sep );
