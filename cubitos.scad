@@ -186,32 +186,60 @@ module partsGrid(bw, bh, cs = 5, nc = 10, nr = 20) {
 // w: (width of a card)
 // dxz: location of hinge point [x, ty, z]
 // hw: hinge width (with ty increment to axle)
-module lid(h = h0, w = w0, hw = 5 ) {
+module lid(h = h0, w = w0 ) {
   r = 1.5; t = 2; rt = r + t;
-  bh = 7;
+  bh = 6;
+  lh = h - bh;
 
   // offset from tray:
-  trr([-.1, 0, 0]) union() {
+  trr([-lh -zh + 2.9, 0, 0]) union() {
+    trr([-bh, 0, 0])
     color ("pink") 
      difference()
     {
-      trr([h/2, w/2, t/2]) cube([h, w, t], true); // base
-      partsGrid(h, w, 8, 5, 6);
+      trr([lh/2, w/2, t/2]) cube([lh, w, t], true); // base
+      partsGrid(lh, w, 8, 5, 6);
     }
     // hinge connection & "tray"
-    trr([h+2, w/2, bh/2-p]) cube([10, w-5, bh+pp], true);
-    trr([h+0, w/2, bh-p])   cube([12, w-5, 2+pp], true);
+    difference() 
+    {
+      union() {
+        trr([lh-2  , w/2, bh /2-p])              cube([4, w-5, bh+pp], true);
+        trr([lh-3.6, w/2, bh+.8-p, [0, 30, 0]])  cube([6, w-5, 1.8+pp], true);
+      }
+      trr([lh-5+p, w/2, 4+t]) cube([10, w*.63, 12], true);
+    }
   }
 
 }
 
+module trayAndLid() {
+  union() {
+  difference() 
+  {
+  color("blue")
+    tray([tl, bh+2*ty, zt], [0, rt, 1, 1], 0, undef, [ty, tt, tt]);
+    // slot for lid:
+    trr([dz, -pp, zh - cz + zd ]) cube([cx, tt+2*pp, cz + p]);
+  }
+  hinge([ 0, hy, zh, [0, 90, 0]], dz, undef, dr, [.1, 180, 0, 0], .2 );
+  hinge([tl, hy, zh, [0, -90, 0]], dz, undef, dr, [.1, 180, 0, 0], .2 );
+  }
+  ar = [-zh, -3, hy];
+  br = [zh, -3, zh-2];
+  echo ("ar = ", ar);
+  trr(ar) color("cyan") cube([.1, 5, .1]);
+  atrans(loc, [[0, tt, 0, [0, 0, 0, ar]], [zh+2.5, tt, zh-2, [0, 180, 0, ar]], [0, tt, 0, [0, 90, 0, ar]], [0,0,0,[0,0,0]], ])
+  lid(h0, w0 );
+}
+
 // allow for 12 cards per color, * .625 = 7.5mm
-loc = 0;
+loc = 3;
 ty = 1;
 tt = 1;
 tl = w0 + 2 * tt; // total y-length
 
-*atrans(loc, [[-t0, 0, 0], [0, 0, 0, [0, 90, 0]], 0])
+atrans(loc, [[-t0, 0, 0], [0, 0, 0, [0, 90, 0]], 0, [0,0,0]])
 vbox(10 * t01, bw, bh, [t0, ty, t0]);
 
 ht = 15;   // height of tray
@@ -219,33 +247,41 @@ rt = 18;   // radius of scoop
 zt = ht+rt;// z-extent before kut
 
 hr = 1.5;  // hinge radius
-hy = 3.1;    // hinge z
+hy = 4.1;    // hinge z
 sep = .2;
 
 dr = 1.5;
-dz = 3; 
+dz = 3;           // block size of hinge
 th = 2;           // 'thickness' for hinge
 zd = 5;
 zh = ht - zd;      // z for hinge
 cx = tl - dz * 2;
 cz = zd+hr+dr+sep -sep; 
-// zh - cz + zd: zh - (zd+hr+dr) + zd : zh - (hr+dr)
 // hinge([ 0, hy, zh, [0, 0, 0]], 3, undef, undef, [1, 180, 90], .2 );
 
-atrans(loc, [[0 - p, tl, 0, [90, 0, -90]], [0, tl, 0, [0, 0, -90]], 0])
-union() {
-  difference() 
-  {
-  color("blue")
-    tray([tl, bh+2*ty, zt], [0, rt, 1, 1], 0, undef, [ty, tt, tt]);
-    // slot for lid:
-    trr([dz, -pp, zh - cz + zd ]) cube([cx, 1+2*pp, cz + p]);
-  }
-  hinge([ 0, hy, zh, [0, 90, 0]], dz, undef, dr, [.1, 180, 0, 0], .2 );
-  hinge([tl, hy, zh, [0, -90, 0]], dz, undef, dr, [.1, 180, 0, 0], .2 );
-}
-atrans(loc, [[-h0-ht, t0, 0], 0, 0])
-lid(h0, w0, [] );
+atrans(loc, [
+  [0 - p, tl, 0, [90, 0, -90]], 
+  [0, tl, 0, [0, 0, -90]], 
+  0,
+  [ 0, 0, 0]])
+trayAndLid();
+// union() {
+//   difference() 
+//   {
+//   color("blue")
+//     tray([tl, bh+2*ty, zt], [0, rt, 1, 1], 0, undef, [ty, tt, tt]);
+//     // slot for lid:
+//     trr([dz, -pp, zh - cz + zd ]) cube([cx, tt+2*pp, cz + p]);
+//   }
+//   hinge([ 0, hy, zh, [0, 90, 0]], dz, undef, dr, [.1, 180, 0, 0], .2 );
+//   hinge([tl, hy, zh, [0, -90, 0]], dz, undef, dr, [.1, 180, 0, 0], .2 );
+// }
+// ar = [-zh, -3, hy];
+// br = [zh, -3, zh-2];
+// echo ("ar = ", ar);
+// trr(ar) color("cyan") cube([.1, 5, .1]);
+// atrans(0, [[0, tt, 0, [0, 0, 0, ar]], [zh+2.5, tt, zh-2, [0, 180, 0, ar]], [0, tt, 0, [0, 90, 0, ar]]])
+// lid(h0, w0 );
 
 dup([0, 15, 0])
 atrans(loc, [undef, [2, 25, tt], 0])
