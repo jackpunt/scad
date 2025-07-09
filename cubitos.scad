@@ -108,23 +108,24 @@ module die(trr = [0,0,0]) {
 // r: radius (& height) of cone (1.5) 
 // dr: incremental thickness around cone (2)
 // mnt: extend a mounting block [dist, angle-socket, angle-cone]
-module hinge(trr=[0,0,0], ht = 3, r = 1.5, dr = 2, mnt = 1.5, sep = .2) {
+module hinge(trr=[0,0,0], ht = 3, r = 1.5, dr = 2, mnts = 1.5, sep = .2) {
   trr = def(trr, [0,0,0]);
   ht = def(ht, 3); 
   r = def(r, 1.5);
   dr = def(dr, 2.0);
-  mnts = is_list(mnt) ? mnt : [mnt];
-  mnta = def(mnts[1], 0); // rotation around z-axis
-  mntb = def(mnts[2], mnta);
-  mnt = def(mnt[0], r);
+  mnts = is_list(mnts) ? mnts : [mnts];
+  mnt0 = def(mnts[0], r);      // mount length (block)
+  mnta = def(mnts[1], 0);     // rotation around z-axis (block)
+  mntb = def(mnts[2], mnta);  // rotation around z-axis (cone)
+  mntc = def(mnts[3], mnt0);    // mount length (cone)
   sep = def(sep, .2);
-  echo("hinge: ht, r, dr, mnt, sep =", [ht, r, dr, mnt, sep]);
+  echo("hinge: ht, r, dr, mnts, sep =", [ht, r, dr, mnts, sep]);
   fn = 30;
 
-  module mountblock(h = ht, z = 0, mnta = mnta) {
-    if (mnt > 0) {
+  module mountblock(h = ht, z = 0, mntd = mnt0, mnta = mnta) {
+    if (mntd > 0) {
       rt = r + dr; 
-      my = (rt + mnt);
+      my = (rt + mntd);
       color("red")
       trr([0, my/2, z+h/2, [0, 0, mnta, [0, -my/2, 0]]]) cube([2 * rt, my, h], true);
     }
@@ -156,45 +157,52 @@ module hinge(trr=[0,0,0], ht = 3, r = 1.5, dr = 2, mnt = 1.5, sep = .2) {
     difference() // bottom socket
     {
       union() {
-        mountblock(ht, 0, mnta); // bottom socket block
+        mountblock(ht, 0, mnt0, mnta); // bottom socket block
         trr([0, 0, ht/2]) cylinder(h = ht, r = r+dr, center = true, $fn = fn);
       }
       trr([0,0,ht+p]) scale([(r+sep)/r, (r+sep)/r, 1]) coneblock(r); // or +cos(30)*sep
     }
-    mountblock(ht, ht+sep, mntb); // top ball block
+    mountblock(ht, ht+sep, mntc, mntb); // top ball block
     trr([0,0,ht+sep]) coneblock(r); // top ball
     }
 // }
 }
 
-// make hole for axle 
-// TODO: use conical axle & hole; so no overhang!
-// trr: location of hinge point [x, y, z]
-// ar: radius of hole (1.5)
-// f: extra radius (.1)
-// child(0) 
-module hole(trr, h = t0, ar = 1.5, f=.1) {
-  difference() 
-  {
-    children(0);
-   # trr(trr) cylinder(h, ar+f/2, ar+f/2, true);
-  }
+// cs: child size; begin grid @ (cs, cs+1)
+// nc: columns
+// nr: rows
+module partsGrid(bw, bh, cs = 5, nc = 10, nr = 20) {
+  xi = (bw - cs) / nc;
+  x0 = (bw - cs - xi * (nc - 1) + cs)/2;
+  xm = bw - cs;
+  yi = (bh - cs) / nr;
+  y0 = (bh - cs - yi * (nr - 1) + cs)/2;
+  ym = bh - cs;
+  translate([0, 0, -t0])
+  gridify([x0, xi, xm], [y0, yi, ym], 2) cube([cs, cs, cs], true);
 }
 
 // h: (height of a card)
 // w: (width of a card)
 // dxz: location of hinge point [x, ty, z]
 // hw: hinge width (with ty increment to axle)
-module lid(h = h0, w = w0, dxyz = [], hw = 5 ) {
+module lid(h = h0, w = w0, hw = 5 ) {
   r = 1.5; t = 2; rt = r + t;
-  dx = dxyz.x;
-  dy = dxyz.y;
-  dz = dxyz.z;
+  bh = 7;
 
   // offset from tray:
   trr([-.1, 0, 0]) union() {
-    color ("pink") cube([h, w, 1]); // base
+    color ("pink") 
+     difference()
+    {
+      trr([h/2, w/2, t/2]) cube([h, w, t], true); // base
+      partsGrid(h, w, 8, 5, 6);
+    }
+    // hinge connection & "tray"
+    trr([h+2, w/2, bh/2-p]) cube([10, w-5, bh+pp], true);
+    trr([h+0, w/2, bh-p])   cube([12, w-5, 2+pp], true);
   }
+
 }
 
 // allow for 12 cards per color, * .625 = 7.5mm
@@ -211,14 +219,17 @@ rt = 18;   // radius of scoop
 zt = ht+rt;// z-extent before kut
 
 hr = 1.5;  // hinge radius
-hy = 5;    // hinge z
+hy = 3.1;    // hinge z
 sep = .2;
 
-dr = 2;
+dr = 1.5;
 dz = 3; 
 th = 2;           // 'thickness' for hinge
 zd = 5;
 zh = ht - zd;      // z for hinge
+cx = tl - dz * 2;
+cz = zd+hr+dr+sep -sep; 
+// zh - cz + zd: zh - (zd+hr+dr) + zd : zh - (hr+dr)
 // hinge([ 0, hy, zh, [0, 0, 0]], 3, undef, undef, [1, 180, 90], .2 );
 
 atrans(loc, [[0 - p, tl, 0, [90, 0, -90]], [0, tl, 0, [0, 0, -90]], 0])
@@ -228,13 +239,13 @@ union() {
   color("blue")
     tray([tl, bh+2*ty, zt], [0, rt, 1, 1], 0, undef, [ty, tt, tt]);
     // slot for lid:
-    trr([dz, -pp, zh-(hr+dr+sep-p)]) cube([tl - dz * 2, 1+2*pp, zd+hr+dr+sep+pp]);
+    trr([dz, -pp, zh - cz + zd ]) cube([cx, 1+2*pp, cz + p]);
   }
-  hinge([ 0, hy, zh, [0, 90, 0]], dz, undef, dr, [1.5, 180], .2 );
-  hinge([tl, hy, zh, [0, -90, 0]], dz, undef, dr, [1.5, 180], .2 );
+  hinge([ 0, hy, zh, [0, 90, 0]], dz, undef, dr, [.1, 180, 0, 0], .2 );
+  hinge([tl, hy, zh, [0, -90, 0]], dz, undef, dr, [.1, 180, 0, 0], .2 );
 }
-*atrans(loc, [[-h0-ht, t0, 0], 0, 0])
-lid(h0, w0, [-zh, ty, zd], 8);
+atrans(loc, [[-h0-ht, t0, 0], 0, 0])
+lid(h0, w0, [] );
 
 dup([0, 15, 0])
 atrans(loc, [undef, [2, 25, tt], 0])
