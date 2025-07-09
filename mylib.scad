@@ -165,7 +165,7 @@ module scalet(sv) {
 module trr(rtr) {
   rtr = def(rtr, [0, 0, 0]);
   rotr = def(rtr[3], [0, 0, 0]);
-  translate(as3D(rtr)) rotatet(rotr) children(0);
+  translate(as3D(rtr)) rotatet(rotr) children();
 }
 
 // duplicate, with translate & rotate:

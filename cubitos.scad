@@ -48,7 +48,7 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
     w0 = 2; h0 = 4; h1 = 7; a = 7;
     vh2 = vh * .7;
     // TODO: the trig to calc height of green cube (depends on angle a)
-    difference() {
+    *difference() {
     translate([w0/2 + p, 0, vh2]) color("green") cube([w0, vt, h0 + 4 * h1], true);
     trr([w0, 0, vh2+h1+h0, [0, -a, 0]]) color ("pink") cube([w0, vt+pp, h0 + 2 * h1], true);
     trr([w0, 0, vh2-h1-h0, [0, a, 0]]) color ("pink") cube([w0, vt+pp, h0 + 2 * h1], true);
@@ -56,8 +56,8 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
   }
   // slotify the walls:
   vl = vt;
-  sw = vw-30;   // width of slot 
-  dh = 50;      // depth of slot (below the radius of tray)
+  sw = vw*.7;      // width of slot 
+  dh = vh*.8;      // depth of slot (below the radius of tray)
   sr = min(5, dh/2, sw/2); // radius of slot
   hwtr0 = [dh, vw -2*ty, 2*tz, .1]; // ]height, width, translate, radius]
   hwtr1 = [dh, sw      , 2*tz, sr]; // ]height, width, translate, radius]
@@ -119,7 +119,7 @@ module hinge(trr=[0,0,0], ht = 3, r = 1.5, dr = 2, mnts = 1.5, sep = .2) {
   mntb = def(mnts[2], mnta);  // rotation around z-axis (cone)
   mntc = def(mnts[3], mnt0);    // mount length (cone)
   sep = def(sep, .2);
-  echo("hinge: ht, r, dr, mnts, sep =", [ht, r, dr, mnts, sep]);
+  echo("hinge: [zh, ht, r, dr, mnts, sep] =", [zh, ht, r, dr, mnts, sep]);
   fn = 30;
 
   module mountblock(h = ht, z = 0, mntd = mnt0, mnta = mnta) {
@@ -178,41 +178,48 @@ module partsGrid(bw, bh, cs = 5, nc = 10, nr = 20) {
   yi = (bh - cs) / nr;
   y0 = (bh - cs - yi * (nr - 1) + cs)/2;
   ym = bh - cs;
-  translate([0, 0, -t0])
+  translate([0, 0, t0])
   gridify([x0, xi, xm], [y0, yi, ym], 2) cube([cs, cs, cs], true);
 }
 
-// h: (height of a card)
-// w: (width of a card)
-// dxz: location of hinge point [x, ty, z]
-// hw: hinge width (with ty increment to axle)
-module lid(h = h0, w = w0 ) {
-  r = 1.5; t = 2; rt = r + t;
-  ym = 6;    // push out to clear
-  lh = h - ym + tt;
+// h: height of a card (h0)
+// w: width of a card (w0)
+// t: thickness of lid (2)
+// rt: radius of hinge (hr + dr = 3)
+// zh: ambient z-coord of hinge
+module lid(h = h0, w = w0, t = 2, rt = hr + dr ) {
+  ym = ht - zh + rt + sep;   // push out to clear (7.3)
+  lh = h - ym + tt;          // lid height - pink part [+ tt to clear top edge when closed]
+  lhh = lh - 2.9;            // TODO: correct formula for '2.9' axis of hinge; zh = 11.9
+  echo("[ht, zh, rt, sep, ym, lh, lhh] =", [ht, zh, rt, sep, ym, lh, lhh]);
 
-  // offset from tray:
-  trr([tt, -lh -zh + 2.9, 0]) union() {
+  // offset from tray: (hy & zd are both 4.1; zh = (15-4.1) = 11.9)
+  trr([tt, -zh -lhh, 0]) { // +tt is on the y-axis after rotation, inset from edge of tray
     trr([0, -ym, 0])
     color ("pink") 
      difference()
     {
-      trr([w/2, lh/2, t/2]) cube([w, lh, t], true); // base lid
-      partsGrid(w, lh, 8, 6, 5);     // perforate
+      trr([w/2, lh/2, t/2]) {
+        cube([w, lh, t], true); // base lid
+        trr([0, 3-(lh)/2, tt/2 ]) cube([tl, 3*tt, tt], true); // clips
+      }
+      if (w0 > 80) {
+        partsGrid(w, lh, 8, 6, 5);     // perforate
+      } else {
+        partsGrid(w, lh, 3, 4, 4);     // perforate
+      }
     }
     // hinge connection & "tray"
     difference() 
     {
       union() {
-        trr([w/2, lh-2.4, ym /2-p])              cube([w-5, 4, ym+pp], true);
-        trr([w/2, lh-3.5, ym+.8-p, [-30, 0, 0]]) cube([w-5, 6, 1.8+pp], true);
-        trr([w/2, lh-3.5, t/2])                  cube([w-5, 6, t], true);
-        // clips:
-        color("cyan") trr([tl/2-tt, -2*tt/2, tt+tt/2 ]) cube([tl, 3*tt, 1*tt], true);
+        trr([w/2, lh-ym/2, t/2])                  cube([w-5, ym, t], true); // tang
+        trr([w/2, lh-rt, rt/2])               cube([w-5, 2*rt, rt], true); // block
+        trr([w/2, lh-ym, ym-p, [-30, 0, 0]]) cube([w-5, ym, 1.8+pp], true); // feet
       }
-      trr([w/2, lh-5+p, 4+t-2*pp]) cube([w*.63, 10, 12], true);
+      trr([w/2, lh-ym/2+p, 6]) cube([w*.63, 16, 14], true); // cut
     }
-    trr([w/2, lh-2.85, 2.1+t, [0, 90, 0]]) cylinder(w-6, 3, 3, $fn=30, center = true);
+    trr([w/2, lhh, hy, [0, 90, 0]]) cylinder(w-5, rt, rt, $fn=30, center = true);
   }
 }
 
@@ -275,6 +282,6 @@ atrans(loc, [
   [ 0, 0, 0 ]])
 trayAndLid();
 
-dup([0, 15, 0])
-atrans(loc, [undef, [9, 25, tt], 1, 1])
+dup([0, 13, 0])
+atrans(loc, [undef, [9, 5, tt], 1, 1])
 die();
