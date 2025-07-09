@@ -221,6 +221,7 @@ module lid(h = h0, w = w0, t = 2, rt = hr + dr ) {
       trr([w/2, lh-ym/2+p, 6]) cube([w*.63, 16, 14], true); // cut
     }
     trr([w/2, lhh, hy, [0, 90, 0]]) cylinder(w-5, rt, rt, $fn=30, center = true);
+    trr([w/2, lhh, rt/2, [0, 00, 0]]) cube([w-5, rt, rt], center = true); // or trr[,,9] above
   }
 }
 
