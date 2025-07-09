@@ -214,9 +214,9 @@ module lid(h = h0, w = w0, t = 2, rt = hr + dr ) {
     difference() 
     {
       union() {
-        trr([w/2, lh-ym/2, t/2])                  cube([w-5, ym, t], true); // tang
-        trr([w/2, lh-rt, rt/2])               cube([w-5, 2*rt, rt], true); // block
-        trr([w/2, lh-ym, ym-p, [-30, 0, 0]]) cube([w-5, ym, 1.8+pp], true); // feet
+        trr([w/2, lh-ym/2, t/2])             cube([w-5, ym, t], true); // tang
+        trr([w/2, lh-rt, rt/2])              cube([w-5, 2*rt, rt], true); // block
+        trr([w/2, lh-ym, ym-p, [-30, 0, 0]]) cube([w-5, ym*.5, 1.8+pp], true); // feet
       }
       trr([w/2, lh-ym/2+p, 6]) cube([w*.63, 16, 14], true); // cut
     }
@@ -251,7 +251,7 @@ module trayAndLid() {
 }
 
 // allow for 12 cards per color, * .625 = 7.5mm
-loc = 2;
+loc = 0;
 ty = 1;
 tt = 1;
 tl = w0 + 2 * tt; // total y-length
