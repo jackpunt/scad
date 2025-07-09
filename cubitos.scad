@@ -75,19 +75,20 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
 
 // tray is a rounded tube (kut) with end caps [from civo_tray]
 // size: [x: length, y: width_curved, z: height_curved]
-// rt: radii of tray [bl, tl, tr, br]
+// rs: radii of scoop for tray [bl, tl, tr, br]
 // rc: radii of caps
 // k0: cut_end default: cut max(top radii) -> k
 // txyz: (t0 -> [t0, t0, t0])
-module tray(size = 10, rt = 2, rc = 0, k0, txyz = t0) {
+module tray(size = 10, rs = 2, rc = 0, k0, txyz = t0) {
+  echo("tray: rs =", rs);
  ta = is_list(txyz) ? txyz : [txyz, txyz, txyz];
  s0 = is_list(size) ? size : [size, size, size]; // tube_size
  s = [s0.x, s0.y, s0.z];
- rm = is_list(rt) ? max(rt[1], rt[2]) : rt;   // round_max of tl, bl
+ rm = is_list(rs) ? max(rs[1], rs[2]) : rs;   // round_max of tl, bl
  k = is_undef(k0) ? -rm : k0;
  translate([s[0], 0, 0])
  rotate([0, -90, 0])
- roundedTube([s.z, s.y, s.x], rt, k, ta);
+ roundedTube([s.z, s.y, s.x], rs, k, ta);
 
  // endcaps
  hw0 = [s.z, s.y, 0];
@@ -105,48 +106,49 @@ module die(trr = [0,0,0]) {
 // square blocks 2*r + dxy
 // trr: final placement
 // ht: height of each block (3)
-// r: radius (& height) of cone (1.5) 
+// hr: radius (& height) of hinge/cone (hr = 1.5) 
 // dr: incremental thickness around cone (2)
 // mnt: extend a mounting block [dist, angle-socket, angle-cone]
-module hinge(trr=[0,0,0], ht = 3, r = 1.5, dr = 2, mnts = 1.5, sep = .2) {
+module hinge(trr=[0,0,0], ht = 3, hr = 1.5, dr = 2, mnts = 1.5, sep = .2) {
   trr = def(trr, [0,0,0]);
   ht = def(ht, 3); 
-  r = def(r, 1.5);
+  hr = def(hr, 1.5);
   dr = def(dr, 2.0);
+  rt = hr + dr;               // total radius of hinge
   mnts = is_list(mnts) ? mnts : [mnts];
-  mnt0 = def(mnts[0], r);      // mount length (block)
+  mnt0 = def(mnts[0], hr);    // mount length (block)
   mnta = def(mnts[1], 0);     // rotation around z-axis (block)
   mntb = def(mnts[2], mnta);  // rotation around z-axis (cone)
-  mntc = def(mnts[3], mnt0);    // mount length (cone)
+  mntc = def(mnts[3], mnt0);  // mount length (cone)
   sep = def(sep, .2);
-  echo("hinge: [zh, ht, r, dr, mnts, sep] =", [zh, ht, r, dr, mnts, sep]);
+  echo("hinge: [zh, ht, hr, dr, mnts, sep] =", [zh, ht, hr, dr, mnts, sep]);
   fn = 30;
 
   module mountblock(h = ht, z = 0, mntd = mnt0, mnta = mnta) {
     if (mntd > 0) {
-      rt = r + dr; 
+      rt = hr + dr; 
       my = (rt + mntd);
       color("red")
       trr([0, my/2, z+h/2, [0, 0, mnta, [0, -my/2, 0]]]) cube([2 * rt, my, h], true);
     }
   }
-  module coneblock(r = r) {
-    rr = r * .68;
+  module coneblock(hr = hr) {
+    rr = hr * .68;
     trr([0, 0, ht/2, [180, 0,0]])
     union() {
-      cylinder(h = ht, r = r + dr, center = true, $fn = fn);
+      cylinder(h = ht, r = hr + dr, center = true, $fn = fn);
       trr([0, 0, ht/2-p]) 
       union() {
-        cylinder(r*.7, r, r*.56, $fn = fn); // frustrum of cone
-        trr([0, 0, r-rr]) sphere(rr, $fn = fn); // sphere on top
+        cylinder(hr*.7, hr, hr*.56, $fn = fn); // frustrum of cone QQQ: hr*.7 vs rr=hr*.68
+        trr([0, 0, hr-rr]) sphere(rr, $fn = fn); // sphere on top
       }
     }
   }
   module section() {
     color("cyan") intersection() { 
-      cube([r+dr+dr, r+dr+dr, 2*ht]); 
+      cube([rt + dr, rt + dr, 2*ht]); 
       difference() { 
-        cylinder(h = 2*ht, r = r+dr);
+        cylinder(h = 2*ht, r = rt);
         children();
       }
     }
@@ -158,12 +160,12 @@ module hinge(trr=[0,0,0], ht = 3, r = 1.5, dr = 2, mnts = 1.5, sep = .2) {
     {
       union() {
         mountblock(ht, 0, mnt0, mnta); // bottom socket block
-        trr([0, 0, ht/2]) cylinder(h = ht, r = r+dr, center = true, $fn = fn);
+        trr([0, 0, ht/2]) cylinder(h = ht, r = rt, center = true, $fn = fn);
       }
-      trr([0,0,ht+p]) scale([(r+sep)/r, (r+sep)/r, 1]) coneblock(r); // or +cos(30)*sep
+      trr([0,0,ht+p]) scale([(hr+sep)/hr, (hr+sep)/hr, 1]) coneblock(hr); // or +cos(30)*sep
     }
     mountblock(ht, ht+sep, mntc, mntb); // top ball block
-    trr([0,0,ht+sep]) coneblock(r); // top ball
+    trr([0,0,ht+sep]) coneblock(hr); // top ball
     }
 // }
 }
@@ -185,7 +187,7 @@ module partsGrid(bw, bh, cs = 5, nc = 10, nr = 20) {
 // h: height of a card (h0)
 // w: width of a card (w0)
 // t: thickness of lid (2)
-// rt: radius of hinge (hr + dr = 3)
+// rt: radius [total] of hinge (hr + dr = 3)
 // zh: ambient z-coord of hinge
 module lid(h = h0, w = w0, t = 2, rt = hr + dr ) {
   et = tt * .8;
@@ -214,9 +216,9 @@ module lid(h = h0, w = w0, t = 2, rt = hr + dr ) {
     difference() 
     {
       union() {
-        trr([w/2, lh-ym/2, t/2])             cube([w-5, ym, t], true); // tang
-        trr([w/2, lh-rt, rt/2])              cube([w-5, 2*rt, rt], true); // block
-        trr([w/2, lh-ym, ym-p, [-30, 0, 0]]) cube([w-5, ym*.5, 1.8+pp], true); // feet
+        trr([w/2, lh-ym/2-.2, t/2])             cube([w-5, ym, t], true); // tang
+        // trr([w/2, lh-rt, rt/2+1])              cube([w-5, 2*rt, rt], true); // block
+        // trr([w/2, lh-ym, ym-p, [-30, 0, 0]]) cube([w-5, ym*.5, 1.8+pp], true); // feet
       }
       trr([w/2, lh-ym/2+p, 6]) cube([w*.63, 16, 14], true); // cut
     }
@@ -226,6 +228,11 @@ module lid(h = h0, w = w0, t = 2, rt = hr + dr ) {
 }
 
 module trayAndLid() {
+  cx = tl - dz * 2;
+  cz = zd+hr+dr+sep; 
+  cc = zd - (hr + dr); // cut notch (above hinge) to hold card bottom
+  lt = 2;   // lid thickness
+
   mnts = [.1, 180, 0, 0];
   sep = .2;
   rotate([90, 0, 0])
@@ -233,13 +240,15 @@ module trayAndLid() {
   difference() 
   {
   color("blue")
-    tray([tl, bh+2*ty, zt], [0, rt, 1, 1], 0, undef, [ty, tt, tt]);
-    // slot for lid:
+    tray([tl, bh+2*ty, zt], [0, rs, 1, 1], 0, undef, [ty, tt, tt]);
+    // back side slot for lid:
     trr([dz, -pp, zh - cz + zd ]) cube([cx, tt+2*pp, cz + p]);
     // front edge
     trr([tl/2, bh + tt, ht-tt+pp ]) cube([tl-2*tt, 2*tt, 2.2*tt], true);
     // hole for clip:
     trr([tl/2, bh - 3*tt, ht-1.57*tt+pp ]) cube([tl+2*tt, 3*tt, 1.2*tt], true);
+    // top side cut to hold card bottom
+    color ("cyan") trr([-p, -p, ht-cc+p]) cube([tl+pp, zd, cc+pp]);
   }
     hinge([ 0, hy, zh, [0, 90, 0]], dz, undef, dr, mnts, sep );
     hinge([tl, hy, zh, [0, -90, 0]], dz, undef, dr, mnts, sep );
@@ -248,7 +257,7 @@ module trayAndLid() {
   echo ("ar = ", ar);
   trr(ar) color("cyan") cube([5, .1, .1]);
   atrans(loc, [[0, 0, 0], 0, [0, 0, 0, [-90, 0, 0, ar]], [0, 0, 0, [-89.99999999, 0, 0, ar]]])
-  lid(h0, w0 );
+  lid(h0, w0, lt );
 }
 
 // allow for 12 cards per color, * .625 = 7.5mm
@@ -257,12 +266,12 @@ ty = 1;
 tt = 1;
 tl = w0 + 2 * tt; // total y-length
 
-atrans(loc, [[-t0, 0, 0], [0, 0, 0, [0, 90, 0]], 1, [0,0,0]])
+*atrans(loc, [[-t0, 0, 0], [0, 0, 0, [0, 90, 0]], 1, [0,0,0]])
 vbox(10 * t01, bw, bh, [t0, ty, t0]);
 
 ht = 16;   // height of tray
-rt = 18;   // radius of scoop
-zt = ht+rt;// z-extent before kut
+rs = 18;   // radius of scoop
+zt = ht+rs;// z-extent before kut
 
 hr = 1.5;  // hinge radius
 hy = 4.1;  // hinge z (pre rotation, the y-coord of axle)
@@ -273,8 +282,6 @@ th = 2;           // 'thickness' for hinge
 zd = 4.1;         // down from top of tray (coincidentally? == hy)
 zh = ht - zd;     // z for hinge
 dz = 3;           // block size of hinge
-cx = tl - dz * 2;
-cz = zd+hr+dr+sep; 
 // hinge([ 0, hy, zh, [0, 0, 0]], 3, undef, undef, [1, 180, 90], .2 );
 
 atrans(loc, [
