@@ -24,8 +24,14 @@ w0 = 90.5;
 // height of card
 h0 = 66;
 bt = 10 * t01 + 2 * t0; //
-bw = w0; // total length of box (y-extent @ loc = 2)
-bh = h0; // height of box (short dimension of card + bottom(t0) + top(3mm))
+
+
+// a stack of cards
+module card(tr = [  (h0 - h00) / 2, tcg + (w0 - w00) / 2, 0 ], n = 1, dxyz=[h0, w0, t0])
+{
+  translate(tr) astack(n, [ 0, 0, t01 ]) color("cyan") roundedCube(dxyz, 3, true);
+}
+
 
 
 // box for setup (Events, VICI, markers, chips) cards:
@@ -41,17 +47,21 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
   vh = vh0 + 2 * tz;
   echo("------ vbox: vt= ", vt, "vw=", vw, "vh=", vh);
   // vt: interior x-extent
-  module cardGuide(vt = vt0+pp) {
-    // w0 size of inset; squeeze
-    // h0 height of flat part
-    // h1 height of taper part
-    w0 = 2; h0 = 4; h1 = 7; a = 7;
+  // tcg: width of each cardguide
+  // ambient:
+  module cardGuide(vt = vt0+pp, wcg = tcg) {
+    // wcg: size of inset; squeeze
+    // h0: height of flat part
+    // h1: height of taper part
+    // a: angle of taper
+    wcg = def(wcg, 2); 
+    h0 = 4; h1 = 7; a = 7;
     vh2 = vh * .7;
     // TODO: the trig to calc height of green cube (depends on angle a)
     difference() {
-      translate([w0/2 + p, 0, vh2]) color("green") cube([w0, vt, h0 + 4 * h1], true);
-      trr([w0, 0, vh2+h1+h0, [0, -a, 0]]) color ("pink") cube([w0, vt+pp, h0 + 2 * h1], true);
-      trr([w0, 0, vh2-h1-h0, [0, a, 0]]) color ("pink") cube([w0, vt+pp, h0 + 2 * h1], true);
+      translate([wcg/2 + p, 0, vh2]) color("green") cube([wcg, vt, h0 + 4 * h1], true);
+      trr([wcg, 0, vh2+h1+h0, [0, -a, 0]]) color ("pink") cube([wcg, vt+pp, h0 + 2 * h1], true);
+      trr([wcg, 0, vh2-h1-h0, [0, a, 0]]) color ("pink") cube([wcg, vt+pp, h0 + 2 * h1], true);
     }
   }
   // slotify the walls:
@@ -231,6 +241,8 @@ module lid(h = h0, w = w0, t = 2, rt = hr + dr ) {
     trr([w/2, lhh, hy, [0, 90, 0]]) cylinder(w-5, rt, rt, $fn=30, center = true); // space filler
     trr([w/2, lhh, rt/2, [0, 00, 0]]) cube([w-5, rt, rt], center = true); // support for cylinder
   }
+  atrans(loc, [undef, [0,0,0], 1])
+    card([3, zh-w0-2, 3], 1, [w0, h0, 1]);
 }
 
 module trayAndLid() {
@@ -267,29 +279,21 @@ module trayAndLid() {
     }
   }
 
-  ar = [-3, -zh, hy];
-  echo ("ar = ", ar);
   trr(ar) color("cyan") cube([5, .1, .1]);
-  atrans(loc, [
-    [0, 0, 0], 
-    0, 
-    [0, 0, 0, [23, 0, 0, ar]], 
-    [0, 0, 0, [-89.99999999, 0, 0, ar]], 
-    undef, 
-    0,
-    2,
-    ])
-  lid(h0, w0, lt );
+  atrans(loc, lidtrans)
+  lid(h0, bw, lt );
 }
 
 // allow for 12 cards per color, * .625 = 7.5mm
-loc = 0;
 tw = 1;   // thickness of tray walls (in print x-coord); tray-x
 ty = 1.2; // thickness of walls, tray endcap (in print y-coord);
 tz = 1;   // thickness of tray bottom (todo)
+tcg = 2;
+bw = w0 + 2 * tcg; // total length of box (y-extent @ loc = 2)
+bh = h0 ; // height of box (short dimension of card + bottom(t0) + top(3mm))
 
 tt = 1;
-tl = w0 + 2 * ty; // total y-length (width of card)
+tl = w0 + 2 * ty + 2 * tcg; // total y-length (width of card)
 
 atrans(loc, [[-t0, 0, 0], [0, 0, 0, [0, 90, 0]], 1, 1])
 vbox(10 * t01, bw, bh, [t0, ty, t0]);
@@ -309,11 +313,22 @@ zh = ht - zd;     // z for hinge
 dz = 3;           // block size of hinge
 // hinge([ 0, hy, zh, [0, 0, 0]], 3, undef, undef, [1, 180, 90], .2 );
 
+ar = [-3, -zh, hy]; // location of axle in lid space
+lidtrans = [
+    [0, 0, 0], 
+    0, 
+    [0, 0, 0, [23, 0, 0, ar]], 
+    [0, 0, 0, [-89.99999999, 0, 0, ar]], 
+    undef, 
+    0,
+    2,
+    ];
+
 atrans(loc, [
-  [0, tl, 0, [0, 0, -90]], 
-  [0, tl, 0, [-90, 0, -90]], 
-  [0, tl, 0, [-90, 0, -90]], 
-  [0, tl, 0, [-90, 0, -90]], 
+  [0, tl, 0, [  0, 0, -90]], // 0
+  [0, tl, 0, [-90, 0, -90]], // 1
+  [0, tl, 0, [-90, 0, -90]], // 2
+  [0, tl, 0, [-90, 0, -90]], // 3
   0, 
   0,
   [0, tl, 0, [-90, 0, -90]], // 6
@@ -323,3 +338,5 @@ trayAndLid();
 dup([0, 13, 0])
 atrans(loc, [undef, [9, 5, tt], 1, 1])
 die();
+
+loc = 3;
