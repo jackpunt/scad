@@ -284,7 +284,6 @@ module trayAndLid() {
   sep = .2;
   rotate([90, 0, 0])
   {
-  echo("tray: [tl, bh, tcg, tw, ty, tz] = ",[tl, bh, tcg, tw, ty, tz]);
   difference() {
     color("blue")
     tray([tl, bh+tw, zt], [0, rs, 1, 1], 0, undef, [ty, tw]);
@@ -317,7 +316,8 @@ ty = 1.2; // thickness of walls, tray endcap (in print y-coord);
 tz = 1;   // thickness of tray bottom 
 tcg = (95-w0-2*ty)/2;  // inset for cardguide
 bw = w0 + 2 * tcg; // interior width of box (y-extent @ loc = 2)
-bh = h0 + tz ; // interior height of vbox (short dimension of card)
+ot = 2;
+bh = h0 + ot ; // interior height of vbox (short dimension of card)
 vbd = 10 * t01;
 
 tt = 1;    // tw or tz
@@ -372,6 +372,7 @@ die();
 card2();
 
 loc = 3;
+echo("toplevel: [tl, bh, bh+tw, ht, vbd, ht+vbd, tcg, tw, ty, tz] = ", [tl, bw, bh, bh+tw, ht, vbd, ht+vbd, tcg, tw, ty, tz]);
 differenceN(1, 0 ) {
   wholebox();
   trr([-tw, -3, -vbd-3*ty]) cube([bw+2*tw, 8, ht + vbd + 4*ty]);
