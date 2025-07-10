@@ -278,19 +278,20 @@ module trayAndLid() {
   bx = 2 * hh + 2 * sep;
   by = 3;   // lid blocker
   bz = (ht - zd) - (hr+dr);   // lid blocker (8.9)
+  kz = lt + 1;  // cut at front edge of scoop; for lid warp
 
   mnts = [.1, 180, 0, 0];
   sep = .2;
   rotate([90, 0, 0])
   {
-  echo("tray: [tl, bh, tw, ty, tz] = ",[tl, bh, tw, ty, tz]);
+  echo("tray: [tl, bh, tcg, tw, ty, tz] = ",[tl, bh, tcg, tw, ty, tz]);
   difference() {
     color("blue")
     tray([tl, bh+tw, zt], [0, rs, 1, 1], 0, undef, [ty, tw]);
     // back side slot for lid:
     trr([dz, -pp, zh - cz + zd ]) cube([cx, tw+2*pp, cz + p]);
     // front edge: extra space because lid may warp down
-  #  trr([tl/2, bh, ht-tz+pp ]) cube([tl-2*ty, 2*tw, 4.2], true);
+    trr([ty, bh-tw, ht-kz+pp ]) cube([tl-2*ty, 2*tw, kz], false);
     // hole for clip: (.35 may be related to sep, slack in the hinge; 0.2 is fudge)
     trr([-p, bh-ce-.35+p, ht-2.2+pp ]) cube([tl+pp, .8, 1.2], false); // ce < 8
     trr([-p, bh-ce+.35+p, ht-2.2+pp ]) cube([tl+pp, ce+1.7, 2.2], false);
@@ -314,7 +315,7 @@ module trayAndLid() {
 tw = 2;   // thickness of tray back wall (in print z-coord); tray-x
 ty = 1.2; // thickness of walls, tray endcap (in print y-coord);
 tz = 1;   // thickness of tray bottom 
-tcg = 2;  // inset for cardguide
+tcg = (95-w0-2*ty)/2;  // inset for cardguide
 bw = w0 + 2 * tcg; // interior width of box (y-extent @ loc = 2)
 bh = h0 + tz ; // interior height of vbox (short dimension of card)
 vbd = 10 * t01;
