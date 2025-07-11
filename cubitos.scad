@@ -77,16 +77,16 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
   sw = vw*.7;      // width of slot 
   dh = vh*.8;      // depth of slot (below the radius of tray)
   sr = min(5, dh/2, sw/2); // radius of slot
-  hwtr0 = [dh, vw -2*ty, 2*tz, .1]; // ]height, width, translate, radius]
+  hwtr0 = [dh, vw -2*ty, 2*tz, sr]; // ]height, width, translate, radius]
   hwtr1 = [dh, sw      , 2*tz, sr]; // ]height, width, translate, radius]
   ss = false;   // show slot
 
   { 
     // slotted box with card guides:
-    slotify(hwtr0, [00+tx/2, vw/2, vh-(dh/2-tz)], 1, 0, ss) // tray bottom
+    slotify(hwtr0, [00+tx/2, vw/2, vh-(dh/2-sr)], 1, 0, ss) // tray bottom
     slotify(hwtr1, [vl-tx/2, vw/2, vh-(dh/2-sr)], 1, 3, ss) // outer slot
     box([vt, vw, vh], ta);
-    if (w0 > 50) {
+    if (w0 > 99) {
     translate([vt/2,  0+ty, 0 ]) rotate([0,0, 90]) cardGuide();
     translate([vt/2, vw-ty, 0 ]) rotate([0,0,-90]) cardGuide();
     }
@@ -239,7 +239,7 @@ module lid(h = h0, w = w0, t = 2, rt = hr + dr, ang = ang ) {
   xm = hh + sep - ty;        // from exterior to inner ball; sep = .2, th = 1.2 !
   wxm = w - 2*xm;            // width inside hinge
   lh = h - ym + et;          // lid height - green part [+ et to clear top edge when closed]
-  fl = (rt+0)/2;             // feet length/2
+  fl = (rt+.5)/2;             // feet length/2
   lhh = lh - 3 + .3;         // TODO: correct formula for '2.7' axis of hinge; zh = 11.9
   echo("lid: [zh, rt, ht, sep, wxm, xm, ym, lh, lhh] =", [zh, rt, ht, sep, wxm, xm, ym, lh, lhh]);
 
@@ -274,8 +274,8 @@ module trayAndLid() {
   cc = zd - (hr + dr); // cut notch (above hinge) to hold card bottom
   lt = 2;   // lid thickness
   bx = 2 * hh + 2 * sep;
-  by = 3;   // lid blocker
-  bz = (ht - zd) - (hr+dr);   // lid blocker (8.9)
+  by = 1.5;   // lid blocker
+  bz = (ht - zd) - (hr+dr) - sep;   // lid blocker (8.9)
   kz = lt + 1;  // cut at front edge of scoop; for lid warp
 
   mnts = [.1, 180, 0, 0];
@@ -351,31 +351,31 @@ lidtrans = [
     0,
     ];
 
-module wholebox() {
-  atrans(loc, [[-tz, 0, 0], [0, 0, tz, [0, 90, 0]], 1, 1])
-  vbox(vbd, bw, bh, [tz, ty, tw]);
+boxtrans = [
+  [0, 0, 0, [  0, 0, 0]], // 0
+  [0, tl, 0, [-90, 0, -90]], // 1
+  1,
+  1,
+  0, 
+  0,
+  [0, tl, 0, [-90, 0, -90]], // 6
+  ];
 
-  atrans(loc, [
-    [0, tl, 0, [  0, 0, -90]], // 0
-    [0, tl, 0, [-90, 0, -90]], // 1
-    1,
-    1,
-    0, 
-    0,
-    [0, tl, 0, [-90, 0, -90]], // 6
-    ])
+module wholebox() {
+  trr([tl, -tz, 0, [0, 0,  90]]) vbox(vbd, bw, bh, [tz, ty, tw]);
   trayAndLid();
 }
 
 dup([0, 13, 0])
-atrans(loc, [undef, [9, 5, tz], 1, 1]) {
-die();
-card2();
+atrans(loc, [undef, [7.2, 5, tz], 1, 1]) die();
+// atrans(loc, [undef, [0, 0, -tz], 1, 1]) card2();
+
+echo("toplevel: [tl, bw, bh, bh+tw, ht, vbd, ht+vbd, tcg, tw, ty, tz] =\n ---- toplevel:  ", [tl, bw, bh, bh+tw, ht, vbd, ht+vbd, tcg, tw, ty, tz]);
+difference() {
+  atrans(loc, boxtrans)
+    wholebox();
+  atrans(loc, [undef, [-tw, -3, -vbd-3*ty],1,1,0,0,0])
+    cube([bw+2*tw, 8, ht + vbd + 4*ty]); // cutaway view
 }
 
 loc = 0;
-echo("toplevel: [tl, bw, bh, bh+tw, ht, vbd, ht+vbd, tcg, tw, ty, tz] = ", [tl, bw, bh, bh+tw, ht, vbd, ht+vbd, tcg, tw, ty, tz]);
-differenceN(1, 0 ) {
-  wholebox();
-  trr([-tw, -3, -vbd-3*ty]) cube([bw+2*tw, 8, ht + vbd + 4*ty]);
-}
