@@ -37,7 +37,7 @@ module card(tr = [ tw +  (h0 - h00) / 2, ty + tcg + (w0 - w00) / 2, -tz ], n = 1
 // a stack of blue cards (in vbox)
 module card2(tr = undef, n = 1, dxyz=[h0, w0, t00], rgb="blue")
 {
-  tr = def(tr, [tz, ty + tcg, 0, [0, -90, 0]]); // (bw-w0)/2
+  tr = def(tr, [tz, ty + tcg, tw, [0, -90, 0]]); // (bw-w0)/2
   card(tr, n, dxyz, rgb);
 }
 
@@ -316,8 +316,8 @@ module trayAndLid() {
     for (x=[0: (dieSize+2.8) : bw*.4]) {
       trr([bw/2+x, tw, tz-pp]) cube([ty, bh-rs+6, 1.2]);
       trr([bw/2-x, tw, tz-pp]) cube([ty, bh-rs+6, 1.2]);
-      atrans(loc, [undef, [0,0,0],1,0,0,0,1])
-        die([bw/2-x+1.75, tw+1, 0]);
+      atrans(loc, [undef, [0,0,0],1,1,0,0,1])
+        die([bw/2-x+1.75, tw+1, tz]);
     }
   }
   // AND lid:
@@ -327,13 +327,13 @@ module trayAndLid() {
 }
 
 // allow for 12 cards per color, * .625 = 7.5mm
-tw = 1.5;   // thickness of tray back wall (in print z-coord); tray-x
+tw = 1.4;   // thickness of tray back wall (in print z-coord); tray-x
 ty = 1.1; // thickness of walls, tray endcap (in print y-coord);
 tz = 1;   // thickness of tray bottom 
 tcg = sample ?  .1 : (95-w0-2*ty)/2;  // inset for cardguide
 bw = w0 + 2 * tcg; // interior width of box (y-extent @ loc = 2)
 bwc = bw * .7;  // center cut (backwall, hinge)
-ot = 1;        // vbox extends over card. still fit upright in 70mm packing box
+ot = .5;       // vbox extends over card. still fit upright in 70mm packing box
 bh = h0 + ot ; // interior height of vbox (short dimension of card)
 th = bh + tw;  // total exterior "height" (short dimension of card) of box: [tl, th]
 // holds 11.5 std cards OR: 7-9 std + 3-5 thin cards
@@ -343,7 +343,7 @@ lt = 1.8;   // lid thickness
 tt = 1;    // tw or tz
 tl = w0 + 2 * ty + 2 * tcg; // total y-length (width of card + ty + tcg)
 
-ht = dieSize + 1 + tz + lt;   // height of tray
+ht = dieSize + .6 + tz + lt;   // height of tray
 rs = 18;   // radius of scoop
 zt = ht+rs;// z-extent before kut
 
@@ -383,6 +383,8 @@ boxtrans = [
   1, 
   ];
 
+// TODO: grey-tray (64 dice, 12 player blocks, hands, credits)
+// layout in box
 module wholebox() {
   if (!sample)
   trr([tl, -tz, 0, [0, 0,  90]]) vbox(vbd, bw, bh, [tz, ty, tw]);
