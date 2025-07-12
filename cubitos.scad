@@ -31,12 +31,13 @@ bt = 10 * t01 + 2 * t0; //
 // a stack of cyan cards (on lid)
 module card(tr = [ tw +  (h0 - h00) / 2, ty + tcg + (w0 - w00) / 2, -tz ], n = 1, dxyz=[h00, w00, t00], rgb="cyan")
 {
-  translate(tr) astack(n, [ 0, 0, t01 ]) color(rgb, .5) roundedCube(dxyz, 3, true);
+  trr(tr) astack(n, [ 0, 0, t01 ]) color(rgb, .5) roundedCube(dxyz, 3, true);
 }
 
 // a stack of blue cards (in vbox)
-module card2(tr = [ tw , ty + tcg, -tz ], n = 1, dxyz=[h0, w0, t00], rgb="blue")
+module card2(tr = undef, n = 1, dxyz=[h0, w0, t00], rgb="blue")
 {
+  tr = def(tr, [tz, ty + tcg, 0, [0, -90, 0]]); // (bw-w0)/2
   card(tr, n, dxyz, rgb);
 }
 
@@ -50,13 +51,13 @@ module card2(tr = [ tw , ty + tcg, -tz ], n = 1, dxyz=[h0, w0, t00], rgb="blue")
 // txyz: wall thickness (t0) [tx, ty, tz] 
 // ambient: tcg thickness of cardguide
 // total width: [vt + 2 * tx, vw + 2 * ty + 2 * tcg, vh + tz]
-module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
+module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0) // txyz=[tz, ty, tw]
 {
   ta = is_list(txyz) ? txyz : [txyz, txyz, txyz];
   tx = ta.x; ty = ta.y; tz = ta.z;
-  vt = vt0 + 2 * tx; // external x-extent
-  vw = vw0 + 2 * ty;
-  vh = vh0 + 1 * tz;
+  vt = vt0 + 2 * tx; // external x-extent (card thickness)
+  vw = vw0 + 2 * ty; // external y-extent (card width)
+  vh = vh0 + 1 * tz; // internal + back wall
   echo("------ vbox: vt= ", vt, "vw=", vw, "vh=", vh);
   // vt: interior x-extent
   // tcg: width of each cardguide
@@ -81,7 +82,7 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
   sw = vw*.7;      // width of slot 
   dh = vh*.8;      // depth of slot (below the radius of tray)
   sr = min(5, dh/2, sw/2); // radius of slot
-  hwtr0 = [dh, vw -2*ty, 2*tz, sr]; // ]height, width, translate, radius]
+  hwtr0 = [dh, vw -2*ty, 2*tz, .1]; // ]height, width, translate, radius]
   hwtr1 = [dh, sw      , 2*tz, sr]; // ]height, width, translate, radius]
   ss = false;   // show slot
 
@@ -94,6 +95,7 @@ module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0)
     translate([vt/2,  0+ty, 0 ]) rotate([0,0, 90]) cardGuide();
     translate([vt/2, vw-ty, 0 ]) rotate([0,0,-90]) cardGuide();
     }
+    atrans(loc, [undef, [bt - tz, 0, 0], 1, 1]) card2(undef, 11); // in the vbox
   }
 }
 
@@ -137,7 +139,8 @@ module die(trr = [0,0,0]) {
 // hh: height of each block (3)
 // hr: radius (& height) of hinge/cone (hr = 1.5) 
 // dr: incremental thickness around cone (2)
-// mnt: extend a mounting block [dist, angle-socket, angle-cone]
+// mnt: extend a mounting block (1.5) 
+// -- [len-socket (hr), angle-socket (0), angle-cone (mnt[1]), len-cone (len-socket)]
 // sep: gap between socket & ball (.2)
 module hinge(trr=[0,0,0], hh = 3, hr = 1.5, dr = 2, mnts = 1.5, sep = .2) {
   trr = def(trr, [0,0,0]);
@@ -254,7 +257,7 @@ module lid(h = h0, w = w0, t = 2, rt = hr + dr, ang = ang ) {
     differenceN(2)
     {
       color ("green") cube([w, lh, t]);                // base lid
-      trr([-ty, ce, 0 ]) cube([tl, cl, t], false);    // clips
+      trr([-ty, ce-pp, 0-pp ]) cube([tl, cl-p, t], false);    // clips
       partsGrid(w, lh, w > 60 ? [8, 6, 5]: [8, 2, 2]); // perforation
     }
     // hinge connection & "tray"
@@ -272,41 +275,42 @@ module lid(h = h0, w = w0, t = 2, rt = hr + dr, ang = ang ) {
   }
 }
 ce = 0;     // clip offset
-cl = 2.2;   // clip length
-cf = .145;  // empirical fudge for clip/hole
+cl = 2.7;   // clip length
+cf = .155;  // empirical fudge for clip/hole (reduce friction b/c not square inside corner)
 ch = ce + cl + cf; // hole length for clip
-chd = .21;  // under cut approx 1 layer.
+chd = 2;    // under cut (over close lid)
 
 module trayAndLid() {
   cx = tl - dz * 2;
   cz = zd+hr+dr+sep;       // clearance in back wall for lid
-  cc = zd - (hr + dr) +.2; // cut top corner for hinge clearance
+  cc = zd - (hr + dr) +2.2; // cut top corner for hinge clearance
   bx = 0; //2 * hh + 2 * sep;
   by = 1.5;   // lid blocker  (beyond tw)
   bz = (ht - zd) - (hr+dr) - sep;   // lid blocker (8.9)
-  kz = lt + 1;  // cut at front edge of scoop; for lid warp
+  kz = lt + 2;  // cut at front edge of scoop; for lid warp
 
-  mnts = [.1, 180, 0, 0];
+  mnt0 = [hr, -90, 0, 0];
+  mnt1 = [hr,  90, 0, 0];
   sep = .2;
   rotate([90, 0, 0])
   {
-  difference() {
+  differenceN(1) {
     color("blue")
     tray([tl, bh+tw, zt], [0, rs, 1, 1], 0, undef, [ty, tw]);
     // back side slot for lid clearance:
     trr([dz, -pp, zh - cz + zd ]) cube([cx, tw+ by+2*pp, cz + p]);
     // top corner for lid clearance:
-    trr([-p, -pp, zh - cc + zd ]) cube([tl+pp, tw + 2*pp, cc + pp]);
+    trr([ty-p, -pp, zh - cc + zd ]) cube([tl-2*ty+pp, 2*tw + 2*pp, cc + pp]);
     // front edge: extra space because lid may warp down
     trr([ty, bh-tw, ht-kz+pp ]) cube([tl-2*ty, 2*tw, kz], false);
     // hole for clip: .2 overcut
-    trr([-p, th-ch+p, ht-(lt + chd)+pp ]) cube([tl+pp, ch, lt + chd], false);
+    trr([-p, th-ch+p, ht-(lt + chd)+pp ]) cube([tl+pp, ch+pp, lt + chd], false);
     }
-    hinge([ 0, hy, zh, [0,  90, 0]], dz, hr, dr, mnts, sep );
-    hinge([tl, hy, zh, [0, -90, 0]], dz, hr, dr, mnts, sep );
+    hinge([ 0, hy, zh, [0,  90, 0]], dz, hr, dr, mnt0, sep );
+    hinge([tl, hy, zh, [0, -90, 0]], dz, hr, dr, mnt1, sep );
     difference() {
       trr([tl/2  , by/2 -p + tw, bz/2]) cube([tl-2*bx, by, bz], true); // angle stop block
-      trr([tl/2+p, by/2 +p + tw, bz/2]) cube([bwc+pp, by+pp, bz+pp], true); // cut
+      trr([tl/2+p, by/2 +p + tw, bz/2]) cube([bwc+pp, by+pp, bz+pp], true); // back wall cut
     }
     color("red") 
     for (x=[0: (dieSize+2.8) : bw*.4]) {
@@ -328,7 +332,7 @@ ty = 1.1; // thickness of walls, tray endcap (in print y-coord);
 tz = 1;   // thickness of tray bottom 
 tcg = sample ?  .1 : (95-w0-2*ty)/2;  // inset for cardguide
 bw = w0 + 2 * tcg; // interior width of box (y-extent @ loc = 2)
-bwc = bw * .7;  // center cut
+bwc = bw * .7;  // center cut (backwall, hinge)
 ot = 1;        // vbox extends over card. still fit upright in 70mm packing box
 bh = h0 + ot ; // interior height of vbox (short dimension of card)
 th = bh + tw;  // total exterior "height" (short dimension of card) of box: [tl, th]
@@ -385,14 +389,11 @@ module wholebox() {
   trayAndLid();
 }
 
-*dup([0, 12, 0])dup([0, 12, 0])dup([0, 12, 0])dup([0, 12, 0])dup([0, 12, 0])
-atrans(loc, [undef, [7.5, 3.2, tz], 1, 1]) die();
-atrans(loc, [undef, [0, 0, -tz], 1, 1]) card2(); // in the vbox
 atrans(loc, boxtrans) atrans(loc, [undef, [0,0,0], 1, 1, 1, 1, 1])
   trr(ar) color("cyan") cube([tl+10, .05, .05]); // hinge axis
 
 echo("toplevel: [tl, bw, bh, bh+tw, ht, vbd, ht+vbd, tcg, tw, ty, tz] =\n ---- toplevel:  ", [tl, bw, bh, bh+tw, ht, vbd, ht+vbd, tcg, tw, ty, tz]);
-difference() {
+differenceN(1,1) {
   atrans(loc, boxtrans)
     wholebox();
   atrans(loc, [undef, [-tw, -5, -vbd-3*ty],1,0,0,0,1])
