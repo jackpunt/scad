@@ -228,7 +228,7 @@ module differenceN(n, r = undef) {
     children([n: $children-1]);
   }
   } else {
-    children([0: r]);
+    children([0: max(0, r-1)]);
   }
 }
 
