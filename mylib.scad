@@ -577,7 +577,7 @@ module align(tr = [0,0,0], rottr = [0,0,0], ss = false) {
 // d1: [a0, ainc, alimit]
 // d2: [b0, binc, blimit]
 // rid: translation plane -> zy | xz | xy | 00
-// children(0) the item to be placed at each grid point
+// children() the item(s) to be placed at each grid point
 module gridify(d1, d2, rid = 0)
 {
   for (a = [d1[0]:d1[1]:d1[2]], b = [d2[0]:d2[1]:d2[2]])
@@ -585,7 +585,7 @@ module gridify(d1, d2, rid = 0)
             : rid == 1 ? [a, 0, b]
             : rid == 2 ? [a, b, 0]
             : [0, 0, 0])
-    translate(tr) children(0);
+    translate(tr) children();
 }
 
 // diagonal grid on XZ for civ0_cardbox sidewall
