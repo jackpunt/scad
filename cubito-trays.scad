@@ -16,7 +16,7 @@ xs = 216;
 th = 2*dieSize;   // total allocated height: 2*diceSize + 3*tz
 high = th + 3 * tz;
 rad = 4;
-csize = 40; // size for cardboard bits
+gsize = 62.275; // size of larger partition, for grey cubes
 
 // TODO: use roundTube & divXY before rotation
 module tray2(size = 10, rs = 2, rc = 0, k0, txyz = t0) {
@@ -51,7 +51,10 @@ module partsTray(len, wid, h , rad = rad) {
   // half the base, 2 tw,  
   wid = def(wid, (xs/2 - dw)/ 2);
   h = def(h, high - tz);
-  echo("partsTray: h=", h);
+  td = 1; // thickness of divs
+  csize = (len - 3*td-2*gsize)/2; // size for cardboard bits
+
+  echo("partsTray: [len, wid, h, csize]", [len, wid, h, csize]);
   trr([(xs-len)/2, 2*(tw+f)+gap/2, tz]) { // tw * 2 + gap/2
     // trr([0, wid, 0]) box([len, wid, h]);
     // dup([0, wid + gap/2, 0], undef, "orange", "green") 
@@ -59,11 +62,13 @@ module partsTray(len, wid, h , rad = rad) {
       tray([len, wid, h+2*rad], rad, rad, -2*rad, [tz, tw, tw] );
       dup([-csize, 0, 0])
       dup([ csize, 0, 0])
-      div([h+2*rad, wid, len/2], rad, -2*rad);
+      div([h+2*rad, wid, len/2], rad, -2*rad, td);
     }
     // --- put a die in it:
-    die([10, 10, tz+.8]);
-    die([10, 10, tz + dieSize]);
+    atrans(loc, [[0,0,0], undef, 1, 1, 1, 1])
+    gridify(d1 = [-8, dieSize+.1, 4*dieSize], d2 = [-2, dieSize+.1, 2*dieSize],rid= 2)
+    die([10, 10, tz]);
+    // die([10, 10, tz + dieSize]);
   }
 }
 
@@ -82,13 +87,13 @@ module baseTray(len, wid, h = high) {
   }
 }
 
-module lidTray(len = xs, wid = xs, h = high+tz) {
+module lidTray(len = xs, wid = xs, h = high+tz-6) {
   trr([(xs-len)/2, 0, -tz, [-0, 0, 0]]) {
     box([len, wid, h], [tw, tw, tz] );
   }
 }
 echo("parts trays: [xs, tw, tz, high]", [xs, tw, tz, high]);
-loc = 0;
+loc = 1;
 atrans(loc, [[0,0,0], [0,0,0], undef, 1, undef ]) 
   partsTray();
 atrans(loc, [[0,0,0], undef, [0,0,0], 2, undef ]) 
