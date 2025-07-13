@@ -50,7 +50,7 @@ module atrans(ndx = 0, atran = [[ 0, 0, 0 ]]) {
 // lwh: [length_x, width_y, height_z], exterior size
 // t: ([t0,t0,t0]) thickness of x_wall, y_wall, z_floor 
 // d: ([2, 2, 1-p]) delta --> reduction to create inner box: lwh-d*t 
-// cxy: (false) center XY, z = 0
+// cxy: (false) center XY, Z = 0
 // -
 // diff() { cube(lwh); tr(txyz) cube(adif(lwh, amul(d, txyz))) }
 module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
@@ -172,15 +172,17 @@ module trr(rtr) {
 // suitable inside hull() { ... }
 // trr: translate (after rotate) ([0, 0, 0])
 // rott: rotate (with rott[3] as center)
+// c1: color copy
+// c0: color original
 module dup(trr, rott, c1, c0) {
   trr = def(trr, [0, 0, 0 ]);
   rott = def(rott, [0, 0, 0]);
   tr3 = def(trr[3], rott);
   rtr = [trr.x, trr.y, trr.z, tr3];
-  color(c0) children(0);
+  color(c0) children();
   // translate(tr) rotatet(rott) // TODO: upgrade to trr(rtr)
   trr(rtr)
-  color(c1) children(0);
+  color(c1) children();
 }
 
 // New implementation: MCAD
@@ -358,6 +360,14 @@ module roundedTube(sxy = 10, r = 2, k = 0, txyz = t0) {
 // test for k:
 *translate([ 0, -60, 0 ]) rotate([ 0, -90, 0 ])
     roundedTube([ 40, 40, 8 ], [ 15, 4, 2, 2 ], -15, 1);
+
+// in XY plane; endcaps for a roundedTube
+module divXY(xyz = 10, r = 2, k, t = t0) {
+  dz = is_undef(xyz.z) ? 0 : xyz.z;
+  translate([ 0, 0, dz ])    //
+      linear_extrude(height = t) //
+      roundedRect([ xyz.x, xyz.y ], r, k);
+}
 
 // a roundedRect divider (@x) across the YZ plane of a box:
 // hwx: [z,y,x] --> z-height, y-depth, x-translation
