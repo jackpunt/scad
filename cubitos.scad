@@ -127,7 +127,7 @@ module tray(size = 10, rs = 2, rc = 0, k0, txyz = t0) {
 }
 
 dieSize = 12;
-module die(trr = [0,0,0]) {
+module die(trr = [0,0,0], dieSize = dieSize) {
   trr(trr)
   color("red") roundedCube(dieSize);
 }

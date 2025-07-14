@@ -45,6 +45,7 @@ module tray2(size = 10, rs = 2, rc = 0, k0, txyz = t0) {
 
 module partsTray(len, wid, h , rad = rad) {
   gap = f; // gap around each tray
+  twf = tw+f;
   dl = 4*(tw+f) + gap;
   dw = 2.5*(tw+f) + gap; // lid, base & half of center divider
   len = def(len, xs - dl);
@@ -53,6 +54,7 @@ module partsTray(len, wid, h , rad = rad) {
   h = def(h, high - tz);
   td = 1; // thickness of divs
   csize = (len - 3*td-2*gsize)/2; // size for cardboard bits
+  ds = 12;
 
   echo("partsTray: [len, wid, h, csize]", [len, wid, h, csize]);
   trr([(xs-len)/2, 2*(tw+f)+gap/2, tz]) { // tw * 2 + gap/2
@@ -66,8 +68,8 @@ module partsTray(len, wid, h , rad = rad) {
     }
     // --- put a die in it:
     atrans(loc, [[0,0,0], undef, 1, 1, 1, 1])
-    gridify(d1 = [-8, dieSize+.1, 4*dieSize], d2 = [-2, dieSize+.1, 2*dieSize],rid= 2)
-    die([10, 10, tz]);
+    gridify(d1 = [twf, ds+.02, gsize-ds], d2 = [twf, ds+.1, wid-ds],rid= 2)
+    die([0, 0, tz], ds);
     // die([10, 10, tz + dieSize]);
   }
 }
@@ -79,7 +81,7 @@ module baseTray(len, wid, h = high) {
   wid = def(len, xs-2*(tw+f));
   trr([(xs - len)/2,  (tw+f), 0]) {
     box([len, wid, h], [tw, tw, tz] );
-    trr([0, wid/2, 0]) 
+    trr([0, 51.325 + 60 + 2*(tw+f), 0]) 
     differenceN(1) {
       cube([len, 2, h]);
       trr([cl/2-p, 0-p, 0-p]) cube([len-cl+pp, 2+pp, high+pp]);
@@ -93,9 +95,11 @@ module lidTray(len = xs, wid = xs, h = high+tz-6) {
   }
 }
 echo("parts trays: [xs, tw, tz, high]", [xs, tw, tz, high]);
-loc = 1;
-atrans(loc, [[0,0,0], [0,0,0], undef, 1, undef ]) 
-  partsTray();
+loc = 3;
+atrans(loc, [[0,0,0], [0,0,0], undef, 1, undef ]) {
+  // partsTray(undef, undef);
+  trr([0, 51.3125+f*2, 0]) partsTray(undef, 60);
+}
 atrans(loc, [[0,0,0], undef, [0,0,0], 2, undef ]) 
   baseTray();
 atrans(loc, [[0,0,0], undef, undef, 1, [0,0,0] ]) 
