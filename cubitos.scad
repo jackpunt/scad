@@ -223,17 +223,6 @@ module partsGrid(bw, bh, snr=[5, 10, 20]) {
   translate([0, 0, t0])
   gridify([x0, xi, xm], [y0, yi, yl], 2) cube([cs, cs, cs], true);
 }
-// n: union first to children, subtract the rest
-module differenceN(n, r = undef) {
-  if (is_undef(r)) {
-  difference() {
-    children([0 : n-1]);
-    children([n: $children-1]);
-  }
-  } else {
-    children([0: max(0, r-1)]);
-  }
-}
 
 // h: height of lid (h0)
 // w: width of a card (w0)

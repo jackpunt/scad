@@ -20,6 +20,20 @@ function sum(ary = [], n) =
     (nn < 0) ? 0 : (n == 0) ? ary[0] : ary[nn] + sum(ary, nn-1);
 
 
+// n: union first n children, subtract the rest (1)
+// r: ignore the final r children (0)
+module differenceN(n = 1, r = 0) {
+  echo("diffN: $children=", $children);
+  if ($children-1-r >= n) {
+    difference() {
+      children([0 : n-1]);
+      children([n: $children-1-r]);
+    }
+  } else {
+      children([0 : n-1]);
+  }
+}
+
 // move objects to new location
 // ndx: choice of location
 // atran: [ [x,y,z {, [rx, ry, rz {, [cx, cy, cz]} ]} ], ... ]
@@ -171,18 +185,16 @@ module trr(rtr) {
 // duplicate, with translate & rotate:
 // suitable inside hull() { ... }
 // trr: translate (after rotate) ([0, 0, 0])
-// rott: rotate (with rott[3] as center)
-// c1: color copy
+// nc: number of copies (1)
+// c1: color copies
 // c0: color original
-module dup(trr, rott, c1, c0) {
+module dup(trr, nc = 1, c1, c0) {
   trr = def(trr, [0, 0, 0 ]);
-  rott = def(rott, [0, 0, 0]);
-  tr3 = def(trr[3], rott);
-  rtr = [trr.x, trr.y, trr.z, tr3];
   color(c0) children();
-  // translate(tr) rotatet(rott) // TODO: upgrade to trr(rtr)
-  trr(rtr)
-  color(c1) children();
+  color(c1) 
+  for(i = [1:nc])
+    trr(amul(trr, i))
+      children();
 }
 
 // New implementation: MCAD

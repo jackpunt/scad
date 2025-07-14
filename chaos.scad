@@ -186,7 +186,7 @@ parts = [
 dzz = selectNth(1, parts);
 for (i = [0 : len(parts)]) echo(i, "sumi() = ", sumi(dzz, i), "sumt() = ", sumt(dzz,i));
 
-difference()
+differenceN(1,0)
 {
   // intersection() 
   union() 
@@ -196,7 +196,7 @@ difference()
   }
   atrans(loc, [undef, [0,0,0]])
   trr([-3-xoff, -4, -1]) cube([width+6, bz+5, 50]); // cutaway view
-  *atrans(loc, [undef, [0,0,0]])
+  atrans(loc, [undef, [0,0,0]])
   trr([-3-xoff, -4, -1]) cube([bz+5, height+6, 50]) // cutaway view
   ;
 }
