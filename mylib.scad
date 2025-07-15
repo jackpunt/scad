@@ -182,9 +182,10 @@ module trr(rtr) {
   translate(as3D(rtr)) rotatet(rotr) children();
 }
 
-// duplicate, with translate & rotate:
+// duplicate: insert multiple references to children();
+// each instance rotated then translated 
 // suitable inside hull() { ... }
-// trr: translate (after rotate) ([0, 0, 0])
+// trr: translate (after rotate with offset) ([0, 0, 0])
 // nc: number of copies (1)
 // c1: color copies
 // c0: color original
