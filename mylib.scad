@@ -23,7 +23,6 @@ function sum(ary = [], n) =
 // n: union first n children, subtract the rest (1)
 // r: ignore the final r children (0)
 module differenceN(n = 1, r = 0) {
-  echo("diffN: $children=", $children);
   if ($children-1-r >= n) {
     difference() {
       children([0 : n-1]);
@@ -70,7 +69,7 @@ module atrans(ndx = 0, atran = [[ 0, 0, 0 ]]) {
 module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
   t = is_undef(t) ? t0 : t;             // wall thickness
   txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
-  d = is_list(d) ? d : [ 2, 2, 1 - pp ]; // reduce inner_cube by txyz
+  d = is_list(d) ? d : [ 2, 2, .9 ]; // reduce inner_cube by 2*txy (enlarge tz for quickview)
   dxyz = adif(lwh, amul(d, txyz)); // dxyz = lwh - d * txyz;
   // echo("box: lwh=", lwh, "d=", d, "txyz=", txyz, "dxyz=", dxyz);
   dc = cxy ? -.5 : 0;

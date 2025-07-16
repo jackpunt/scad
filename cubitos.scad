@@ -51,7 +51,7 @@ module card2(tr = undef, n = 1, dxyz=[h0, w0, t00], rgb="blue")
 // txyz: wall thickness (t0) [tx, ty, tz] 
 // ambient: tcg thickness of cardguide
 // total width: [vt + 2 * tx, vw + 2 * ty + 2 * tcg, vh + tz]
-module vbox(vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0) // txyz=[tz, ty, tw]
+module vbox(loc = loc, vt0 = bt, vw0 = bw, vh0 = bh, txyz = t0) // txyz=[tz, ty, tw]
 {
   ta = is_list(txyz) ? txyz : [txyz, txyz, txyz];
   tx = ta.x; ty = ta.y; tz = ta.z;
@@ -230,7 +230,7 @@ module partsGrid(bw, bh, snr=[5, 10, 20]) {
 // rt: radius [total] of hinge (hr + dr = 3)
 // ang: angle to block rotation
 // zh: ambient z-coord of hinge
-module lid(h = h0, w = w0, t = 2, rt = hr + dr, ang = ang ) {
+module lid(loc = loc, h = h0, w = w0, t = 2, rt = hr + dr, ang = ang ) {
   et = -1.4;// .6;    // extend length of lid to reach end of tray
   ym = zd + rt + sep; // push out to clear (zd + rt + sep = 7.3)
   xm = hh + sep - ty;        // from exterior to inner ball; sep = .2, th = 1.2 !
@@ -269,7 +269,7 @@ cf = .155;  // empirical fudge for clip/hole (reduce friction b/c not square ins
 ch = ce + cl + cf; // hole length for clip
 chd = 2;    // under cut (over close lid)
 
-module trayAndLid() {
+module trayAndLid(loc=loc) {
   cx = tl - dz * 2;
   cz = zd+hr+dr+sep;       // clearance in back wall for lid
   cc = zd - (hr + dr) +2.2; // cut top corner for hinge clearance
@@ -311,7 +311,7 @@ module trayAndLid() {
   }
   // AND lid:
   atrans(loc, lidtrans)
-  lid(th, bw, lt );
+  lid(loc, th, bw, lt );
 
 }
 
@@ -359,6 +359,8 @@ lidtrans = [
     undef, 
     [0, 0, 0, [ang, 0, 0, ar]], 
     [0, 0, 0, [85, 0, 0, ar]],
+    undef, 
+    undef,
     ];
 
 boxtrans = [
@@ -370,14 +372,15 @@ boxtrans = [
   0,
   1,
   1, 
+  undef,
   ];
 
 // TODO: grey-tray (64 dice, 12 player blocks, hands, credits)
 // layout in box
-module wholebox() {
+module wholebox(loc = loc) {
   if (!sample)
-  trr([tl, -tz, 0, [0, 0,  90]]) vbox(vbd, bw, bh, [tz, ty, tw]);
-  trayAndLid();
+  trr([tl, -tz, 0, [0, 0,  90]]) vbox(loc, vbd, bw, bh, [tz, ty, tw]);
+  trayAndLid(loc);
 }
 
 atrans(loc, boxtrans) atrans(loc, [undef, [0,0,0], 1, 1, 1, 1, 1])
