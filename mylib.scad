@@ -231,12 +231,12 @@ module roundedCube(dxyz = 10, r = 1, sidesonly = false, center) {
 
 // translate, maybe mark child with #
 // clang-format off
-module show(ss=false, tr=[0,0,0]) { 
+module show(ss=false, trr=[0,0,0]) { 
   // echo("show: ss=", ss) ;
   if (ss)
-    # translate(tr) children(0);
+    # trr(trr) children(0);
   else
-    translate(tr) children(0); 
+    trr(trr) children(0); 
 }
 // clang-format on
 
@@ -609,8 +609,8 @@ module gridDXZ(nx, nz, k, tr = [ 1, 0, 1 ])
 
 // grid test:
 module gridTest() {
-translate([ 0, -40, 0 ])
-{
+  translate([ 0, -40, 0 ])
+  {
     nx = 50;
     nz = 30;
     y = 1;
@@ -618,15 +618,88 @@ translate([ 0, -40, 0 ])
     s2 = s / 2;
     difference()
     {
-        cube([ nx, y, nz ]);
-        gridDXZ(nx, nz, s / 2) 
-        scale([ 1, 1, .7 ]) 
-        translate([ -s / 2, 0, -s2 ]) 
-        // scale([1, 1, .7])
-        rotatet([ 0, 45, 0 ], [ s2/2, 0, s2/2 ]) 
-        translate([ 0, -p, 0 ])
-        cube([s2, y + pp, s2])
-        ;
+      cube([ nx, y, nz ]);
+      gridDXZ(nx, nz, s / 2) 
+      scale([ 1, 1, .7 ]) 
+      translate([ -s / 2, 0, -s2 ]) 
+      // scale([1, 1, .7])
+      rotatet([ 0, 45, 0 ], [ s2/2, 0, s2/2 ]) 
+      translate([ 0, -p, 0 ])
+      cube([s2, y + pp, s2])
+      ;
     }
+  }
 }
+
+
+// two pieces: ball & socket
+// socket on bottom, ball on top
+// square blocks 2*r + dxy
+// hh: height of each block (3)
+// hr: radius (& height) of hinge/cone (hr = 1.5) 
+// dr: incremental thickness around cone (2)
+// mnt: extend a mounting block (1.5) 
+// -- [len-socket (hr), angle-socket (0), angle-cone (mnt[1]), len-cone (len-socket)]
+// sep: gap between socket & ball (.2)
+module hinge(hh = 3, hr = 1.5, dr = 2, mnts = 1.5, sep = .2) {
+  hh = def(hh, 3); 
+  hr = def(hr, 1.5);
+  dr = def(dr, 2.0);
+  rt = hr + dr;               // total radius of hinge
+  mnts = is_list(mnts) ? mnts : [mnts];
+  mnt0 = def(mnts[0], hr);    // mount length (block)
+  mnta = def(mnts[1], 0);     // rotation around z-axis (block)
+  mntb = def(mnts[2], mnta);  // rotation around z-axis (cone)
+  mntc = def(mnts[3], mnt0);  // mount length (cone)
+  sep = def(sep, .2);
+  mntt = mnt0 + mntc + sep;
+
+  // echo("hinge: [zh, hh, hr, dr, mnts, sep] =", [zh, hh, hr, dr, mnts, sep]);
+  fn = 30;
+
+  // cube on the side of cyl, z-length to attach to other parts
+  module mountblock(h = hh, z = 0, mntd = mnt0, mnta = mnta) {
+    if (mntd > 0) {
+      rt = hr + dr; 
+      my = (rt + mntd);
+      color("red")
+      trr([0, my/2, z+h/2, [0, 0, mnta, [0, -my/2, 0]]]) cube([2 * rt, my, h], true);
+    }
+  }
+  // hr: hinge radius @ wide of cone
+  module coneblock(hr = hr) {
+    rr = hr * .68;
+    trr([0, 0, hh/2, [180, 0,0]]) {
+      cylinder(h = hh, r = hr + dr, center = true, $fn = fn);
+      trr([0, 0, hh/2-p]) {
+        cylinder(hr*.7, hr, hr*.56, $fn = fn); // frustrum of cone QQQ: hr*.7 vs rr=hr*.68
+        trr([0, 0, hr-rr]) sphere(rr, $fn = fn); // sphere on top
+      }
+    }
+  }
+  // Diff to see cross section of gap between cone & mount/socket.
+  module section() {
+    color("cyan") intersection() { 
+      cube([rt + dr, rt + dr, 2*hh]); 
+      difference() { 
+        cylinder(h = 2*hh, r = rt);
+        children();
+      }
+    }
+  }
+  // section() {
+  differenceN(2) // bottom socket - scaled coneblock
+  {
+    mountblock(hh, 0, mnt0, mnta); //bottom mounting block (if mnta>0)
+    trr([0, 0, hh/2]) cylinder(h = hh, r = rt, center = true, $fn = fn);
+    // remove scaled coneblock:
+    trr([0,0,hh+p]) scale([(hr+sep)/hr, (hr+sep)/hr, 1]) coneblock(hr); // or +cos(30)*sep?
+  }
+  mountblock(hh, hh+sep, mntc, mntb); // top ball block
+  trr([0,0,hh+sep]) coneblock(hr);    // top ball cone
+// }
+}
+
+hinge2() {
+  
 }

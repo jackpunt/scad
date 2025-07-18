@@ -41,9 +41,6 @@ module card2(tr = undef, n = 1, dxyz=[h0, w0, t00], rgb="blue")
   card(tr, n, dxyz, rgb);
 }
 
-
-
-
 // box for setup (Events, VICI, markers, chips) cards:
 // vt: interior box depth (~ t01 * number of cards + 2*t0) x-extent
 // vw: interior box width (long dimension of card + 2*t0)  y-extent
@@ -132,79 +129,6 @@ module die(trr = [0,0,0], dieSize = dieSize) {
   color("red") roundedCube(dieSize);
 }
 
-// two pieces: ball & socket
-// socket on bottom, ball on top
-// square blocks 2*r + dxy
-// trr: final placement
-// hh: height of each block (3)
-// hr: radius (& height) of hinge/cone (hr = 1.5) 
-// dr: incremental thickness around cone (2)
-// mnt: extend a mounting block (1.5) 
-// -- [len-socket (hr), angle-socket (0), angle-cone (mnt[1]), len-cone (len-socket)]
-// sep: gap between socket & ball (.2)
-module hinge(trr=[0,0,0], hh = 3, hr = 1.5, dr = 2, mnts = 1.5, sep = .2) {
-  trr = def(trr, [0,0,0]);
-  hh = def(hh, 3); 
-  hr = def(hr, 1.5);
-  dr = def(dr, 2.0);
-  rt = hr + dr;               // total radius of hinge
-  mnts = is_list(mnts) ? mnts : [mnts];
-  mnt0 = def(mnts[0], hr);    // mount length (block)
-  mnta = def(mnts[1], 0);     // rotation around z-axis (block)
-  mntb = def(mnts[2], mnta);  // rotation around z-axis (cone)
-  mntc = def(mnts[3], mnt0);  // mount length (cone)
-  sep = def(sep, .2);
-  mntt = mnt0 + mntc + sep;
-
-  // echo("hinge: [zh, hh, hr, dr, mnts, sep] =", [zh, hh, hr, dr, mnts, sep]);
-  fn = 30;
-
-  // cube on the side of cyl, z-length to attach to other parts
-  module mountblock(h = hh, z = 0, mntd = mnt0, mnta = mnta) {
-    if (mntd > 0) {
-      rt = hr + dr; 
-      my = (rt + mntd);
-      color("red")
-      trr([0, my/2, z+h/2, [0, 0, mnta, [0, -my/2, 0]]]) cube([2 * rt, my, h], true);
-    }
-  }
-  // hr: hinge radius @ wide of cone
-  module coneblock(hr = hr) {
-    rr = hr * .68;
-    trr([0, 0, hh/2, [180, 0,0]]) {
-      cylinder(h = hh, r = hr + dr, center = true, $fn = fn);
-      trr([0, 0, hh/2-p]) {
-        cylinder(hr*.7, hr, hr*.56, $fn = fn); // frustrum of cone QQQ: hr*.7 vs rr=hr*.68
-        trr([0, 0, hr-rr]) sphere(rr, $fn = fn); // sphere on top
-      }
-    }
-  }
-  // Diff to see cross section of gap between cone & mount/socket.
-  module section() {
-    color("cyan") intersection() { 
-      cube([rt + dr, rt + dr, 2*hh]); 
-      difference() { 
-        cylinder(h = 2*hh, r = rt);
-        children();
-      }
-    }
-  }
-  trr(trr)
-  union() {
-    // section() {
-    differenceN(2) // bottom socket - scaled coneblock
-    {
-      mountblock(hh, 0, mnt0, mnta); //bottom mounting block (if mnta>0)
-      trr([0, 0, hh/2]) cylinder(h = hh, r = rt, center = true, $fn = fn);
-      // remove scaled coneblock:
-      trr([0,0,hh+p]) scale([(hr+sep)/hr, (hr+sep)/hr, 1]) coneblock(hr); // or +cos(30)*sep?
-    }
-    mountblock(hh, hh+sep, mntc, mntb); // top ball block
-    trr([0,0,hh+sep]) coneblock(hr);    // top ball cone
-    }
-// }
-}
-
 // bw: allocated width (cols)
 // bh: allocated height (rows)
 // snr: [cs, nc, nr]
@@ -283,20 +207,20 @@ module trayAndLid(loc=loc) {
   sep = .2;
   rotate([90, 0, 0])
   {
-  differenceN(1) {
-    color("blue")
-    tray([tl, bh+tw, zt], [0, rs, 1, 1], 0, undef, [ty, tw]);
-    // back side slot for lid clearance:
-    trr([dz, -pp, zh - cz + zd ]) cube([cx, tw+ by+2*pp, cz + p]);
-    // top corner for lid clearance:
-    trr([ty-p, -pp, zh - cc + zd ]) cube([tl-2*ty+pp, 2*tw + 2*pp, cc + pp]);
-    // front edge: extra space because lid may warp down
-    trr([ty, bh-tw, ht-kz+pp ]) cube([tl-2*ty, 2*tw, kz], false);
-    // hole for clip: .2 overcut
-    trr([-p, th-ch+p, ht-(lt + chd)+pp ]) cube([tl+pp, ch+pp, lt + chd], false);
+    differenceN(1) {
+      color("blue")
+      tray([tl, bh+tw, zt], [0, rs, 1, 1], 0, undef, [ty, tw]);
+      // back side slot for lid clearance:
+      trr([dz, -pp, zh - cz + zd ]) cube([cx, tw+ by+2*pp, cz + p]);
+      // top corner for lid clearance:
+      trr([ty-p, -pp, zh - cc + zd ]) cube([tl-2*ty+pp, 2*tw + 2*pp, cc + pp]);
+      // front edge: extra space because lid may warp down
+      trr([ty, bh-tw, ht-kz+pp ]) cube([tl-2*ty, 2*tw, kz], false);
+      // hole for clip: .2 overcut
+      trr([-p, th-ch+p, ht-(lt + chd)+pp ]) cube([tl+pp, ch+pp, lt + chd], false);
     }
-    hinge([ 0, hy, zh, [0,  90, 0]], dz, hr, dr, mnt0, sep );
-    hinge([tl, hy, zh, [0, -90, 0]], dz, hr, dr, mnt1, sep );
+    trr([ 0, hy, zh, [0,  90, 0]]) hinge(dz, hr, dr, mnt0, sep );
+    trr([tl, hy, zh, [0, -90, 0]]) hinge(dz, hr, dr, mnt1, sep );
     difference() {
       trr([tl/2  , by/2 -p + tw, bz/2]) cube([tl-2*bx, by, bz], true); // angle stop block
       trr([tl/2+p, by/2 +p + tw, bz/2]) cube([bwc+pp, by+pp, bz+pp], true); // back wall cut
