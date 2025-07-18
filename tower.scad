@@ -11,7 +11,7 @@ sqrt3_2 = sqrt3/2;  // .866
 sample = false;
 high = 120;
 wide = 60;  // dist bewteen hinge axis
-rad = 2.5;  // z-thickness: hinge radius
+rad = 2;  // z-thickness: hinge radius
 hr = rad * .6;
 dr = rad * .4;
 sep = 0.2;
@@ -36,7 +36,7 @@ module awall() {
   trr([dx, 0, 0]) cube([wide-sep, 2*rad, high]); // basic wall cube
 
   differenceN(1) {
-    trr([wide-rad,   0,    0]) cube([2*rad,   sod,    high]);
+#    trr([wide-rad,   0,    0]) cube([2*rad,   sod,    high]);
     trr([wide-rad-p, 0-p, 10]) cube([2*rad+pp, sod+pp, high-20]); // standoff
   }
   trr([wide, 5*rad, 0 + 0]) hinge(4, hr, dr, mnt0);  // standoff bottom
@@ -66,17 +66,22 @@ module lwall() {
 }
 
 // 0: print
-// 1: folded
-// 2: expanded
-loc = 0;
+// 1: upright
+// 2: folded
+// 3: expanded
+loc = 3;
+print=[wide-sod-rad-sep, 0, 0, [90,0,0]];
+up = [0,0,0];
+print2 = adif(print, [-(2*wide-sod+sep), 0, 0]);
+up2 = adif(up, [-(2*wide+sep), 0, 0]);
 
-atrans(loc, [[0, 0, 0, [0,0,0,[0, rad, rad]]], 0, [0,0,0, [0, 0, -90, [0, rad, rad]]]])
+atrans(loc, [print, up, 1, [0,0,0, [0, 0, -90, [0, rad, rad]]]])
 rwall(); 
-atrans(loc, [[0,0,0], 0, 0, 0, 0])
+atrans(loc, [print, up, 1, [0,0,0, [0, 0,  -0, [0, rad, rad]]]])
 fwall();
 
-atrans(loc, [[2*wide, 0, 0], [wide,sod,0, [0,0,-0, [0, rad, rad]]], [wide,sod,0, [0,0,-90, [0, rad, rad]]]])
+atrans(loc, [print2, up2, [wide,sod,0, [0,0,-0, [0, rad, rad]]], [wide,sod,0, [0,0,-90, [0, rad, rad]]]])
 lwall();
-atrans(loc, [[2*wide, 0, 0], [sod,0,0, [0,0,180, [0, 3*rad, 0]]], [wide,wide-sod,0, [0,0,180, [0, 3*rad, 0]]]])
+atrans(loc, [print2, up2, [sod,0,0, [0,0,180, [0, 3*rad, 0]]], [wide,wide-sod,0, [0,0,180, [0, 3*rad, 0]]]])
 bwall();
 
