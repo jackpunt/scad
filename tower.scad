@@ -29,6 +29,17 @@ module hingez() {
   trr([0, rad, high-hz1]) mirror([0,0,1]) hinge(len, hr, dr, mnt0 ); // top hinge
 }
 
+// crr @ [0, 0, rad]
+// h: height between cylinders
+// dw: inset from wide
+// r: radius of cylinder, thicnkess of flap = 2*rad
+module aflap(h, dw = 7.5, r = rad) {
+  d = 2*rad;
+  hull() dup([0, d, 0]) trr([dw, 0, rad, [0, 90,0]]) cylinder(wide-2*dw, r, r);
+  hull() dup([0, 0, h]) trr([dw, d, rad, [0, 90,0]]) cylinder(wide-2*dw, r, r);
+}
+
+
 
 // front/back wall; (add flaps)
 module awall() {
@@ -37,7 +48,7 @@ module awall() {
   hingez();
   trr([dx, 0, 0]) cube([wide-sep, 2*rad, high]); // basic wall cube
 
-  c = 10;
+  c = 10; // cut differential
   differenceN(1) // standoff (with center cut)
   {
     trr([wide-rad,   0,   0]) cube([2*rad,    sod,    high]);     // standoff
@@ -47,8 +58,25 @@ module awall() {
   trr([wide, 5*rad, high]) mirror([0,0,1]) hinge(4, hr, dr, mnt0); // standoff top hinge
 
 }
+
+module flapf1(a = -90, h = wide*.6) {
+  trr([0, rad, 0, [a, 0, 0, [0, 0, rad]]]) aflap(h, 3*rad);
+}
+echo ("sf = ",   (rad+1*sep)/ rad);// 1.05;);
+
 module fwall() {
-  awall();
+  zz = high/2;
+  sx = 1.02;
+  sf =  (rad+1*sep)/ rad;// 1.077;
+  zs = rad;
+  differenceN(1) {
+    awall();
+    trr([0, 0, zz]) scalet([sx, sf, sf, [-wide/2, 0, zs]]) flapf1(-125);
+    trr([0, 0, zz]) scalet([sx, sf, sf, [-wide/2, 0, zs]]) flapf1(-90);
+    trr([0, 0, zz]) scalet([sx, sf, sf, [-wide/2, 0, zs]]) flapf1(-0);
+  }
+  ang = [-90, -90, 0, -125];
+  trr([0, 0, zz]) flapf1(ang[loc]); // sep tilts to: 126
 }
 module bwall() {
   awall();
@@ -66,6 +94,7 @@ module swall(clr="tan") {
 module rwall() {
   swall("red");
 }
+
 module lwall() {
   swall("lavender");
 }
