@@ -1,7 +1,7 @@
 // tower.scad
 use <mylib.scad>;
 
-p = .001;
+p = .003;
 pp = 2 * p;
 t0 = 1;
 f = .18;
@@ -9,25 +9,34 @@ sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
 sample = false;
-high = 125;
-wide = 60;  // dist bewteen hinge axis
-rad = 2.6;  // z-thickness: hinge radius
+rad = 2.4;  // z-thickness: hinge radius
+high = 130;
+wide = 60-rad;  // dist bewteen hinge axis
 hr = rad * .6;
 dr = rad * .4;
 sep = 0.2;
-hz0 = 30;
-hz1 = 30;
 sod = 4*rad; // standoff distance (l&r: x-dist, f&b: y-dist of standofff)
-dw = 1*rad+2;
+dw = 1*rad;
+
+dieSize = 12;
+module die(trr = [0,0,0], dieSize = dieSize, clr = "red") {
+  trr(trr)
+  color(clr) roundedCube(dieSize);
+}
 
 // 4 walls: right, front, left, back
 
-// hinge btw fwall & rwall (also btw bwall & lwall)
+function hangle() = -90;
+
+// hinge btw awall & swall; socket attached to swall (so needs to rotate with swall)
 module hingez() {
-  len = 8;
-  mnt0 = [sep, 90, -90];
-  trr([0, rad, 0 + hz0]) hinge(len, hr, dr, mnt0);  // bottom hinge
-  trr([0, rad, high-hz1]) mirror([0,0,1]) hinge(len, hr, dr, mnt0 ); // top hinge
+  sang = [90, 90, 90, 0, 0, 90][loc];
+  mnt0 = [sep, sang, -90];
+  trr([0, rad, 0+0])                  hinge([30, 10], hr, dr, mnt0); // bottom hinge
+  trr([0, rad, 70]) mirror([0,0,1])   hinge([20, 10], hr, dr, mnt0); // botton-m
+
+  trr([0, rad, high-60])              hinge([20, 20], hr, dr, mnt0); // top hinge
+  trr([0, rad, high]) mirror([0,0,1]) hinge([10, 10], hr, dr, mnt0); // top-m
 }
 
 // crr @ [0, 0, rad]
@@ -40,24 +49,20 @@ module aflap(h, dw = dw, r = rad) {
   hull() dup([0, 0, h]) trr([dw, d, rad, [0, 90,0]]) cylinder(wide-2*dw, r, r);
 }
 
-
-
 // front/back wall; (add flaps)
 module awall() {
+  dh = high / 2;
   dx = (rad + sep);
-  mnt0 = [sep, 90, -90];
+  sang = [0, 90, 90, 0, 0, 0][loc];
+  mnt0 = [sep, 180, sang];
   hingez();
   trr([dx, 0, 0]) cube([wide-sep, 2*rad, high]); // basic wall cube
 
-  c = 10; // cut differential
-  differenceN(1) // standoff (with center cut)
+  differenceN(1) // standoff
   {
     trr([wide-rad,   0,   0]) cube([2*rad,    sod,    high]);     // standoff
-    trr([wide-rad-p, 0-p, c]) cube([2*rad+pp, sod+pp, high-2*c]); // center cut
   }
-  trr([wide, 5*rad, 0   ])                 hinge(4, hr, dr, mnt0);  // standoff bottom hinge
-  trr([wide, 5*rad, high]) mirror([0,0,1]) hinge(4, hr, dr, mnt0); // standoff top hinge
-
+  trr([wide, 5*rad, 0   ])                 hinge([dh, dh], hr, dr, mnt0); // standoff bottom hinge
 }
 
 module flapf1(h = wide*.6, a = -90) {
@@ -70,28 +75,27 @@ module addFlap(zz, h = 30, a = -125) {
   zs = rad;
   difference() {
     children();
-    trr([0, 0, zz]) scalet([sx, sf, sf, [-wide/2, 0, zs]]) flapf1(h, -a);
-    trr([0, 0, zz]) scalet([sx, sf, sf, [-wide/2, 0, zs]]) flapf1(h, -90);
-    trr([0, 0, zz]) scalet([sx, sf, sf, [-wide/2, 0, zs]]) flapf1(h, -0);
+    trr([dw+.5,-1,zz-2*rad+sep]) cube([wide-2*dw-1,3*rad, 2*rad+2*rad+pp]);
+    trr([0, 0, zz]) scalet([sx, sf, 1, [-wide/2, 0, zs]]) flapf1(h, a);
   }
-  ang = [-90, -90, 0, a, a][loc];
+  ang = [-90, -90, 0, a, a, a][loc]; // display angle
   trr([0, 0, zz]) flapf1(h, ang); // sep tilts to: 126
 }
-module cutFront(h = 30) {
+module cutFront(h = 30, pp=pp) {
   difference() {
     children();
-    trr([dw, -p, -p]) cube([wide-2*dw, 2*rad+pp, h]);
+    trr([dw, -pp, -pp]) cube([wide-2*dw, 2*(rad+pp), h]);
   }
 }
 module fwall() {
   zz = high/2;
   cutFront()
-  addFlap(high - 50,  40, -130)
+  addFlap(75,  40, -130)
   awall();
 }
 module bwall() {
-  addFlap(high - 35, 30)
-  addFlap(high - 80, 50, -130)
+  addFlap(high - 35, 30, -125)
+  addFlap(40, 49, -125)
   awall();
 }
 
@@ -101,7 +105,7 @@ module swall(clr="tan") {
   mnt0 = [sep, 90, -90];
   color(clr)
   trr([dx+sod-wide, 0, 0]) cube([wide-2*dx-sod, 2*rad, high]); // basic wall cube
-* trr([00-wide, p, -8 ]) cube([wide, 2*rad, high]); // virtual side-wall
+// % trr([00-wide, p, -8 ]) cube([wide, 2*rad, high]); // virtual side-wall
 }
 
 module rwall() {
@@ -118,6 +122,8 @@ function rr(w, s=0, a=-90, r=rad) = [w,s,0, [0,0,a, [0, r, 0]]];
 // 1: upright
 // 2: folded
 // 3: expanded
+// 4: open wall
+// 5: bwall only?
 loc = 4;
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
@@ -136,6 +142,8 @@ fwall();
 
 atrans(loc, [print2, up2, rr(wide, sod, 0), rr(wide, sod, -90), undef])
 lwall();
-atrans(loc, [print2, up2, rr(sod, sod, 180), rr(wide, wide-sod, 180, 3*rad), 3])
+atrans(loc, [print2, up2, rr(sod, sod, 180), rr(wide, wide-sod, 180, 3*rad), 3, 0])
 bwall();
 
+d = 3;
+atrans(loc, [undef, 0, 0, 0, [0,0,0]] ) die([30, 20+d, 60-d], 15, "grey");
