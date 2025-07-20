@@ -198,16 +198,16 @@ module dup(trr, nc = 1, c1, c0) {
 }
 
 // New implementation: MCAD
-// dxyz: [dx, dy, dz] ()
-// r: corner radius
-// sidesonly: round xy, flat on z?
-// center:
-module roundedCube(dxyz = 10, r = 1, sidesonly = false, center) {
+// dxyz: [dx, dy, dz] (10)
+// r: corner radius (1)
+// sidesonly: round xy, flat on z (false)
+// center: offset by -.5 * dxyz (false)
+module roundedCube(dxyz = 10, r = 1, sidesonly = false, center = false) {
   s = is_list(dxyz) ? dxyz : [ dxyz, dxyz, dxyz ];
   // echo("roundedCube: s=", s, "r=", r);
   translate(center ? amul(s, [-.5, -.5, -.5]) : [ 0, 0, 0 ]) {
     if (sidesonly) {
-      *linear_extrude(s.z) roundedRect([ s.x, s.y ], r);
+      // linear_extrude(s.z) roundedRect([ s.x, s.y ], r);
       hull() {
         translate([ r, r ]) cylinder(r = r, h = s.z);
         translate([ r, s.y - r ]) cylinder(r = r, h = s.z);
