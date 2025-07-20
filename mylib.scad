@@ -635,7 +635,7 @@ module gridTest() {
 // two pieces: ball & socket
 // socket on bottom, ball on top
 // square blocks 2*r + dxy
-// hh: height of each block (3)
+// hh: height of bottom-socket, top-cone mounting blocks (3 or [3, 3])
 // hr: radius (& height) of hinge/cone (hr = 1.5) 
 // dr: incremental thickness around cone (2)
 // mnt: extend a mounting block (1.5) 
@@ -643,6 +643,8 @@ module gridTest() {
 // sep: gap between socket & ball (.2)
 module hinge(hh = 3, hr = 1.5, dr = 2, mnts = 1.5, sep = .2) {
   hh = def(hh, 3); 
+  h0 = is_list(hh) ? hh[0] : hh;
+  h1 = is_list(hh) ? hh[1] : hh;
   hr = def(hr, 1.5);
   dr = def(dr, 2.0);
   rt = hr + dr;               // total radius of hinge
@@ -658,7 +660,7 @@ module hinge(hh = 3, hr = 1.5, dr = 2, mnts = 1.5, sep = .2) {
   fn = 30;
 
   // cube on the side of cyl, z-length to attach to other parts
-  module mountblock(h = hh, z = 0, mntd = mnt0, mnta = mnta) {
+  module mountblock(h = h0, z = 0, mntd = mnt0, mnta = mnta) {
     if (mntd > 0) {
       rt = hr + dr; 
       my = (rt + mntd);
@@ -669,9 +671,9 @@ module hinge(hh = 3, hr = 1.5, dr = 2, mnts = 1.5, sep = .2) {
   // hr: hinge radius @ wide of cone
   module coneblock(hr = hr) {
     rr = hr * .68;
-    trr([0, 0, hh/2, [180, 0,0]]) {
-      cylinder(h = hh, r = hr + dr, center = true, $fn = fn);
-      trr([0, 0, hh/2-p]) {
+    trr([0, 0, h1/2, [180, 0, 0]]) {
+      cylinder(h = h1, r = hr + dr, center = true, $fn = fn);
+      trr([0, 0, h1/2-p]) {
         cylinder(hr*.7, hr, hr*.56, $fn = fn); // frustrum of cone QQQ: hr*.7 vs rr=hr*.68
         trr([0, 0, hr-rr]) sphere(rr, $fn = fn); // sphere on top
       }
@@ -680,9 +682,9 @@ module hinge(hh = 3, hr = 1.5, dr = 2, mnts = 1.5, sep = .2) {
   // Diff to see cross section of gap between cone & mount/socket.
   module section() {
     color("cyan") intersection() { 
-      cube([rt + dr, rt + dr, 2*hh]); 
+      cube([rt + dr, rt + dr, h0+h1]); 
       difference() { 
-        cylinder(h = 2*hh, r = rt);
+        cylinder(h = h0+h1, r = rt);
         children();
       }
     }
@@ -690,16 +692,13 @@ module hinge(hh = 3, hr = 1.5, dr = 2, mnts = 1.5, sep = .2) {
   // section() {
   differenceN(2) // bottom socket - scaled coneblock
   {
-    mountblock(hh, 0, mnt0, mnta); //bottom mounting block (if mnta>0)
-    trr([0, 0, hh/2]) cylinder(h = hh, r = rt, center = true, $fn = fn);
+    mountblock(h0, 0, mnt0, mnta); // bottom mounting block (if mnta>0)
+    trr([0, 0, h0/2]) cylinder(h = h0, r = rt, center = true, $fn = fn);
     // remove scaled coneblock:
-    trr([0,0,hh+p]) scale([(hr+sep)/hr, (hr+sep)/hr, 1]) coneblock(hr); // or +cos(30)*sep?
+    trr([0,0,h0+p]) scale([(hr+sep)/hr, (hr+sep)/hr, 1]) coneblock(hr); // or +cos(30)*sep?
   }
-  mountblock(hh, hh+sep, mntc, mntb); // top ball block
-  trr([0,0,hh+sep]) coneblock(hr);    // top ball cone
+  mountblock(h1, h0+sep, mntc, mntb); // top ball block
+  trr([0,0,h0+sep]) coneblock(hr);    // top ball cone
 // }
 }
 
-hinge2() {
-  
-}
