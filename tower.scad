@@ -9,7 +9,7 @@ sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
 sample = false;
-rad = 2.4;  // z-thickness: hinge radius (2.3mm)
+rad = 2.3;  // z-thickness: hinge radius (2.3mm)
 wide = 60-2*rad;  // dist bewteen hinge axis
 w60 = wide/60;  // scale factor for flap length
 high = 127.4;   // 125 + rad?
@@ -18,7 +18,7 @@ hr = rad * .6;
 dr = rad * .4;
 sep = 0.2;
 sod = 4*rad; // standoff distance (l&r: x-dist, f&b: y-dist of standofff)
-dw = rad;    // inset of hole for flap? (final flap may be narrower)
+dw = rad+4;  // inset of hole for flap (final flap may be narrower)
 
 dieSize = 12;
 module die(trr = [0,0,0], dieSize = dieSize, clr = "red") {
@@ -41,14 +41,15 @@ module hingez() {
   trr([0, rad, high]) mirror([0,0,1]) hinge([10, 10], hr, dr, mnt0); // top-m
 }
 
-// crr @ [0, 0, rad]
+// crr @ [0, 0, 0]
 // h: height between cylinders
 // dw: inset from wide (each side)
 // r: radius of cylinder, thicnkess of flap = 2*rad
 module aflap(h, dw = dw, r = rad) {
   d = 2*r;
-  hull() dup([0, d, 0]) trr([dw, 0, r, [0, 90, 0]]) cylinder(wide-2*dw, r, r); // up (y=d) to hinge axis
-  hull() dup([0, 0, h]) trr([dw, d, r, [0, 90, 0]]) cylinder(wide-2*dw, r, r);
+  hull() dup([0, d, 0]) trr([dw, 0, 0, [0, 90, 0]]) cylinder(wide-2*dw, r, r); // down (y=-d) from hinge axis
+  hull() dup([0, 0, h]) trr([dw, d, 0, [0, 90, 0]]) cylinder(wide-2*dw, r, r);
+  trr([0, 0, 0, [0, 90, 0]]) color("cyan") cylinder(h = wide+4*rad, r = .1);
 }
 
 // front/back wall; (add flaps)
@@ -67,29 +68,29 @@ module awall() {
   trr([wide, 5*rad, 0   ])                 hinge([dh, dh], hr, dr, mnt0); // standoff bottom hinge
 }
 
-module flapf1(h = wide*.6, a = -90, dw = dw) {
-  trr([0, rad, 0, [a, 0, 0, [0, 0, rad]]]) aflap(h, dw);
+// make flap rotated, and move to wall
+module flapf1(h = wide*.9, a = -90, dw = dw, sf = 1) {
+  trr([0, rad, 0, [a, 0, 0]]) scalet([1, sf, 1, [0, 0, 0]]) aflap(h, dw);
 }
 echo ("sf = ",   (rad+1*sep)/ rad);// 1.05;);
-module addFlap(zz, h = 30, a = -125, dw = rad) {
-  iw = 1;
+module addFlap(zz, h = 30, a = -125, dw = dw) {
+  iw = sep;
   dwf = dw + iw;          // inset from wall
   fw = wide - 2*dwf;      // final width of flap
-  sx = wide/fw ; // 1.04;
   dx = dw; // shrink the box to match flapf1 () *(sx+.14)
   sf =  (rad+sep)/ rad;// 1.077;
   zs = rad;
-  trr([-2*rad, 1*rad, 1*rad+zz, [0, 90, 0]]) color("cyan") cylinder(h = wide+4*rad, r = .1);
+  // trr([-2*rad, 1*rad, 1*rad+zz, [0, 90, 0]]) color("cyan") cylinder(h = wide+4*rad, r = .1);
   difference() {
     children();
-    trr([dx, -1, zz-2*rad+sep]) cube([wide-2*dx, 3*rad, 2*rad+2*rad+pp]);
-    trr([0, 0, zz]) scalet([1, sf, 1, [-wide/2, 8*rad, 0]]) flapf1(h, a);
+    trr([dx, -pp, zz-3*rad+sep]) cube([wide-2*dx, 2*rad+4*pp, 4*rad+pp]);
+    trr([0, 0, zz]) flapf1(h, a, dw, sf);
   }
   // [print, upright, folded, open,...]
   ang = [-90, -90, 0, a, a, a][loc]; // display angle
   trr([0, 0, zz]) flapf1(h, ang, dwf ); // sep tilts to: 126
 }
-module cutFront(h = 30, pp=pp) {
+module cutFront(h = 30, dw = rad, pp=pp) {
   difference() {
     children();
     trr([dw, -pp, -pp]) cube([wide-2*dw, 2*(rad+pp), h]);
@@ -100,10 +101,9 @@ fz1 = 70;
 fz2 = 95; // high - f2-2*rad
 
 module fwall() {
-  zz = high/2;
   fh1 = 40 * w60;
   cutFront()
- % addFlap(fz1, fh1, -130)
+  addFlap(fz1, fh1, -130)
   awall();
 }
 module bwall() {
@@ -139,7 +139,7 @@ function rr(w, s=0, a=-90, r=rad) = [w,s,0, [0,0,a, [0, r, 0]]];
 // 3: expanded
 // 4: open wall
 // 5: bwall only?
-loc = 1;
+loc = 4;
 
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
