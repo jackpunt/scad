@@ -128,7 +128,7 @@ module dimples(w, h, r = rad, d10=rad, d20=rad) {
   echo("dimples: d1, d2=", d1, d2);
 
   gridify(d1, d2, 2) // XY plane
-   scale([1.4, 1.2, .35]) sphere(r);
+   scale([1.3, 1.15, .45]) sphere(r);
 }
     
 module addFlap(zz, h = 30, a = -125, dw = dw) {
