@@ -78,7 +78,7 @@ module hingez(hh , hr=hr, dr=dr, mnts=1.5, sep=.2) {
       trr([0, rad, z0+z1-hi[0]-hi[1]])
       hinge(hi, hr, dr, mntb, sep);
     } else {
-      trr([0, rad, z0+z1])
+      trr([0, rad, z0+z1+sep])
       mirror([0,0,1]) 
       hinge([hi[1], hi[0]], hr, dr, mntb, sep);
     }
@@ -135,21 +135,51 @@ module addFlap(zz, h = 30, a = -125, dw = dw) {
   ang = [-90, -90, 0, a, a, a, a][loc]; // display angle
   trr([0, 0, zz]) flapf1(h, ang, dwf ); // sep tilts to: 126
 }
-module cutFront(h = 30, dw = rad, pp=pp) {
+module cutFront(h = 30, dw = rad) {
   difference() {
     children();
     trr([dw, -pp, -pp]) cube([wide-2*dw, 2*(rad+pp), h]);
   }
 }
+
+// h: height of hole (same as for cutFront)
+// dw: thickness of edge outside of hole (same as for cutFront: rad)
+// dg: thickness of gate (rad)
+// ys: y-extent (2*rad)
+module gate(h = 30, dw = rad, dg = rad, ys = 2*rad) {
+  dws = dw+sep;              // offset to outer edge of gate
+  gw = wide - 2 * dws;       // total width of gate
+  hh = max(dg, dw);    // hinge height (along axis)
+  gap = sep * 4;       // gap for bar rotation clearance
+  bm = 3.8 * rad;      // bar height
+  differenceN(2) {
+    color("cyan")
+    trr([dw+sep, 0, h-dg-gap]) roundedCube([gw, bm, dg], bm/2, true);
+    color("cyan")
+    trr([dw+sep,       0, 2*rad]) cube([gw,      ys,      h-2*rad-gap]);
+    trr([dw+sep+dg, -pp, -pp]) cube([gw-2*dg, ys+2*pp, h-dg-gap]);
+  }
+  trr([dg+sep   , rad, 0, [0, -90, 0, [0, 0, hh]]]) 
+  hinge(hh, hr, dr, [.1, -90, 0]  );
+
+  trr([dg+sep+gw, rad, 0, [0, 90, 0, [0, 0, hh]]]) 
+  hinge(hh, hr, dr, [.1,  90, 0]  );
+}
+
+// flap heights: 
 fz0 = 35;
 fz1 = 70;
 fz2 = 95; // high - f2-2*rad
 
 module fwall() {
   fh1 = 40 * w60;
-  cutFront()
+  gs = 50; 
+  mh = (110 - gs - 20)/5 ;
+  cutFront(gs)
   addFlap(fz1, fh1, -130)
-  awall([[40, 10, -1], 12, -12, [12, high-110-sep]]);
+  awall([[gs+10, 10, -1], mh, -mh, [mh, high-110-sep]]);
+  
+  atrans(loc, [[0, 0, 0], 0, 0, 0, [0,0,0, [90,0,0, [0, rad, rad]]], 0, 0]) gate(gs, rad);
 }
 module bwall() {
   fh2 = 30 * w60;
@@ -175,8 +205,9 @@ module rwall() {
 module lwall() {
   swall("lavender");
 }
-// 
-function rr(w, s=0, a=-90, r=rad) = [w,s,0, [0,0,a, [0, r, 0]]];
+// rotate wall into postion for loc
+// w: wide; s: y-offset; a: angle; r: rad
+function rr(w, s=0, a=-90, r=rad) = [w, s, 0, [0, 0, a, [0, r, 0]]];
 
 // 0: print
 // 1: upright
@@ -185,7 +216,7 @@ function rr(w, s=0, a=-90, r=rad) = [w,s,0, [0,0,a, [0, r, 0]]];
 // 4: open wall
 // 5: bwall only
 // 6: fwall only
-loc = 2;
+loc = 6;
 
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
@@ -209,3 +240,5 @@ bwall();
 
 d = -3;
 atrans(loc, [undef, 0, 0, 0, [0,d,-d]] ) die([wide/2, wide/2, fz1-6.2, [70, 45, 0]], 15, "grey");
+
+// TODO: gate, flap-hinges, clip-axles
