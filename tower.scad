@@ -69,10 +69,10 @@ module hingez(hh , hr=hr, dr=dr, mnts=1.5, sep=.2) {
   rad = hr + dr;
   hp0 = [ for (h = hh) absi(h ,0) ];
   hp1 = [ for (h = hh) absi(h, 1) ]; 
-  echo("hh=", hh);
+  // echo("hh=", hh);
   for (i = [0 : len(hh)-1]) {
     let(z0 = sumi(hp0, i), z1 = sumi(hp1, i), hii = hh[i], hi = is_list(hii) ? hii : [abs(hii), abs(hii), sign(hii)], ht = def(hi[2], 1))
-    echo("hi=", hi, "ht=", ht, "z0=", z0, "z1=", z1)
+    // echo("hi=", hi, "ht=", ht, "z0=", z0, "z1=", z1)
     if (ht != 0) {
     if (ht > 0) {
       trr([0, rad, z0+z1-hi[0]-hi[1]])
@@ -94,7 +94,7 @@ module aflap(h, dw = dw, r = rad) {
   d = 2*r;
   hull() dup([0, d, 0]) trr([dw, 0, 0, [0, 90, 0]]) cylinder(wide-2*dw, r, r); // down (y=-d) from hinge axis
   hull() dup([0, 0, h]) trr([dw, d, 0, [0, 90, 0]]) cylinder(wide-2*dw, r, r);
-  trr([0, 0, 0, [0, 90, 0]]) color("cyan") cylinder(h = wide+4*rad, r = .1);
+  if (loc != 0 && loc != 6) trr([0, 0, 0, [0, 90, 0]]) color("cyan") cylinder(h = wide+4*rad, r = .1);  // axis line
 }
 
 // front/back wall; (add flaps)
@@ -125,12 +125,16 @@ module addFlap(zz, h = 30, a = -125, dw = dw) {
   dx = dw; // shrink the box to match flapf1 () *(sx+.14)
   sf =  (rad+sep)/ rad;// 1.077;
   zs = rad;
-  // trr([-2*rad, 1*rad, 1*rad+zz, [0, 90, 0]]) color("cyan") cylinder(h = wide+4*rad, r = .1);
-  difference() {
+  h0 = dw-rad-sep; //1.5*rad; // dw = rad+4;
+
+  differenceN(1) {
     children();
-    trr([dx, -pp, zz-3*rad+sep]) cube([wide-2*dx, 2*rad+4*pp, 4*rad+pp]);
-    trr([0, 0, zz]) flapf1(h, a, dw, sf);
+    trr([rad+iw, rad, zz, [0,90,0]]) cylinder(h = wide - 2*(rad+iw), r = rad); // hinge hole
+    trr([dx, -pp, zz-3*rad+iw]) cube([wide-2*dx, 2*rad+4*pp, 4*rad+pp]); // main box
+    trr([0, 0, zz]) flapf1(h, a, dw, sf);  // tilted flap
   }
+  trr([0    + (dw-h0), 1*rad, zz, [0,  90, 0]]) hinge([h0, h0], hr, dr, 0, sep);
+  trr([wide - (dw-h0), 1*rad, zz, [0, -90, 0]]) hinge([h0, h0], hr, dr, 0, sep);
   // [print, upright, folded, open,...]
   ang = [-90, -90, 0, a, a, a, -90][loc]; // display angle
   trr([0, 0, zz]) flapf1(h, ang, dwf ); // sep tilts to: 126
@@ -177,15 +181,15 @@ module gateStop(dw=rad, z = gateH-10) {
     trr([gw+.2, 2 * rad, z, [0, 0, +a]]) cube([rad, 2*rad, rad], center = true);
     trr([sep+p, 0, 0]) children(0);
   }
-  // intersection() {
-  //   trr([0+dw , 2 * rad, z, [0, 0, -a]]) cube([rad, 2*rad, rad], center = true);
-  //   trr([-sep-p, 0, 0]) children(0);
-  // }
+  intersection() {
+    trr([0+dw , 2 * rad, z, [0, 0, -a]]) cube([rad, 2*rad, rad], center = true);
+    trr([-sep-p, 0, 0]) children(0);
+  }
 
   difference() {
     children();
     trr([gw+.1, 1.99 * rad, z, [0, 0, +a]]) cube([rad, 2.2*rad, 1.4*rad], true);
-    // trr([dw+.1 , 1.99 * rad, z, [0, 0, -a]]) cube([rad, 2.2*rad, 1.4*rad], true);
+    trr([dw+.1 , 1.99 * rad, z, [0, 0, -a]]) cube([rad, 2.2*rad, 1.4*rad], true);
   }
 }
 
@@ -266,4 +270,4 @@ bwall();
 d = -3;
 atrans(loc, [undef, 0, 0, 0, [0,d,-d]] ) die([wide/2, wide/2, fz1-6.2, [70, 45, 0]], 15, "grey");
 
-// TODO: gate, flap-hinges, clip-axles
+// TODO: clip-axles, texture flaps
