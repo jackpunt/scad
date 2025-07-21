@@ -132,7 +132,7 @@ module addFlap(zz, h = 30, a = -125, dw = dw) {
     trr([0, 0, zz]) flapf1(h, a, dw, sf);
   }
   // [print, upright, folded, open,...]
-  ang = [-90, -90, 0, a, a, a, a][loc]; // display angle
+  ang = [-90, -90, 0, a, a, a, -90][loc]; // display angle
   trr([0, 0, zz]) flapf1(h, ang, dwf ); // sep tilts to: 126
 }
 module cutFront(h = 30, dw = rad) {
@@ -142,11 +142,12 @@ module cutFront(h = 30, dw = rad) {
   }
 }
 
+gateH = 50;
 // h: height of hole (same as for cutFront)
 // dw: thickness of edge outside of hole (same as for cutFront: rad)
 // dg: thickness of gate (rad)
 // ys: y-extent (2*rad)
-module gate(h = 30, dw = rad, dg = rad, ys = 2*rad) {
+module gate(h = gateH, dw = rad, dg = rad, ys = 2*rad) {
   dws = dw+sep;              // offset to outer edge of gate
   gw = wide - 2 * dws;       // total width of gate
   hh = max(dg, dw);    // hinge height (along axis)
@@ -166,6 +167,28 @@ module gate(h = 30, dw = rad, dg = rad, ys = 2*rad) {
   hinge(hh, hr, dr, [.1,  90, 0]  );
 }
 
+// a beveled block to stop gate at vertical
+// child is gate
+module gateStop(dw=rad, z = gateH-10) {
+  a = 30;
+  dws = dw + sep;
+  gw = wide - 2 * dws + dw;
+  intersection() {
+    trr([gw+.2, 2 * rad, z, [0, 0, +a]]) cube([rad, 2*rad, rad], center = true);
+    trr([sep+p, 0, 0]) children(0);
+  }
+  // intersection() {
+  //   trr([0+dw , 2 * rad, z, [0, 0, -a]]) cube([rad, 2*rad, rad], center = true);
+  //   trr([-sep-p, 0, 0]) children(0);
+  // }
+
+  difference() {
+    children();
+    trr([gw+.1, 1.99 * rad, z, [0, 0, +a]]) cube([rad, 2.2*rad, 1.4*rad], true);
+    // trr([dw+.1 , 1.99 * rad, z, [0, 0, -a]]) cube([rad, 2.2*rad, 1.4*rad], true);
+  }
+}
+
 // flap heights: 
 fz0 = 35;
 fz1 = 70;
@@ -173,13 +196,15 @@ fz2 = 95; // high - f2-2*rad
 
 module fwall() {
   fh1 = 40 * w60;
-  gs = 50; 
-  mh = (110 - gs - 20)/5 ;
-  cutFront(gs)
+  gh = gateH; 
+  mh = (110 - gh - 20)/5 ;
+  cutFront(gh)
   addFlap(fz1, fh1, -130)
-  awall([[gs+10, 10, -1], mh, -mh, [mh, high-110-sep]]);
-  
-  atrans(loc, [[0, 0, 0], 0, 0, 0, [0,0,0, [90,0,0, [0, rad, rad]]], 0, 0]) gate(gs, rad);
+  awall([[gh+10, 10, -1], mh, -mh, [mh, high-110-sep]]);
+
+  atrans(loc, [[0, 0, 0], 0, 0, 0, [0,0,0, [90,0,0, [0, rad, rad]]], 0, 0]) 
+  gateStop()
+  gate(gh, rad);
 }
 module bwall() {
   fh2 = 30 * w60;
@@ -230,7 +255,7 @@ up2    = adif(up,    [-(2*wide+sep    ), 0, 0]);
 
 atrans(loc, [print, up, 1, rr(0, 0, -90), 3])
 rwall(); 
-atrans(loc, [print, up, 1, rr(0, 0, 0), 3, undef, 3])
+atrans(loc, [print, up, 1, rr(0, 0, 0), 3, undef, 0])
 fwall();
 
 atrans(loc, [print2, up2, rr(wide, sod, 0), rr(wide, sod, -90), undef])
