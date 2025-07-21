@@ -631,6 +631,13 @@ module gridTest() {
   }
 }
 
+// sumi computes sum of ary[i] (i = 0..n)
+// ary: array of length > n
+// n: number of elements to sum
+// j: if is_list(ary[i]) sum ary[i][j] (the j-th column)
+function sumi(ary, n = 0, j = 0) 
+  = (is_list(ary[n]) ? ary[n][j] : ary[n]) + (n > 0 ? sumi(ary, n-1, j) : 0);
+  // = (n >= 0 ? (ary[n] + sumi(ary, n-1)) : 0);
 
 // two pieces: ball & socket
 // socket on bottom, ball on top
