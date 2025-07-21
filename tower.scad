@@ -118,6 +118,19 @@ module flapf1(h = wide*.9, a = -90, dw = dw, sf = 1) {
   trr([0, rad, 0, [a, 0, 0]]) scalet([1, sf, 1, [0, 0, 0]]) aflap(h, dw);
 }
 echo ("sf = ",   (rad+1*sep)/ rad);// 1.05;);
+
+// make some dimples to remove from 'top' of flap
+module dimples(w, h, r = rad, d10=rad, d20=rad) {
+  d10 = def(d10, r);
+  d20 = def(d20, r);
+  d1 = [d10, 3*r, w];
+  d2 = [d20, 4*r, h];
+  echo("dimples: d1, d2=", d1, d2);
+
+  gridify(d1, d2, 2) // XY plane
+   scale([1.4, 1.2, .35]) sphere(r);
+}
+    
 module addFlap(zz, h = 30, a = -125, dw = dw) {
   iw = sep;
   dwf = dw + iw;          // inset from wall
@@ -136,8 +149,14 @@ module addFlap(zz, h = 30, a = -125, dw = dw) {
   trr([0    + (dw-h0), 1*rad, zz, [0,  90, 0]]) hinge([h0, h0], hr, dr, 0, sep);
   trr([wide - (dw-h0), 1*rad, zz, [0, -90, 0]]) hinge([h0, h0], hr, dr, 0, sep);
   // [print, upright, folded, open,...]
-  ang = [-90, -90, 0, a, a, a, -90][loc]; // display angle
-  trr([0, 0, zz]) flapf1(h, ang, dwf ); // sep tilts to: 126
+  ang = [-90, -90, 0, a, a, -90, -90][loc]; // display angle
+  z0 = -rad;
+  trr([0, 0, zz, [ang+90, 0, 0, [0, rad, 0]]])  // rotate *after* dimples (@-90)
+  differenceN(1) {
+    flapf1(h, -90, dwf ); // sep tilts to: 126
+    trr([5*rad+iw, 3*rad, z0]) dimples(fw-2*rad, h, rad, -rad/2);
+    trr([5*rad+iw, 4.5*rad, z0]) dimples(fw-4*rad, h-3*rad, rad, 1*rad, 1.5*rad);
+  }
 }
 module cutFront(h = 30, dw = rad) {
   difference() {
@@ -239,13 +258,13 @@ module lwall() {
 function rr(w, s=0, a=-90, r=rad) = [w, s, 0, [0, 0, a, [0, r, 0]]];
 
 // 0: print
-// 1: upright
+// 1: upright (no rotations)
 // 2: folded
 // 3: expanded
 // 4: open wall
-// 5: bwall only
-// 6: fwall only
-loc = 6;
+// 5: bwall only (print orientation)
+// 6: fwall only (print orientation)
+loc = 5;
 
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
