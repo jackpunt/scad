@@ -12,13 +12,13 @@ sample = false;
 rad = 2.3;  // z-thickness: hinge radius (2.3mm)
 wide = 60-2*rad;  // dist bewteen hinge axis
 w60 = wide/60;  // scale factor for flap length
-high = 127.4;   // 125 + rad?
+high = 125;   // 125 + rad?
 
 hr = rad * .6;
 dr = rad * .4;
 sep = 0.2;
 sod = 4*rad; // standoff distance (l&r: x-dist, f&b: y-dist of standofff)
-dw = rad+4;  // inset of hole for flap (final flap may be narrower)
+dw = rad+3.2;  // inset of hole for flap (final flap may be narrower)
 
 dieSize = 12;
 module die(trr = [0,0,0], dieSize = dieSize, clr = "red") {
@@ -119,14 +119,15 @@ module flapf1(h = wide*.9, a = -90, dw = dw, sf = 1) {
 }
 echo ("sf = ",   (rad+1*sep)/ rad);// 1.05;);
 
+dimple = false;
 // make some dimples to remove from 'top' of flap
 module dimples(w, h, r = rad, d10=rad, d20=rad) {
   d10 = def(d10, r);
   d20 = def(d20, r);
   d1 = [d10, 3*r, w];
   d2 = [d20, 4*r, h];
-  echo("dimples: d1, d2=", d1, d2);
 
+  if (dimple)
   gridify(d1, d2, 2) // XY plane
    scale([1.3, 1.15, .45]) sphere(r);
 }
@@ -151,11 +152,12 @@ module addFlap(zz, h = 30, a = -125, dw = dw) {
   // [print, upright, folded, open,...]
   ang = [-90, -90, 0, a, a, -90, -90][loc]; // display angle
   z0 = -rad;
+  rr = rad*1.3;
   trr([0, 0, zz, [ang+90, 0, 0, [0, rad, 0]]])  // rotate *after* dimples (@-90)
   differenceN(1) {
     flapf1(h, -90, dwf ); // sep tilts to: 126
-    trr([5*rad+iw, 3*rad, z0]) dimples(fw-2*rad, h, rad, -rad/2);
-    trr([5*rad+iw, 4.5*rad, z0]) dimples(fw-4*rad, h-3*rad, rad, 1*rad, 1.5*rad);
+    trr([5*rad, 3*rad, z0]) dimples(fw-2*rr, h, rr, -rr/2);
+    trr([5*rad, 4.65*rad, z0]) dimples(fw-4*rr, h-3*rr, rr, 1*rr, 1.5*rr);
   }
 }
 module cutFront(h = 30, dw = rad) {
@@ -167,21 +169,22 @@ module cutFront(h = 30, dw = rad) {
 
 gateH = 50;
 // h: height of hole (same as for cutFront)
-// dw: thickness of edge outside of hole (same as for cutFront: rad)
+// gt: thickness of edge outside of hole (same as for cutFront: rad)
 // dg: thickness of gate (rad)
 // ys: y-extent (2*rad)
-module gate(h = gateH, dw = rad, dg = rad, ys = 2*rad) {
-  dws = dw+sep;              // offset to outer edge of gate
+module gate(h = gateH, gt = rad, dg = rad, ys = 2*rad) {
+  dws = gt+sep;              // offset to outer edge of gate
   gw = wide - 2 * dws;       // total width of gate
-  hh = max(dg, dw);    // hinge height (along axis)
-  gap = sep * 4;       // gap for bar rotation clearance
-  bm = 3.8 * rad;      // bar height
+  hh = max(dg, gt);    // hinge height (along axis)
+  bm = 4 * rad - sep;  // bar height (almost 4 * rad; 2.3->9.2)
+  f0 = 6.51 - dw;      // inset to clear folded flap (unrelated to bm!)
+  gap = sqrt(h*h + bm*bm)-h;// sep * 4;       // gap for bar rotation clearance sqrt(h*h+bm*bm)
   differenceN(2) {
     color("cyan")
-    trr([dw+sep, 0, h-dg-gap]) roundedCube([gw, bm, dg], bm/2, true);
+    trr([gt+sep+f0, 0, h-dg-gap]) roundedCube([gw-2*f0, bm, dg], bm/2, true);
     color("cyan")
-    trr([dw+sep,       0, 2*rad]) cube([gw,      ys,      h-2*rad-gap]);
-    trr([dw+sep+dg, -pp, -pp]) cube([gw-2*dg, ys+2*pp, h-dg-gap]);
+    trr([dws,       0, 2*rad]) cube([gw,      ys,      h-2*rad-gap]);
+    trr([dws+dg, -pp, -pp]) cube([gw-2*dg, ys+2*pp, h-dg-gap]);
   }
   trr([dg+sep   , rad, 0, [0, -90, 0, [0, 0, hh]]]) 
   hinge(hh, hr, dr, [.1, -90, 0]  );
@@ -214,7 +217,7 @@ module gateStop(dw=rad, z = gateH-10) {
 
 // flap heights: 
 fz0 = 35;
-fz1 = 70;
+fz1 = 72;
 fz2 = 95; // high - f2-2*rad
 
 module fwall() {
@@ -225,13 +228,14 @@ module fwall() {
   addFlap(fz1, fh1, -130)
   awall([[gh+10, 10, -1], mh, -mh, [mh, high-110-sep]]);
 
-  atrans(loc, [[0, 0, 0], 0, 0, 0, [0,0,0, [90,0,0, [0, rad, rad]]], 0, 0]) 
+  // [up-flat: a=0,..., extended: a=90]
+  atrans(loc, [rrx(0, 0, 0, rad, rad), 0, 0, rrx(0, 0, 90, rad, rad), 3, 0, 0]) 
   gateStop()
   gate(gh, rad);
 }
 module bwall() {
   fh2 = 30 * w60;
-  fh0 = 49 * w60;
+  fh0 = 54 * w60;
   addFlap(fz2, fh2, -125)
   addFlap(fz0, fh0 , -125)
   awall([[20, 20, -1], 15, -15, [10, high-110-sep]]);
@@ -243,7 +247,6 @@ module swall(clr="tan") {
   mnt0 = [sep, 90, -90];
   color(clr)
   trr([dx+sod-wide, 0, 0]) cube([wide-2*dx-sod, 2*rad, high]); // basic wall cube
-// % trr([00-wide, p, -8 ]) cube([wide, 2*rad, high]); // virtual side-wall
 }
 
 module rwall() {
@@ -253,9 +256,17 @@ module rwall() {
 module lwall() {
   swall("lavender");
 }
+
+// Common trr around point for atrans:
+// w: x-offset
+// s: y-offset
+// a: rotate on axis
+// cy, cy: center of rotation
+function rrx(w=0, s=0, a=-90, cy=rad, cz=0) = [w, s, 0, [a, 0, 0, [0, cy, cz]]];
+function rry(w=0, s=0, a=-90, cx=rad, cz=0) = [w, s, 0, [0, a, 0, [cx, 0, cz]]];
 // rotate wall into postion for loc
-// w: wide; s: y-offset; a: angle; r: rad
-function rr(w, s=0, a=-90, r=rad) = [w, s, 0, [0, 0, a, [0, r, 0]]];
+// w: wide; s: y-offset; a: angle; cy: rad
+function rrz(w=0, s=0, a=-90, cy=rad, cx=0) = [w, s, 0, [0, 0, a, [cx, cy, 0]]];
 
 // 0: print
 // 1: upright (no rotations)
@@ -264,7 +275,7 @@ function rr(w, s=0, a=-90, r=rad) = [w, s, 0, [0, 0, a, [0, r, 0]]];
 // 4: open wall
 // 5: bwall only (print orientation)
 // 6: fwall only (print orientation)
-loc = 5;
+loc = 4;
 
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
@@ -276,17 +287,18 @@ print2a = adif(print, [-dxp, 0, 0]);
 up = [0,0,0];
 up2    = adif(up,    [-(2*wide+sep    ), 0, 0]);
 
-atrans(loc, [print, up, 1, rr(0, 0, -90), 3])
+atrans(loc, [print, up, 1, rrz(0, 0, -90), 3])
 rwall(); 
-atrans(loc, [print, up, 1, rr(0, 0, 0), 3, undef, 0])
+atrans(loc, [print, up, 1, rrz(0, 0, 0), 3, undef, 0])
 fwall();
 
-atrans(loc, [print2, up2, rr(wide, sod, 0), rr(wide, sod, -90), undef])
+atrans(loc, [print2, up2, rrz(wide, sod, 0), rrz(wide, sod, -90), undef])
 lwall();
-atrans(loc, [print2, up2, rr(sod, sod, 180), rr(wide, wide-sod, 180, 3*rad), 3, 0])
+atrans(loc, [print2, up2, rrz(sod, sod, 180), rrz(wide, wide-sod, 180, 3*rad), 3, 0])
 bwall();
 
-d = -3;
-atrans(loc, [undef, 0, 0, 0, [0,d,-d]] ) die([wide/2, wide/2, fz1-6.2, [70, 45, 0]], 15, "grey");
+d = -1;
+atrans(loc, [undef, 0, 0, 0, [0, d, -d-2]] )
+  die([wide/2, wide/2, fz1-6.2, [70, 45, 0]], 15, "grey");
 
 // TODO: clip-axles, texture flaps
