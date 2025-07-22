@@ -195,12 +195,16 @@ fz1 = 72;
 fz2 = 95; // high - f2-2*rad
 
 pr = rad-1;// 1.3;    // pin hole radius
-pz = 10;   // pin hole depth
+pz = 5;   // pin hole depth
 pbz = 10;  // pin bracket size (top notch)
 lz = 5;    // latch depth
+
+
+// cut slot for pinInsert
+// children: awall (with gate&hinge)
 module pinSlot() {
   top = high - pbz;
-  bot = 0;
+  bot = 0 + pbz;
 
   differenceN(1) {
     children(); // awall & gate-hinge
@@ -208,19 +212,43 @@ module pinSlot() {
     trr([wide, 5*rad, -1])  cylinder(h = high+2, r = pr);    // long axle hole
 
     trr([wide-pr, 2*rad, top-p])      cube([2*pr, sod-rad, pbz+pp]); // top block
-    trr([wide-pr, 1*rad, top-(lz+p)]) cube([2*pr, 2*rad, pbz + (lz+pp)]); // top slot
+    trr([wide-pr, 2*rad, top-(lz+p)]) cube([2*pr, rad, pbz + (lz+pp)]); // top slot
     trr([wide, sod-rad, top-lz]) cylinder(h = lz, r = pr);  // key arch
 
-    trr([wide-pr, 2*rad, bot-p])      cube([2*pr, sod-rad, pbz+pp]); // bot block
-    trr([wide-pr, rad, bot-p])        cube([2*pr, 2*rad, pbz + (lz+pp)]); // bot slot
-    trr([wide, sod-rad, bot+pbz]) cylinder(h = lz, r = pr);  // 
+    trr([wide-pr, 2*rad, bot-pbz-p]) cube([2*pr, sod-rad, pbz+pp]); // bot block
+    trr([wide-pr, 2*rad, bot-pbz-p]) cube([2*pr, rad, pbz + (lz+pp)]); // bot slot
+    trr([wide, sod-rad, bot]) cylinder(h = lz, r = pr);  // key arch
+    trr([wide, 2.5*rad, top-lz+1, [90, 0, 0]]) cylinder(h = 3*rad, r = .5); // pin release
+    trr([wide, 2.5*rad, bot+lz-1, [90, 0, 0]]) cylinder(h = 3*rad, r = .5); // pin release
 
-    trr([wide, -p, -1])  cube([2*rad, sod+2*rad,high+2]);    // cutaway
+    trr([wide-rad, 3*rad, top-2, [0, 0, 0]]) cube([rad, rad, 2]); // top block push
+    trr([wide-rad, 3*rad, bot, [0, 0, 0]]) cube([rad, rad, 2]); // top block push
+
+    // trr([wide, -p, -1])  cube([2*rad, sod+2*rad,high+2]);    // cutaway
   }
-  #trr([wide-pr, 1*rad, top -1, [8, 0, 0]]) cube([2*pr, pr, pbz]); // bevel catch
-  #trr([wide-pr, 1*rad, bot +1, [-8, 0, 0, [0,0,pbz]]]) cube([2*pr, pr, pbz]); // bevel catch
-
+  // bevel catch:
+  trr([wide-pr, 2*rad-pr, top -fz, [5, 0, 0, [0, pr, pbz]]]) cube([2*pr, pr, pbz]); // bevel catch
+  trr([wide-pr, 2*rad, bot-pbz +1, [-8, 0, 0, [0,0,pbz]]]) cube([2*pr, pr, pbz]); // bevel catch
+  if (loc > 2) pinInsert();
 }
+fz = pbz/3;  // fill block z-size
+
+// make *one* aligned at top, print four for tops & bottoms
+module pinInsert() {
+  top = high - pbz;
+  bot = 0;
+  cw = 2*pr-f; // 2.6 - .18 = 5.02
+  wpr = wide - pr + f/2;
+  cy = 1;  // clip rod y-size
+  gy = .2; // gap for spring
+  cz = lz-sep;  // clip rod z-size
+  trr([wpr, 3*rad+gy, top])      cube([cw, sod-2*rad-gy, pbz]);  // main block
+  trr([wide, 5*rad, top-pz])  cylinder(h = pbz+pz, r = pr-f);    // main axle
+  trr([wpr, 2*rad+f, high-fz])      cube([cw, 3*rad-2*f, fz]);         // fill block
+  trr([wpr, 3*rad-cy, top-cz])                       cube([cw, cy, pbz + cz]); // long rod
+  trr([wpr, 3*rad-.95*cy-1, top-cz, [5, 0, 0, [0,pr,0]]]) cube([cw, 1.75*cy, cz-fz]);  // clip end
+}
+
 module fwall() {
   fh1 = 40 * w60;
   gh = gateH; 
@@ -239,6 +267,7 @@ module fwall() {
 module bwall() {
   fh2 = 30 * w60;
   fh0 = 54 * w60;
+  pinSlot()
   addFlap(fz2, fh2, -125)
   addFlap(fz0, fh0 , -125)
   awall([[20, 20, -1], 15, -15, [10, high-110-sep]]);
@@ -247,17 +276,17 @@ module bwall() {
 // side wall (no flaps)
 module swall(clr="tan", dir=1) {
   dx = (rad + sep); // reduce width for hinge
-  ws = wide - sod;
+  ws = wide - sod;  // axis of joining pin
   mnt0 = [sep, 90, -90];
   color(clr)
   differenceN(4) {
-    trr([2*rad-ws, 0, 0]) cube([ws-dx-2*rad, 2*rad, high]);       // basic wall cube (rm for hingez)
-    trr([sod-wide+2*rad, rad, 0]) cylinder(h = high, r = rad);    // cylinder for binding pin
-    trr([-ws, 0, pbz]) cube([ws-dx, 2*rad, high-2*pbz]);          // basic wall cube (rm for hingez)
-    trr([sod-wide, rad, pbz]) cylinder(h = high-2*pbz, r = rad);  // cylinder for binding pin
+    trr([2*rad-ws, 0, 0]) cube([ws-dx-2*rad, 2*rad, high]);       // basic wall cube (rm 'dx' for hingez)
+    trr([2*rad-ws+sep, rad, 0]) cylinder(h = high, r = rad);          // cylinder for binding pin
+    trr([-ws, 0, pbz+f]) cube([ws-dx, 2*rad, high-2*pbz-2*f]);          // basic wall cube (rm for hingez)
+    trr([sod-wide, rad, pbz+f]) cylinder(h = high-2*pbz-2*f, r = rad);  // cylinder for binding pin
     // hole could be much deeper:
-  #  trr([-ws, rad, -1  -pz+pbz]) cylinder(h = pz+pz+1, r = pr);  // bottom hole
-  #  trr([-ws, rad, high-pz-pbz]) cylinder(h = pz+pz+1, r = pr);  // top hole
+    trr([-ws, rad, high-pz-pbz-.5]) cylinder(h = pbz+pz+1, r = pr);  // top hole
+    trr([-ws, rad, -.5  ]) cylinder(h = pbz+pz+1, r = pr);  // bottom hole
   }
 }
 
@@ -287,13 +316,13 @@ function rrz(w=0, s=0, a=-90, cy=rad, cx=0) = [w, s, 0, [0, 0, a, [cx, cy, 0]]];
 // 4: open wall
 // 5: bwall only (print orientation)
 // 6: fwall only (print orientation)
-loc = 6;
+loc = 0;
 
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
 dxp = 2*wide-sod+sep;   // align lwall to right
 print  = [swx-sep, 0, 0, [90, 0, 0]];
-print2 = [swx+wide+swx+rad, 0, 0, [90, 0, 0]];
+print2 = [swx+wide+swx+3*rad, 0, 0, [90, 0, 0]];
 
 print2a = adif(print, [-dxp, 0, 0]);
 up = [0,0,0];
@@ -301,16 +330,21 @@ up2    = adif(up,    [-(2*wide+sep    ), 0, 0]);
 
 atrans(loc, [print, up, 1, rrz(0, 0, -90), 3])
 rwall(); 
-atrans(loc, [print, up, 1, rrz(0, 0, 0), 3, undef, 1])
+atrans(loc, [print, up, 1, rrz(0, 0, 0), 3, undef, 0])
 fwall();
 
-atrans(loc, [print2, up2, rrz(wide, sod, 0), rrz(wide, wide, 90), undef])
+atrans(loc, [print2, up2, rrz(sod, sod, 180), rrz(wide, wide, 90), undef])
 lwall();
 atrans(loc, [print2, up2, rrz(sod, sod, 180), rrz(wide, wide-sod, 180, 3*rad), 3, 0])
 bwall();
 
-d = -1;
+d = -1;  // animation displacement of grey die:
 atrans(loc, [undef, 0, 0, 0, [0, d, -d-2]] )
   die([wide/2, wide/2, fz1-6.2, [70, 45, 0]], 15, "grey");
 
-// TODO: clip-axles
+atrans(loc, [[0,0,0], undef, 1,1,1,1,1,1])
+dup([10, 0, 0])
+dup([10, 0, 0])
+dup([10, 0, 0])
+trr([wide-sod, -(pbz+lz), pr-f/2, [90, 90, 0]])
+ trr([-wide,  0, -high]) pinInsert();
