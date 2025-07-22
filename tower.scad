@@ -36,7 +36,7 @@ module die(trr = [0,0,0], dieSize = dieSize, clr = "red") {
 module hingez(hh , hr=hr, dr=dr, mnts=1.5, sep=.2) {
   function absi(hh, n = 0) = abs(is_list(hh) ? hh[n] : hh);
   hh = def(hh, [[5,5]]);
-  sang = [90, 90, 90, 0, 0, 90, 90][loc];
+  sang = [90, 90, 90, 0, 0, 90, 90, 90, 90][loc];
   mntb = [sep, sang, -90];
   rad = hr + dr;
   hp0 = [ for (h = hh) absi(h ,0) ];
@@ -75,7 +75,7 @@ module awall(hinga = [10, 10, 10]) {
   bot = 0;
   dh = high / 2;
   dx = (rad + sep);
-  sang = [0, 90, 90, 0, 0, 0, 0][loc];
+  sang = [0, 90, 90, 0, 0, 0, 0, 0, 0][loc];
   mnt0 = [sep, 180, sang];
   hingez(hinga);  // hinge btw awall & swall;
   trr([dx, 0, 0]) cube([wide-sep, 2*rad, high]); // basic wall cube
@@ -124,7 +124,7 @@ module addFlap(zz, h = 30, a = -125, dw = dw) {
   trr([0    + (dw-h0), 1*rad, zz, [0,  90, 0]]) hinge([h0, h0], hr, dr, 0, sep);
   trr([wide - (dw-h0), 1*rad, zz, [0, -90, 0]]) hinge([h0, h0], hr, dr, 0, sep);
   // [print, upright, folded, open,...]
-  ang = [-90, -90, 0, a, a, -90, -90][loc]; // display angle
+  ang = [-90, -90, 0, a, a, -90, -90, -90, -90][loc]; // display angle
   z0 = -rad;
   rr = rad*1.3;
   trr([0, 0, zz, [ang+90, 0, 0, [0, rad, 0]]])  // rotate *after* dimples (@-90)
@@ -194,59 +194,60 @@ fz0 = 35;
 fz1 = 72;
 fz2 = 95; // high - f2-2*rad
 
-pr = rad-1;// 1.3;    // pin hole radius
-pz = 5;   // pin hole depth
-pbz = 10;  // pin bracket size (top notch)
-lz = 5;    // latch depth
-
+pr = hr;     // pin hole radius
+pz = 5;      // pin hole depth
+pbz = 10;    // pin bracket size (top notch)
+lz = 5.5;    // latch depth (beyond pbz?)
+px = 1;      // latch offset
+fz = pbz/3;  // fill block z-size
+bz = 8;      // bevel length
 
 // cut slot for pinInsert
 // children: awall (with gate&hinge)
 module pinSlot() {
   top = high - pbz;
-  bot = 0 + pbz;
+  bot = 0 ;
 
   differenceN(1) {
     children(); // awall & gate-hinge
     // remove:
     trr([wide, 5*rad, -1])  cylinder(h = high+2, r = pr);    // long axle hole
 
-    trr([wide-pr, 2*rad, top-p])      cube([2*pr, sod-rad, pbz+pp]); // top block
-    trr([wide-pr, 2*rad, top-(lz+p)]) cube([2*pr, rad, pbz + (lz+pp)]); // top slot
-    trr([wide, sod-rad, top-lz]) cylinder(h = lz, r = pr);  // key arch
+    trr([wide-pr, 2*rad-px, top-p])      cube([2*pr, sod-rad+px, pbz+pp]); // top block
+    trr([wide-pr, 2*rad-px, top-(fz+p)]) cube([2*pr, rad+px, pbz + (fz+pp)]); // top slot
+    trr([wide, sod-rad, top-fz]) cylinder(h = pbz+fz, r = pr);  // key arch
 
-    trr([wide-pr, 2*rad, bot-pbz-p]) cube([2*pr, sod-rad, pbz+pp]); // bot block
-    trr([wide-pr, 2*rad, bot-pbz-p]) cube([2*pr, rad, pbz + (lz+pp)]); // bot slot
-    trr([wide, sod-rad, bot]) cylinder(h = lz, r = pr);  // key arch
-    trr([wide, 2.5*rad, top-lz+1, [90, 0, 0]]) cylinder(h = 3*rad, r = .5); // pin release
-    trr([wide, 2.5*rad, bot+lz-1, [90, 0, 0]]) cylinder(h = 3*rad, r = .5); // pin release
+    trr([wide-pr, 2*rad, bot-p]) cube([2*pr, sod-rad, pbz+pp]); // bot block
+    trr([wide-pr, 2*rad, bot-p]) cube([2*pr, rad, pbz + (lz+pp)]); // bot slot
+    trr([wide, sod-rad, bot+pbz]) cylinder(h = lz, r = pr);  // key arch
+    trr([wide, 2.5*rad, top-fz+1, [90, 0, 0]]) cylinder(h = 3*rad, r = .5); // pin release
+    trr([wide, 2.5*rad, bot+pbz+fz-1, [90, 0, 0]]) cylinder(h = 3*rad, r = .5); // pin release
 
-    trr([wide-rad, 3*rad, top-2, [0, 0, 0]]) cube([rad, rad, 2]); // top block push
-    trr([wide-rad, 3*rad, bot, [0, 0, 0]]) cube([rad, rad, 2]); // top block push
+    trr([wide-rad-p, 3*rad-p, top-2, [0, 0, 0]]) cube([rad+pp, rad+pp, 2]); // top block push
+    trr([wide-rad-p, 3*rad-p, bot+pbz, [0, 0, 0]]) cube([rad+pp, rad+pp, 2]); // bot block push
 
     // trr([wide, -p, -1])  cube([2*rad, sod+2*rad,high+2]);    // cutaway
   }
   // bevel catch:
-  trr([wide-pr, 2*rad-pr, top -fz, [5, 0, 0, [0, pr, pbz]]]) cube([2*pr, pr, pbz]); // bevel catch
-  trr([wide-pr, 2*rad, bot-pbz +1, [-8, 0, 0, [0,0,pbz]]]) cube([2*pr, pr, pbz]); // bevel catch
-  if (loc > 2) pinInsert();
+  trr([wide-pr, 2*rad-px-pr, high-bz-fz, [+5, 0, 0, [0, pr, bz]]]) cube([2*pr, pr, bz]); // bevel catch
+  trr([wide-pr, 2*rad-pr, bot+fz, [-5, 0, 0, [0, pr, 0  ]]]) cube([2*pr, pr, bz]); // bevel catch
+  if (loc > 0 && loc < 5) pinInsert();
 }
-fz = pbz/3;  // fill block z-size
 
 // make *one* aligned at top, print four for tops & bottoms
 module pinInsert() {
   top = high - pbz;
   bot = 0;
-  cw = 2*pr-f; // 2.6 - .18 = 5.02
-  wpr = wide - pr + f/2;
-  cy = 1;  // clip rod y-size
-  gy = .2; // gap for spring
-  cz = lz-sep;  // clip rod z-size
-  trr([wpr, 3*rad+gy, top])      cube([cw, sod-2*rad-gy, pbz]);  // main block
-  trr([wide, 5*rad, top-pz])  cylinder(h = pbz+pz, r = pr-f);    // main axle
-  trr([wpr, 2*rad+f, high-fz])      cube([cw, 3*rad-2*f, fz]);         // fill block
-  trr([wpr, 3*rad-cy, top-cz])                       cube([cw, cy, pbz + cz]); // long rod
-  trr([wpr, 3*rad-.95*cy-1, top-cz, [5, 0, 0, [0,pr,0]]]) cube([cw, 1.75*cy, cz-fz]);  // clip end
+  ir = pr-f;
+  wpr = wide - ir;
+  cw = 2*ir;        // 2.6 - .36 = 2.24
+  cy = 1.5;         // clip rod y-size
+  cz = pbz+fz-sep;  // clip rod z-size
+  trr([wide, 5*rad, top-pz])  cylinder(h = pbz+pz, r = ir);    // main axle
+  trr([wpr, 3.5*rad-px, top])      cube([cw, sod-2.5*rad+px, pbz]);  // main block
+  trr([wpr, 2*rad-px+f, high-fz])  cube([cw, 3*rad+px-2*f, fz]);     // fill block
+  trr([wpr, 3*rad-px+(0.25-cy), high-cz])  cube([cw, cy, cz]);       // long rod
+  trr([wpr, 3*rad-px+(-.4-cy), high-cz, [5, 0, 0, [0,cy/2,cy/2]]]) cube([cw, 1.4*cy, cz-(fz+bz+f)]);  // clip end
 }
 
 module fwall() {
@@ -314,9 +315,11 @@ function rrz(w=0, s=0, a=-90, cy=rad, cx=0) = [w, s, 0, [0, 0, a, [cx, cy, 0]]];
 // 2: folded
 // 3: expanded
 // 4: open wall
-// 5: bwall only (print orientation)
-// 6: fwall only (print orientation)
-loc = 0;
+// 5: bwall & lwall (print orientation)
+// 6: fwall & rwall (print orientation)
+// 7: fwall only (print orientation)
+// 8: four pins
+loc = 6;
 
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
@@ -328,12 +331,12 @@ print2a = adif(print, [-dxp, 0, 0]);
 up = [0,0,0];
 up2    = adif(up,    [-(2*wide+sep    ), 0, 0]);
 
-atrans(loc, [print, up, 1, rrz(0, 0, -90), 3])
+atrans(loc, [print, up, 1, rrz(0, 0, -90), 3, undef, 0])
 rwall(); 
-atrans(loc, [print, up, 1, rrz(0, 0, 0), 3, undef, 0])
+atrans(loc, [print, up, 1, rrz(0, 0, 0), 3, undef, 0, 0])
 fwall();
 
-atrans(loc, [print2, up2, rrz(sod, sod, 180), rrz(wide, wide, 90), undef])
+atrans(loc, [print2, up2, rrz(sod, sod, 180), rrz(wide, wide, 90), undef, 0])
 lwall();
 atrans(loc, [print2, up2, rrz(sod, sod, 180), rrz(wide, wide-sod, 180, 3*rad), 3, 0])
 bwall();
@@ -342,7 +345,7 @@ d = -1;  // animation displacement of grey die:
 atrans(loc, [undef, 0, 0, 0, [0, d, -d-2]] )
   die([wide/2, wide/2, fz1-6.2, [70, 45, 0]], 15, "grey");
 
-atrans(loc, [[0,0,0], undef, 1,1,1,1,1,1])
+atrans(loc, [[0,0,0], undef, 1,1,1,1,1,1, 0])
 dup([10, 0, 0])
 dup([10, 0, 0])
 dup([10, 0, 0])
