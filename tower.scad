@@ -26,44 +26,16 @@ module die(trr = [0,0,0], dieSize = dieSize, clr = "red") {
   color(clr) roundedCube(dieSize, 1, false, true);
 }
 
-// h-h, h, h-m
-module hinge2m(hh = 3, hr=1.5, dr=2, mnts=1.5, sep=.2) {
-  hh = def(hh, [3, 6, 3]); 
-  h0 = is_list(hh) ? hh[0] : hh;
-  h1 = is_list(hh) ? hh[1] : hh;
-  h2 = is_list(hh) ? hh[2] : hh;
-  rad = hr + dr;
-  trr([0, rad, h0+h1/2]) mirror([0,0,1])   
-  hinge([h1/2, h0], hr, dr, mnts, sep); // mirror at bottom
-  trr([0, rad, h0+h1/2])
-  hinge([h1/2, h2], hr, dr, mnts, sep); // bottom hinge
-}
-
 // 4 walls: right, front, left, back
 
-function hangle() = -90;
-
-// hinge btw awall & swall; socket attached to swall (so needs to rotate with swall)
-module hingez0() {
-  sang = [90, 90, 90, 0, 0, 90, 90][loc];
-  mntb = [sep, sang, -90];
-  mnt0 = [sep, sang, -90];
-  // hinge2m([40, 20, 10], hr, dr, mntb);
-  trr([0, rad, 50]) mirror([0,0,1])   hinge([10, 40], hr, dr, mntb); // botton-m
-  trr([0, rad, 50])                   hinge([10, 10], hr, dr, mntb); // bottom hinge
-
-  trr([0, rad, 90]) mirror([0,0,1])   hinge([10, 10], hr, dr, mnt0); // botton-m
-  trr([0, rad, 90])                   hinge([10, high-100], hr, dr, mnt0); // top hinge
-}
-function flatten(l) = [ for (a = l) for (b = a) b ] ;
-
-// h, h-m, h
-// make column of hinge segments in z direction
-// hh: height of each segment of hinge (hh[i]<0 --> mirror(0,0,1))
+// Utility to make a column of hinge segments in z direction
+// hh: array of "hinge-pair": [bottom-len, top-len, orient?] or orient*len
+// for ex: '5' --> [5,5,1]; '-5' --> [5,5,-1]
+// orient: 1: cone on top, -1: socket on top, 0: space, no hinge
+// 
 module hingez(hh , hr=hr, dr=dr, mnts=1.5, sep=.2) {
   function absi(hh, n = 0) = abs(is_list(hh) ? hh[n] : hh);
   hh = def(hh, [[5,5]]);
-  // hf = flatten(hh);
   sang = [90, 90, 90, 0, 0, 90, 90][loc];
   mntb = [sep, sang, -90];
   rad = hr + dr;
@@ -99,18 +71,20 @@ module aflap(h, dw = dw, r = rad) {
 
 // front/back wall; (add flaps)
 module awall(hinga = [10, 10, 10]) {
+  top = high - pbz;
+  bot = 0;
   dh = high / 2;
   dx = (rad + sep);
   sang = [0, 90, 90, 0, 0, 0, 0][loc];
   mnt0 = [sep, 180, sang];
-  hingez(hinga);
+  hingez(hinga);  // hinge btw awall & swall;
   trr([dx, 0, 0]) cube([wide-sep, 2*rad, high]); // basic wall cube
-
-  differenceN(1) // standoff
-  {
-    trr([wide-rad,   0,   0]) cube([2*rad,    sod,    high]);     // standoff
-  }
-  trr([wide, 5*rad, 0   ]) hinge([dh, dh], hr, dr, mnt0); // standoff bottom hinge
+  trr([wide-rad, 0, bot]) cube([2*rad, sod+rad, pbz]);    // bot block
+  trr([wide, 5*rad, bot]) cylinder(h = pbz, r = rad);     // bot cyl
+  trr([wide-rad, 0, top]) cube([2*rad, sod+rad, pbz]);    // top block
+  trr([wide, 5*rad, top]) cylinder(h = pbz, r = rad);     // top cyl
+  trr([wide-rad, 0, bot]) cube([2*rad, sod-rad, high]);   // full block
+  trr([wide, sod-rad, bot]) cylinder(h = high, r = rad);  // full cyl
 }
 
 // make flap, maybe scaled, rotate, and move to wall
@@ -220,10 +194,38 @@ fz0 = 35;
 fz1 = 72;
 fz2 = 95; // high - f2-2*rad
 
+pr = rad-1;// 1.3;    // pin hole radius
+pz = 10;   // pin hole depth
+pbz = 10;  // pin bracket size (top notch)
+lz = 5;    // latch depth
+module pinSlot() {
+  top = high - pbz;
+  bot = 0;
+
+  differenceN(1) {
+    children(); // awall & gate-hinge
+    // remove:
+    trr([wide, 5*rad, -1])  cylinder(h = high+2, r = pr);    // long axle hole
+
+    trr([wide-pr, 2*rad, top-p])      cube([2*pr, sod-rad, pbz+pp]); // top block
+    trr([wide-pr, 1*rad, top-(lz+p)]) cube([2*pr, 2*rad, pbz + (lz+pp)]); // top slot
+    trr([wide, sod-rad, top-lz]) cylinder(h = lz, r = pr);  // key arch
+
+    trr([wide-pr, 2*rad, bot-p])      cube([2*pr, sod-rad, pbz+pp]); // bot block
+    trr([wide-pr, rad, bot-p])        cube([2*pr, 2*rad, pbz + (lz+pp)]); // bot slot
+    trr([wide, sod-rad, bot+pbz]) cylinder(h = lz, r = pr);  // 
+
+    trr([wide, -p, -1])  cube([2*rad, sod+2*rad,high+2]);    // cutaway
+  }
+  #trr([wide-pr, 1*rad, top -1, [8, 0, 0]]) cube([2*pr, pr, pbz]); // bevel catch
+  #trr([wide-pr, 1*rad, bot +1, [-8, 0, 0, [0,0,pbz]]]) cube([2*pr, pr, pbz]); // bevel catch
+
+}
 module fwall() {
   fh1 = 40 * w60;
   gh = gateH; 
   mh = (110 - gh - 20)/5 ;
+  pinSlot() {
   cutFront(gh)
   addFlap(fz1, fh1, -130)
   awall([[gh+10, 10, -1], mh, -mh, [mh, high-110-sep]]);
@@ -232,6 +234,7 @@ module fwall() {
   atrans(loc, [rrx(0, 0, 0, rad, rad), 0, 0, rrx(0, 0, 90, rad, rad), 3, 0, 0]) 
   gateStop()
   gate(gh, rad);
+  }
 }
 module bwall() {
   fh2 = 30 * w60;
@@ -242,19 +245,28 @@ module bwall() {
 }
 
 // side wall (no flaps)
-module swall(clr="tan") {
+module swall(clr="tan", dir=1) {
   dx = (rad + sep); // reduce width for hinge
+  ws = wide - sod;
   mnt0 = [sep, 90, -90];
   color(clr)
-  trr([dx+sod-wide, 0, 0]) cube([wide-2*dx-sod, 2*rad, high]); // basic wall cube
+  differenceN(4) {
+    trr([2*rad-ws, 0, 0]) cube([ws-dx-2*rad, 2*rad, high]);       // basic wall cube (rm for hingez)
+    trr([sod-wide+2*rad, rad, 0]) cylinder(h = high, r = rad);    // cylinder for binding pin
+    trr([-ws, 0, pbz]) cube([ws-dx, 2*rad, high-2*pbz]);          // basic wall cube (rm for hingez)
+    trr([sod-wide, rad, pbz]) cylinder(h = high-2*pbz, r = rad);  // cylinder for binding pin
+    // hole could be much deeper:
+  #  trr([-ws, rad, -1  -pz+pbz]) cylinder(h = pz+pz+1, r = pr);  // bottom hole
+  #  trr([-ws, rad, high-pz-pbz]) cylinder(h = pz+pz+1, r = pr);  // top hole
+  }
 }
 
 module rwall() {
-  swall("red");
+  swall("red", 1);
 }
 
 module lwall() {
-  swall("lavender");
+  swall("lavender", -1);
 }
 
 // Common trr around point for atrans:
@@ -275,7 +287,7 @@ function rrz(w=0, s=0, a=-90, cy=rad, cx=0) = [w, s, 0, [0, 0, a, [cx, cy, 0]]];
 // 4: open wall
 // 5: bwall only (print orientation)
 // 6: fwall only (print orientation)
-loc = 4;
+loc = 6;
 
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
@@ -289,10 +301,10 @@ up2    = adif(up,    [-(2*wide+sep    ), 0, 0]);
 
 atrans(loc, [print, up, 1, rrz(0, 0, -90), 3])
 rwall(); 
-atrans(loc, [print, up, 1, rrz(0, 0, 0), 3, undef, 0])
+atrans(loc, [print, up, 1, rrz(0, 0, 0), 3, undef, 1])
 fwall();
 
-atrans(loc, [print2, up2, rrz(wide, sod, 0), rrz(wide, sod, -90), undef])
+atrans(loc, [print2, up2, rrz(wide, sod, 0), rrz(wide, wide, 90), undef])
 lwall();
 atrans(loc, [print2, up2, rrz(sod, sod, 180), rrz(wide, wide-sod, 180, 3*rad), 3, 0])
 bwall();
@@ -301,4 +313,4 @@ d = -1;
 atrans(loc, [undef, 0, 0, 0, [0, d, -d-2]] )
   die([wide/2, wide/2, fz1-6.2, [70, 45, 0]], 15, "grey");
 
-// TODO: clip-axles, texture flaps
+// TODO: clip-axles
