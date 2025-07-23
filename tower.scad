@@ -16,7 +16,7 @@ high = 125;   // 125 + rad?
 
 hr = rad * .6;
 dr = rad * .4;
-sep = 0.2;
+sep = 0.3;
 sod = 4*rad; // standoff distance (l&r: x-dist, f&b: y-dist of standofff)
 dw = rad+3.2;  // inset of hole for flap (final flap may be narrower)
 
@@ -134,14 +134,14 @@ module addFlap(zz, h = 30, a = -125, dw = dw) {
     trr([5*rad, 4.65*rad, z0]) dimples(fw-4*rr, h-3*rr, rr, 1*rr, 1.5*rr);
   }
 }
-module cutFront(h = 30, dw = rad) {
+module cutFront(h = gateH, dw = rad) {
   difference() {
     children();
     trr([dw, -pp, -pp]) cube([wide-2*dw, 2*(rad+pp), h]);
   }
 }
 
-gateH = 50;
+gateH = 25;
 // h: height of hole (same as for cutFront)
 // gt: thickness of edge outside of hole (same as for cutFront: rad)
 // dg: thickness of gate (rad)
@@ -217,11 +217,11 @@ module pinSlot() {
     trr([wide-pr, 2*rad-px, top-(fz+p)]) cube([2*pr, rad+px, pbz + (fz+pp)]); // top slot
     trr([wide, sod-rad, top-fz]) cylinder(h = pbz+fz, r = pr);  // key arch
 
-    trr([wide-pr, 2*rad, bot-p]) cube([2*pr, sod-rad, pbz+pp]); // bot block
-    trr([wide-pr, 2*rad, bot-p]) cube([2*pr, rad, pbz + (lz+pp)]); // bot slot
+    trr([wide-pr, 2*rad-px, bot-p]) cube([2*pr, sod-rad+px, pbz+pp]); // bot block
+    trr([wide-pr, 2*rad-px, bot-p]) cube([2*pr, rad+px, pbz + (lz+pp)]); // bot slot
     trr([wide, sod-rad, bot+pbz]) cylinder(h = lz, r = pr);  // key arch
-    trr([wide, 2.5*rad, top-fz+1, [90, 0, 0]]) cylinder(h = 3*rad, r = .5); // pin release
-    trr([wide, 2.5*rad, bot+pbz+fz-1, [90, 0, 0]]) cylinder(h = 3*rad, r = .5); // pin release
+    trr([wide, 3.0*rad-p, top-fz+1, [90, 0, 0]]) cylinder(h = 3*rad, r = pr); // pin release
+    trr([wide, 3.0*rad-p, bot+pbz+fz-1, [90, 0, 0]]) cylinder(h = 3*rad, r = pr); // pin release
 
     trr([wide-rad-p, 3*rad-p, top-2, [0, 0, 0]]) cube([rad+pp, rad+pp, 2]); // top block push
     trr([wide-rad-p, 3*rad-p, bot+pbz, [0, 0, 0]]) cube([rad+pp, rad+pp, 2]); // bot block push
@@ -230,7 +230,7 @@ module pinSlot() {
   }
   // bevel catch:
   trr([wide-pr, 2*rad-px-pr, high-bz-fz, [+5, 0, 0, [0, pr, bz]]]) cube([2*pr, pr, bz]); // bevel catch
-  trr([wide-pr, 2*rad-pr, bot+fz, [-5, 0, 0, [0, pr, 0  ]]]) cube([2*pr, pr, bz]); // bevel catch
+  trr([wide-pr, 2*rad-px-pr, bot+fz, [-5, 0, 0, [0, pr, 0  ]]]) cube([2*pr, pr, bz]); // bevel catch
   if (loc > 0 && loc < 5) pinInsert();
 }
 
@@ -260,9 +260,9 @@ module fwall() {
   awall([[gh+10, 10, -1], mh, -mh, [mh, high-110-sep]]);
 
   // [up-flat: a=0,..., extended: a=90]
-  atrans(loc, [rrx(0, 0, 0, rad, rad), 0, 0, rrx(0, 0, 90, rad, rad), 3, 0, 0]) 
-  gateStop()
-  gate(gh, rad);
+  // atrans(loc, [rrx(0, 0, 0, rad, rad), 0, 0, rrx(0, 0, 90, rad, rad), 3, 0, 0]) 
+  // gateStop()
+  // gate(gh, rad);
   }
 }
 module bwall() {
@@ -319,7 +319,7 @@ function rrz(w=0, s=0, a=-90, cy=rad, cx=0) = [w, s, 0, [0, 0, a, [cx, cy, 0]]];
 // 6: fwall & rwall (print orientation)
 // 7: fwall only (print orientation)
 // 8: four pins
-loc = 8;
+loc = 3;
 
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
