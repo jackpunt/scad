@@ -16,7 +16,8 @@ high = 125;   // 125 + rad?
 
 hr = rad * .6;
 dr = rad * .4;
-sep = 0.3;
+sep = 0.2;   // (cone-socket) separation of hinges (also the z-axis sep)
+sap = 0.2;   // separation of wall & hinge
 sod = 4*rad; // standoff distance (l&r: x-dist, f&b: y-dist of standofff)
 dw = rad+3.2;  // inset of hole for flap (final flap may be narrower)
 
@@ -33,11 +34,19 @@ module die(trr = [0,0,0], dieSize = dieSize, clr = "red") {
 // for ex: '5' --> [5,5,1]; '-5' --> [5,5,-1]
 // orient: 1: cone on top, -1: socket on top, 0: space, no hinge
 // 
-module hingez(hh , hr=hr, dr=dr, mnts=1.5, sep=.2) {
+module hingez(hh , hr=hr, dr=dr, mnts=1.5, sep=sep) {
   function absi(hh, n = 0) = abs(is_list(hh) ? hh[n] : hh);
+  // shim the hinge so folding stops at 90-degrees: 
+  // Note: not using 'loc' or 'sang' so does not rotate.
+  module shim(x0, x1, z0, z1, hi) {
+    r2 = 2 * rad;
+    y2 = max(0, sap-f); // shim if sap is large
+    trr([x0, r2, z0+z1-hi[0]-hi[1]]) cube([rad,y2,hi[0]]);
+    trr([x1, r2, z0+z1-hi[1]+sep])   cube([rad,y2,hi[1]-sep]);
+  }
   hh = def(hh, [[5,5]]);
   sang = [90, 90, 90, 0, 0, 90, 90, 90, 90][loc];
-  mntb = [sep, sang, -90];
+  mntb = [sap, sang, -90];
   rad = hr + dr;
   hp0 = [ for (h = hh) absi(h ,0) ];
   hp1 = [ for (h = hh) absi(h, 1) ]; 
@@ -49,10 +58,12 @@ module hingez(hh , hr=hr, dr=dr, mnts=1.5, sep=.2) {
     if (ht > 0) {
       trr([0, rad, z0+z1-hi[0]-hi[1]])
       hinge(hi, hr, dr, mntb, sep);
+      color("teal") shim(-sap-rad, sap, z0, z1, hi);
     } else {
       trr([0, rad, z0+z1+sep])
       mirror([0,0,1]) 
       hinge([hi[1], hi[0]], hr, dr, mntb, sep);
+      color("cyan") shim(sap, -sap-rad, z0, z1, hi);
     }
     }
   }
@@ -74,11 +85,11 @@ module awall(hinga = [10, 10, 10]) {
   top = high - pbz;
   bot = 0;
   dh = high / 2;
-  dx = (rad + sep);
+  dx = (rad + sap);
   sang = [0, 90, 90, 0, 0, 0, 0, 0, 0][loc];
-  mnt0 = [sep, 180, sang];
+  mnt0 = [sap, 180, sang];
   hingez(hinga);  // hinge btw awall & swall;
-  trr([dx, 0, 0]) cube([wide-sep, 2*rad, high]); // basic wall cube
+  trr([dx, 0, 0]) cube([wide-sap, 2*rad, high]); // basic wall cube
   trr([wide-rad, 0, bot]) cube([2*rad, sod+rad, pbz]);    // bot block
   trr([wide, 5*rad, bot]) cylinder(h = pbz, r = rad);     // bot cyl
   trr([wide-rad, 0, top]) cube([2*rad, sod+rad, pbz]);    // top block
@@ -91,7 +102,7 @@ module awall(hinga = [10, 10, 10]) {
 module flapf1(h = wide*.9, a = -90, dw = dw, sf = 1) {
   trr([0, rad, 0, [a, 0, 0]]) scalet([1, sf, 1, [0, 0, 0]]) aflap(h, dw);
 }
-echo ("sf = ",   (rad+1*sep)/ rad);// 1.05;);
+echo ("sf = ",   (rad+1*sap)/ rad);// 1.05;);
 
 dimple = false;
 // make some dimples to remove from 'top' of flap
@@ -107,13 +118,13 @@ module dimples(w, h, r = rad, d10=rad, d20=rad) {
 }
     
 module addFlap(zz, h = 30, a = -125, dw = dw) {
-  iw = sep;
+  iw = sep+2*f;
   dwf = dw + iw;          // inset from wall
   fw = wide - 2*dwf;      // final width of flap
   dx = dw; // shrink the box to match flapf1 () *(sx+.14)
-  sf =  (rad+sep)/ rad;// 1.077;
+  sf =  (rad+sap)/ rad;// 1.077;
   zs = rad;
-  h0 = dw-rad-sep; //1.5*rad; // dw = rad+4;
+  h0 = dw-rad-iw; //1.5*rad; // dw = rad+4;
 
   differenceN(1) {
     children();
@@ -134,6 +145,8 @@ module addFlap(zz, h = 30, a = -125, dw = dw) {
     trr([5*rad, 4.65*rad, z0]) dimples(fw-4*rr, h-3*rr, rr, 1*rr, 1.5*rr);
   }
 }
+
+// dw: inset from wide
 module cutFront(h = gateH, dw = rad) {
   difference() {
     children();
@@ -147,23 +160,23 @@ gateH = 25;
 // dg: thickness of gate (rad)
 // ys: y-extent (2*rad)
 module gate(h = gateH, gt = rad, dg = rad, ys = 2*rad) {
-  dws = gt+sep;              // offset to outer edge of gate
+  dws = gt+sap;              // offset to outer edge of gate
   gw = wide - 2 * dws;       // total width of gate
   hh = max(dg, gt);    // hinge height (along axis)
-  bm = 4 * rad - sep;  // bar height (almost 4 * rad; 2.3->9.2)
+  bm = 4 * rad - sap;  // bar height (almost 4 * rad; 2.3->9.2)
   f0 = 6.51 - dw;      // inset to clear folded flap (unrelated to bm!)
   gap = sqrt(h*h + bm*bm)-h;// sep * 4;       // gap for bar rotation clearance sqrt(h*h+bm*bm)
   differenceN(2) {
     color("cyan")
-    trr([gt+sep+f0, 0, h-dg-gap]) roundedCube([gw-2*f0, bm, dg], bm/2, true);
+    trr([dws+f0, 0, h-dg-gap]) roundedCube([gw-2*f0, bm, dg], bm/2, true);
     color("cyan")
     trr([dws,       0, 2*rad]) cube([gw,      ys,      h-2*rad-gap]);
     trr([dws+dg, -pp, -pp]) cube([gw-2*dg, ys+2*pp, h-dg-gap]);
   }
-  trr([dg+sep   , rad, 0, [0, -90, 0, [0, 0, hh]]]) 
+  trr([dg+sap   , rad, 0, [0, -90, 0, [0, 0, hh]]]) 
   hinge(hh, hr, dr, [.1, -90, 0]  );
 
-  trr([dg+sep+gw, rad, 0, [0, 90, 0, [0, 0, hh]]]) 
+  trr([dg+sap+gw, rad, 0, [0, 90, 0, [0, 0, hh]]]) 
   hinge(hh, hr, dr, [.1,  90, 0]  );
 }
 
@@ -171,15 +184,15 @@ module gate(h = gateH, gt = rad, dg = rad, ys = 2*rad) {
 // child is gate
 module gateStop(dw=rad, z = gateH-10) {
   a = 30;
-  dws = dw + sep;
+  dws = dw + sap;
   gw = wide - 2 * dws + dw;
   intersection() {
     trr([gw+.2, 2 * rad, z, [0, 0, +a]]) cube([rad, 2*rad, rad], center = true);
-    trr([sep+p, 0, 0]) children(0);
+    trr([sap+p, 0, 0]) children(0);
   }
   intersection() {
     trr([0+dw , 2 * rad, z, [0, 0, -a]]) cube([rad, 2*rad, rad], center = true);
-    trr([-sep-p, 0, 0]) children(0);
+    trr([-sap-p, 0, 0]) children(0);
   }
 
   difference() {
@@ -193,14 +206,12 @@ module gateStop(dw=rad, z = gateH-10) {
 fz0 = 35;
 fz1 = 72;
 fz2 = 95; // high - f2-2*rad
+$fn=30;   // high res cylinders
 
 pr = hr;     // pin hole radius
-pz = 5;      // pin hole depth
+pz = 2;      // pin hole depth
 pbz = 10;    // pin bracket size (top notch)
-lz = 5.5;    // latch depth (beyond pbz?)
-px = 1;      // latch offset
-fz = pbz/3;  // fill block z-size
-bz = 8;      // bevel length
+px = 1-rad;  // latch offset into base wall
 
 // cut slot for pinInsert
 // children: awall (with gate&hinge)
@@ -212,42 +223,31 @@ module pinSlot() {
     children(); // awall & gate-hinge
     // remove:
     trr([wide, 5*rad, -1])  cylinder(h = high+2, r = pr);    // long axle hole
+    trr([wide-pr, 2*rad-px, top-f+p]) cube([2*pr, sod-rad+px, pbz+f]); // top block
+    trr([wide-pr, 2*rad-px, bot  -p]) cube([2*pr, sod-rad+px, pbz+f]); // bot block
 
-    trr([wide-pr, 2*rad-px, top-p])      cube([2*pr, sod-rad+px, pbz+pp]); // top block
-    trr([wide-pr, 2*rad-px, top-(fz+p)]) cube([2*pr, rad+px, pbz + (fz+pp)]); // top slot
-    trr([wide, sod-rad, top-fz]) cylinder(h = pbz+fz, r = pr);  // key arch
-
-    trr([wide-pr, 2*rad-px, bot-p]) cube([2*pr, sod-rad+px, pbz+pp]); // bot block
-    trr([wide-pr, 2*rad-px, bot-p]) cube([2*pr, rad+px, pbz + (lz+pp)]); // bot slot
-    trr([wide, sod-rad, bot+pbz]) cylinder(h = lz, r = pr);  // key arch
-    trr([wide, 3.0*rad-p, top-fz+1, [90, 0, 0]]) cylinder(h = 3*rad, r = pr); // pin release
-    trr([wide, 3.0*rad-p, bot+pbz+fz-1, [90, 0, 0]]) cylinder(h = 3*rad, r = pr); // pin release
-
-    trr([wide-rad-p, 3*rad-p, top-2, [0, 0, 0]]) cube([rad+pp, rad+pp, 2]); // top block push
-    trr([wide-rad-p, 3*rad-p, bot+pbz, [0, 0, 0]]) cube([rad+pp, rad+pp, 2]); // bot block push
+    // 2mm slot if need to extract pinInsert:
+    trr([wide-rad-p, 3*rad-p, top-2    , [0, 0, 0]]) cube([rad+f+pp, sod+pp, 4]); // top block push
+    trr([wide-rad-p, 3*rad-p, bot-2+pbz, [0, 0, 0]]) cube([rad+f+pp, sod+pp, 4]); // bot block push
 
     // trr([wide, -p, -1])  cube([2*rad, sod+2*rad,high+2]);    // cutaway
   }
-  // bevel catch:
-  trr([wide-pr, 2*rad-px-pr, high-bz-fz, [+5, 0, 0, [0, pr, bz]]]) cube([2*pr, pr, bz]); // bevel catch
-  trr([wide-pr, 2*rad-px-pr, bot+fz, [-5, 0, 0, [0, pr, 0  ]]]) cube([2*pr, pr, bz]); // bevel catch
-  if (loc > 0 && loc < 5) pinInsert();
+
+  if (loc > 0 && loc < 5) {
+    pinInsert();
+  %  trr([0, 0, 0, [180, 0, 180, [wide,(sod+rad*2)/2,high/2]]]) pinInsert();
+  }
 }
 
 // make *one* aligned at top, print four for tops & bottoms
 module pinInsert() {
   top = high - pbz;
   bot = 0;
-  ir = pr-f;
-  wpr = wide - ir;
-  cw = 2*ir;        // 2.6 - .36 = 2.24
-  cy = 1.5;         // clip rod y-size
-  cz = pbz+fz-sep;  // clip rod z-size
-  trr([wide, 5*rad, top-pz, [0,0,20]])  cylinder(h = pbz+pz, r = ir);// main axle
-  trr([wpr, 3.5*rad-px, top])      cube([cw, sod-2.5*rad+px, pbz]);  // main block
-  trr([wpr, 2*rad-px+f, high-fz])  cube([cw, 3*rad+px-2*f, fz]);     // fill block
-  trr([wpr, 3*rad-px+(0.25-cy), high-cz])  cube([cw, cy, cz]);       // long rod
-  trr([wpr, 3*rad-px+(-.4-cy), high-cz, [5, 0, 0, [0,cy/2,cy/2]]]) cube([cw, 1.4*cy, cz-(fz+bz+f)]);  // clip end
+  ir = pr-f;        // radius for insert pin
+  wmir = wide - ir;
+  // rotate axle to touch z=0
+  trr([wide, 5*rad     , top-pz])  cylinder(h = pbz+pz, r = ir);  // main axle
+  trr([wmir, 2*rad-px+f, high-pbz]) cube([2*ir, 3*rad+px-f, pbz]); // fill block
 }
 
 module fwall() {
@@ -255,7 +255,7 @@ module fwall() {
   gh = gateH; 
   mh = (110 - gh - 20)/5 ;
   pinSlot() {
-  cutFront(gh)
+  cutFront(gh, rad+1)
   addFlap(fz1, fh1, -130)
   awall([[gh+10, 10, -1], mh, -mh, [mh, high-110-sep]]);
 
@@ -276,14 +276,14 @@ module bwall() {
 
 // side wall (no flaps)
 module swall(clr="tan", dir=1) {
-  dx = (rad + sep); // reduce width for hinge
+  dx = (rad + sap); // reduce width for hinge
   ws = wide - sod;  // axis of joining pin
-  mnt0 = [sep, 90, -90];
+  mnt0 = [sap, 90, -90];
   color(clr)
   differenceN(4) {
-    trr([2*rad-ws, 0, 0]) cube([ws-dx-2*rad, 2*rad, high]);       // basic wall cube (rm 'dx' for hingez)
-    trr([2*rad-ws+sep, rad, 0]) cylinder(h = high, r = rad);          // cylinder for binding pin
-    trr([-ws, 0, pbz+f]) cube([ws-dx, 2*rad, high-2*pbz-2*f]);          // basic wall cube (rm for hingez)
+    trr([2*rad-ws, 0, 0]) cube([ws-dx-2*rad, 2*rad, high]);             // basic wall cube (rm 'dx' for hingez)
+    trr([2*rad-ws+sap, rad, 0]) cylinder(h = high, r = rad);            // cylinder for binding pin
+    trr([-ws, 0, pbz+f]) cube([ws-dx, 2*rad, high-2*pbz-2*f]);          // basic wall cube (rm 'dx' for hingez)
     trr([sod-wide, rad, pbz+f]) cylinder(h = high-2*pbz-2*f, r = rad);  // cylinder for binding pin
     // hole could be much deeper:
     trr([-ws, rad, high-pz-pbz-.5]) cylinder(h = pbz+pz+1, r = pr);  // top hole
@@ -319,19 +319,19 @@ function rrz(w=0, s=0, a=-90, cy=rad, cx=0) = [w, s, 0, [0, 0, a, [cx, cy, 0]]];
 // 6: fwall & rwall (print orientation)
 // 7: fwall only (print orientation)
 // 8: four pins
-loc = 3;
+loc = 0;
 
 swx = wide - sod - rad;
-dx0 = wide-sod-rad-sep; // align rwall @ x=0
-dxp = 2*wide-sod+sep;   // align lwall to right
-print  = [swx-sep, 0, 0, [90, 0, 0]];
+dx0 = wide-sod-rad-sap; // align rwall @ x=0
+dxp = 2*wide-sod+sap;   // align lwall to right
+print  = [swx-sap, 0, 0, [90, 0, 0]];
 print2 = [swx+wide+swx+3*rad, 0, 0, [90, 0, 0]];
 
 print2a = adif(print, [-dxp, 0, 0]);
 up = [0,0,0];
-up2    = adif(up,    [-(2*wide+sep    ), 0, 0]);
+up2    = adif(up,    [-(2*wide+sap    ), 0, 0]);
 
-atrans(loc, [print, up, 1, rrz(0, 0, -90), 3, undef, 0])
+atrans(loc, [print, up, 1, rrz(-sap, 0, -90), 3, undef, 0])
 rwall(); 
 atrans(loc, [print, up, 1, rrz(0, 0, 0), 3, undef, 0, 0])
 fwall();
@@ -349,5 +349,5 @@ atrans(loc, [[0,0,0], undef, 1,1,1,1,1,1, 0])
 dup([10, 0, 0])
 dup([10, 0, 0])
 dup([10, 0, 0])
-trr([wide-sod, -(pbz+lz), pr-f, [90, 90, 0]])
+trr([wide-sod, -(pbz+pz), pr-f, [90, 90, 0]])
  trr([-wide,  0, -high]) pinInsert();
