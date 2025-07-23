@@ -243,7 +243,7 @@ module pinInsert() {
   cw = 2*ir;        // 2.6 - .36 = 2.24
   cy = 1.5;         // clip rod y-size
   cz = pbz+fz-sep;  // clip rod z-size
-  trr([wide, 5*rad, top-pz])  cylinder(h = pbz+pz, r = ir);    // main axle
+  trr([wide, 5*rad, top-pz, [0,0,20]])  cylinder(h = pbz+pz, r = ir);// main axle
   trr([wpr, 3.5*rad-px, top])      cube([cw, sod-2.5*rad+px, pbz]);  // main block
   trr([wpr, 2*rad-px+f, high-fz])  cube([cw, 3*rad+px-2*f, fz]);     // fill block
   trr([wpr, 3*rad-px+(0.25-cy), high-cz])  cube([cw, cy, cz]);       // long rod
@@ -319,7 +319,7 @@ function rrz(w=0, s=0, a=-90, cy=rad, cx=0) = [w, s, 0, [0, 0, a, [cx, cy, 0]]];
 // 6: fwall & rwall (print orientation)
 // 7: fwall only (print orientation)
 // 8: four pins
-loc = 6;
+loc = 8;
 
 swx = wide - sod - rad;
 dx0 = wide-sod-rad-sep; // align rwall @ x=0
@@ -349,5 +349,5 @@ atrans(loc, [[0,0,0], undef, 1,1,1,1,1,1, 0])
 dup([10, 0, 0])
 dup([10, 0, 0])
 dup([10, 0, 0])
-trr([wide-sod, -(pbz+lz), pr-f/2, [90, 90, 0]])
+trr([wide-sod, -(pbz+lz), pr-f, [90, 90, 0]])
  trr([-wide,  0, -high]) pinInsert();
