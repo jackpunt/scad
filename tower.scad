@@ -18,7 +18,7 @@ hr = rad * .6;
 dr = rad * .4;
 sep = 0.2;   // (cone-socket) separation of hinges (also the z-axis sep)
 sap = 0.2;   // separation of wall & hinge
-sod = 4*rad+sap; // standoff distance (l&r: x-dist, f&b: y-dist of standofff)
+sod = 4*rad+sap; // standoff distance (l&r: x-dist, f&b: y-dist of standoff) + gap so fold flat
 dw = rad+3.2;  // inset of hole for flap (final flap may be narrower)
 
 dieSize = 12;
@@ -204,9 +204,9 @@ module gateStop(dw=rad, z = gateH-10) {
 }
 
 // flap heights: 
-fz0 = 35;
-fz1 = 72;
-fz2 = 95; // high - f2-2*rad
+fz0 = 35; // back - top
+fz1 = 72; // front - middle
+fz2 = 95; // back - bottom: high - fz1-2*rad
 $fn=30;   // high res cylinders
 
 pr = hr;     // pin hole radius
@@ -323,24 +323,21 @@ function rrz(w=0, s=0, a=-90, cy=rad, cx=0) = [w, s, 0, [0, 0, a, [cx, cy, 0]]];
 loc = 0;
 dimple = false;
 
-swx = wide - sod - rad;
-dx0 = wide-sod-rad-sap; // align rwall @ x=0
-dxp = 2*wide-sod+sap;   // align lwall to right
-print  = [swx-sap, 0, 0, [90, 0, 0]];
-print2 = [swx+wide+swx+3*rad, 0, 0, [90, 0, 0]];
+dx0 = wide+rad -sod; // -(wide+rad); // 
+print1  = [dx0, 0, 0, [90, 0, 0]];
+print2 = adif(print1, [-2*(wide-rad), 0, 0]); // dx0 + (2*(wide+rad)-sod+sap)
 
-print2a = adif(print, [-dxp, 0, 0]);
-up = [0,0,0];
-up2    = adif(up,    [-(2*wide+sap    ), 0, 0]);
+up1 = [dx0,0,0];
+up2 = adif(up1, [-(2*wide+sap), 0, 0]);
 
-atrans(loc, [print, up, 1, rrz(-sap, 0, -90), 3, undef, 0])
+atrans(loc, [print1, up1, 1, rrz(-sap, 0, -90), 3, undef, 0])
 rwall(); 
-atrans(loc, [print, up, 1, rrz(0, 0, 0), 3, undef, 0, 0])
+atrans(loc, [print1, up1, 1, rrz(0, 0, 0), 3, undef, 0, 0])
 fwall();
 
-atrans(loc, [print2, up2, rrz(sod, sod, 180), rrz(wide, wide, 90), undef, 0])
+atrans(loc, [print2, up2, rrz(dx0+sod, sod, 180), rrz(wide, wide, 90), undef, 0])
 lwall();
-atrans(loc, [print2, up2, rrz(sod, sod, 180), rrz(wide, wide-sod, 180, 3*rad), 3, 0])
+atrans(loc, [print2, up2, rrz(dx0+sod, sod, 180), rrz(wide, wide-sod, 180, 3*rad), 3, 0])
 bwall();
 
 d = -1;  // animation displacement of grey die:
@@ -348,8 +345,8 @@ atrans(loc, [undef, 0, 0, 0, [0, d, -d-2]] )
   die([wide/2, wide/2, fz1-6.2, [70, 45, 0]], 15, "grey");
 
 atrans(loc, [[0,0,0], undef, 1,1,1,1,1,1, 0])
-dup([10, 0, 0])
-dup([10, 0, 0])
-dup([10, 0, 0])
-trr([wide-sod, -(pbz+pz), pr-f, [90, 90, 0]])
- trr([-wide,  0, -high]) pinInsert();
+dup([sod, 0, 0])
+dup([sod, 0, 0])
+dup([sod, 0, 0])
+trr([dx0, 0, pr-f, [90, 90, 0]]) // in the cutout, z=0
+ trr([-wide,  0, pz+pbz-high]) pinInsert();
