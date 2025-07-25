@@ -376,10 +376,14 @@ module roundedTube(sxy = 10, r = 2, k = 0, txyz = t0) {
     roundedTube([ 40, 40, 8 ], [ 15, 4, 2, 2 ], -15, 1);
 
 // in XY plane; endcaps for a roundedTube
-module divXY(xyz = 10, r = 2, k, t = t0) {
+// xyz: [dx, dy, dz] (10) x,y size; dz translate
+// r: [r,r,r,r] (2)
+// k: kut
+// t: z-axis extrusion
+module divXY(xyz = 10, r = 2, k, tz = t0) {
   dz = is_undef(xyz.z) ? 0 : xyz.z;
   translate([ 0, 0, dz ])    //
-      linear_extrude(height = t) //
+      linear_extrude(height = tz) //
       roundedRect([ xyz.x, xyz.y ], r, k);
 }
 
@@ -389,24 +393,28 @@ module divXY(xyz = 10, r = 2, k, t = t0) {
 // k: (0) k<0 cut k from top; k>0 cut k from bottom (keep top)
 // - k == 0 --> keep all
 // t: thick (dx = t0)
-module div(zyx = 10, r = 2, k, t = t0) {
+module div(zyx = 10, r = 2, k, tx = t0) {
   dx = is_undef(zyx[2]) ? 0 : zyx[2];
-  translate([ dx + t, 0, 0 ])    //
+  translate([ dx + tx, 0, 0 ])    //
       rotate([ 0, -90 ])         //
-      linear_extrude(height = t) //
+      linear_extrude(height = tx) //
       roundedRect([ zyx[0], zyx[1] ], r, k);
 }
 
 // on the XZ plane, displaced by y
 // zxy -> z-height, x-width, y-translation
 // t: thickness of extrusion
-module divXZ(zxy = 10, r = 2, k, t = t0) {
+// zyx: [dz, dy, dx] (10) z,y size; dx translate
+// r: [r,r,r,r] (2)
+// k: kut
+// t: z-axis extrusion
+module divXZ(zxy = 10, r = 2, k, ty = t0) {
   dy = is_undef(zxy[2]) ? 0 : zxy[2];
-  translate([ zxy[1], dy + t, 0 ])    //
+  translate([ zxy[1], dy + ty, 0 ])    //
       translate([zxy[2], 0, 0])
       rotate([ 90, 0, 0 ])       //
       rotate([ 0, 0, 90 ])       //
-      linear_extrude(height = t) //
+      linear_extrude(height = ty) //
       roundedRect([ zxy[0], zxy[1] ], r, k);
 }
 

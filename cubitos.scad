@@ -168,15 +168,15 @@ module lid(loc = loc, h = h0, w = w0, lt = lt, rt = rt, ang = ang ) {
   // czz: cut slot for card depth (so: czz > t01 sleeved-card thickness)
   // cz: extent of 'hook' in z dir; beyond czz; (overhang when printing!)
   // cx: extent of 'hook' in x dir
-  module clip(czz = t01+.9, cz = 1, cx = ty+2*tcg+.5) {
-    dc = 0; // cut a bit wider than card
-    lh0 = cl;
+  module clip(czz = t01+.9, cz = 1, cx = ty+2*tcg+.3) {
+    dc = -.5; // cut a bit wider than card
+    lh0 = (cl+2) - cl; // align with hole
     // cl: length of clip along the lid; w0 = tl-2*ty-2*tcg; lid-width: bw = w0+2*tcg; bw = tl - 2*ty; tl = bw+2*ty
     differenceN(1) 
     {
       trr([0 -ty, lh0  , -p ]) cube([bw+2*ty, cl,    czz+cz+lt], false); // base clip
       trr([cx-ty, lh0-p, lt]) cube([bw+2*ty-2*cx, cl+pp, czz+cz+pp], false); // cut center
-      trr([0 -dc, lh0-czz*.6, -czz*2.5, [90,0,0,[0,czz,cl]]]) divXY([bw+2*dc, czz*4, 0+pp], czz*1.5, undef, cl*1.3);
+      trr([0 -dc, lh0+1.8-(2), -czz*1.8+lt/2]) divXZ([czz*3.6, bw+2*dc, 0+pp], czz*1.3, 2, cl*1.1);
     }
   }
 
@@ -206,8 +206,8 @@ module lid(loc = loc, h = h0, w = w0, lt = lt, rt = rt, ang = ang ) {
   }
 }
 ce = 0;     // clip offset
-cl = 2.7;   // clip length
-cf = .155;  // empirical fudge for clip/hole (reduce friction b/c not square inside corner)
+cl = 4;     // clip length
+cf = .185;   // empirical fudge for clip/hole (reduce friction b/c not square inside corner)
 ch = ce + cl + cf; // hole length for clip
 chd = 2;    // under cut (over close lid)
 
@@ -239,7 +239,7 @@ module trayAndLid(loc=loc) {
       // hole for front clip: .2 overcut
       *trr([-p, th-ch+p, ht-(lt + chd)+pp ]) cube([tl+pp, ch+pp, lt + chd], false);
       // hole for lid clip:  (end of lid: h0+1.9)
-      trr([0-p, h0+1.9-2*cl-cf+p  , ht-sz+pp ]) cube([tl+pp, 2*cl+cf+pp, sz+pp], false); // base clip
+      trr([0-p, h0+1.9-(cl+2)-cf+p  , ht-sz+pp ]) cube([tl+pp, (cl+2)+cf+pp, sz+pp], false); // base clip
     }
     trr([ 0, hy, zh, [0,  90, 0]]) hinge(dz, hr, dr, mnt0, sep );
     trr([tl, hy, zh, [0, -90, 0]]) hinge(dz, hr, dr, mnt1, sep );
@@ -302,7 +302,7 @@ lidtrans = [
     [0, 0, 0], 
     0, 
     [0, 0, 0, [ang, 0, 0, ar]], 
-    [0, 0, 0, [-90.0, 0, 0, ar]], 
+    [0, 0, 0, [-90, 0, 0, ar]], 
     undef, 
     [0, 0, 0, [ang, 0, 0, ar]], 
     [0, 0, 0, [85, 0, 0, ar]],
