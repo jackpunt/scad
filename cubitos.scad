@@ -8,7 +8,7 @@ f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
-sample = true;
+sample = false;
 
 // box size and placement constraint (3x4 grid in square box)
 wmax = 285/4;    // 95 (w0 < wmax)
@@ -156,7 +156,7 @@ module partsGrid(bw, bh, snr=[5, 10, 20]) {
 // rt: radius [total] of hinge (hr + dr = 3)
 // ang: angle to block rotation
 // zh: ambient z-coord of hinge
-module lid(loc = loc, h = h0, w = w0, lt = lt, rt = hr + dr, ang = ang ) {
+module lid(loc = loc, h = h0, w = w0, lt = lt, rt = rt, ang = ang ) {
   et = -1.4;// .6;    // extend length of lid to reach end of tray
   ym = zd + rt + sep; // push out to clear (zd + rt + sep = 7.3)
   xm = hh + sep - ty;        // from exterior to inner ball; sep = .2, th = 1.2 !
@@ -170,28 +170,23 @@ module lid(loc = loc, h = h0, w = w0, lt = lt, rt = hr + dr, ang = ang ) {
   // cx: extent of 'hook' in x dir
   module clip(czz = t01+.9, cz = 1, cx = ty+2*tcg+.5) {
     dc = 0; // cut a bit wider than card
-    lh0 = lh/4;
+    lh0 = cl;
     // cl: length of clip along the lid; w0 = tl-2*ty-2*tcg; lid-width: bw = w0+2*tcg; bw = tl - 2*ty; tl = bw+2*ty
     differenceN(1) 
     {
-      trr([0 -ty, lh0  , 0 ]) cube([bw+2*ty, cl,    czz+cz+lt], false); // base clip
+      trr([0 -ty, lh0  , -p ]) cube([bw+2*ty, cl,    czz+cz+lt], false); // base clip
       trr([cx-ty, lh0-p, lt]) cube([bw+2*ty-2*cx, cl+pp, czz+cz+pp], false); // cut center
-      differenceN(1) 
-      {
-      trr([ -dc, lh0-p, lt]) cube([bw+2*dc, cl+pp, czz*1.2   ], false); // cut card slot
-      trr([bw,lh0,lt+.3, [0, -30, 180, [0, cl/2, 0]]]) cube([czz+2*cz, cl, czz]);
-      trr([ 0,lh0,lt+.3, [0, -35, 0]]) cube([czz+2*cz, cl, czz]);
-      }
+      trr([0 -dc, lh0-czz*.6, -czz*2.5, [90,0,0,[0,czz,cl]]]) divXY([bw+2*dc, czz*4, 0+pp], czz*1.5, undef, cl*1.3);
     }
   }
 
   // offset from tray: (hy & zd are both 4.1; zh = (15-4.1) = 11.9)
   trr([ty, -zh -lhh, 0]) {
     trr([0, -ym, 0])
-    differenceN(3)
+    differenceN(2)
     {
       color ("green") cube([w, lh, lt]);                // base lid
-      trr([-ty, ce, 0 ]) cube([tl, cl, lt], false);    // clips
+      // trr([-ty, ce, 0 ]) cube([tl, cl, lt], false);    // clips
       clip();
       partsGrid(w, lh, w > 60 ? [8, 6, 5]: [8, 2, 2]); // perforation
     }
@@ -227,7 +222,9 @@ module trayAndLid(loc=loc) {
 
   mnt0 = [hr, -90, 0, 0];
   mnt1 = [hr,  90, 0, 0];
-  sep = .2;
+  sep = .2; et = -1.4;
+  lh0 = 0;//(h0 - (zd + rt + sep) + et)/4;
+  sz = t01+.9 + 1 + lt + f;  //lt+chd;// 
   rotate([90, 0, 0])
   {
     differenceN(1) {
@@ -239,8 +236,10 @@ module trayAndLid(loc=loc) {
       trr([ty-p, -pp, zh - cc + zd ]) cube([tl-2*ty+pp, 2*tw + 2*pp, cc + pp]);
       // front edge: extra space because lid may warp down
       trr([ty, bh-tw, ht-kz+pp ]) cube([tl-2*ty, 2*tw, kz], false);
-      // hole for clip: .2 overcut
-      trr([-p, th-ch+p, ht-(lt + chd)+pp ]) cube([tl+pp, ch+pp, lt + chd], false);
+      // hole for front clip: .2 overcut
+      *trr([-p, th-ch+p, ht-(lt + chd)+pp ]) cube([tl+pp, ch+pp, lt + chd], false);
+      // hole for lid clip:  (end of lid: h0+1.9)
+      trr([0-p, h0+1.9-2*cl-cf+p  , ht-sz+pp ]) cube([tl+pp, 2*cl+cf+pp, sz+pp], false); // base clip
     }
     trr([ 0, hy, zh, [0,  90, 0]]) hinge(dz, hr, dr, mnt0, sep );
     trr([tl, hy, zh, [0, -90, 0]]) hinge(dz, hr, dr, mnt1, sep );
@@ -285,7 +284,8 @@ zt = ht+rs;// z-extent before kut
 
 hh = 3;    // hinge height for each of socket and ball
 hr = 1.5;  // hinge radius (cone)
-dr = 1.5;  // hinge thickness (around cone) radius total: rt = hr + dr
+dr = 1.5;  // hinge thickness (around cone) radius total: 
+rt = hr + dr;
 hy = 4.1;  // hinge z (pre rotation, the y-coord of axle)
 sep = .2;
 
@@ -341,7 +341,7 @@ differenceN(1,1) {
     cube([bw+2*tw, 8, ht + vbd + 4*ty]); // cutaway view
 }
 
-loc = 1;
+loc = 0;
 
 // 0: print
 // 1: view w/dice & card @ 90
