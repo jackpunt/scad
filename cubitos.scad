@@ -176,8 +176,12 @@ module lid(loc = loc, h = h0, w = w0, lt = lt, rt = hr + dr, ang = ang ) {
     {
       trr([0 -ty, lh0  , 0 ]) cube([bw+2*ty, cl,    czz+cz+lt], false); // base clip
       trr([cx-ty, lh0-p, lt]) cube([bw+2*ty-2*cx, cl+pp, czz+cz+pp], false); // cut center
-      trr([1 -dc, lh0-p, lt]) cube([bw+2*dc-1.8, cl+pp, czz   ], false); // cut card slot
-      trr([0 -dc, lh0-p, lt]) cube([bw+2*dc, cl+pp, czz/2      ], false); // cut card slot
+      differenceN(1) 
+      {
+      trr([ -dc, lh0-p, lt]) cube([bw+2*dc, cl+pp, czz*1.2   ], false); // cut card slot
+      trr([bw,lh0,lt+.3, [0, -30, 180, [0, cl/2, 0]]]) cube([czz+2*cz, cl, czz]);
+      trr([ 0,lh0,lt+.3, [0, -35, 0]]) cube([czz+2*cz, cl, czz]);
+      }
     }
   }
 
@@ -337,7 +341,7 @@ differenceN(1,1) {
     cube([bw+2*tw, 8, ht + vbd + 4*ty]); // cutaway view
 }
 
-loc = 0;
+loc = 1;
 
 // 0: print
 // 1: view w/dice & card @ 90
