@@ -8,7 +8,7 @@ f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
-sample = false;
+sample = true;
 
 // box size and placement constraint (3x4 grid in square box)
 wmax = 285/4;    // 95 (w0 < wmax)
@@ -28,7 +28,9 @@ h0 = h00+3.0;
 bt = 10 * t01 + 2 * t0; //
 
 
-// a stack of cyan cards (on lid)
+// a stack of cyan cards (on lid) - pro'ly from chaos orientation; BYO 'tr'
+// tr: offset card 
+// x: short dim of card (h00); y: long dim of card (w00); z: thickness (t00)
 module card(tr = [ tw +  (h0 - h00) / 2, ty + tcg + (w0 - w00) / 2, -tz ], n = 1, dxyz=[h00, w00, t00], rgb="cyan")
 {
   trr(tr) astack(n, [ 0, 0, t01 ]) color(rgb, .5) roundedCube(dxyz, 3, true);
@@ -150,11 +152,11 @@ module partsGrid(bw, bh, snr=[5, 10, 20]) {
 
 // h: height of lid (h0)
 // w: width of a card (w0)
-// t: thickness of lid (2)
+// lt: thickness of lid (lt)
 // rt: radius [total] of hinge (hr + dr = 3)
 // ang: angle to block rotation
 // zh: ambient z-coord of hinge
-module lid(loc = loc, h = h0, w = w0, t = 2, rt = hr + dr, ang = ang ) {
+module lid(loc = loc, h = h0, w = w0, lt = lt, rt = hr + dr, ang = ang ) {
   et = -1.4;// .6;    // extend length of lid to reach end of tray
   ym = zd + rt + sep; // push out to clear (zd + rt + sep = 7.3)
   xm = hh + sep - ty;        // from exterior to inner ball; sep = .2, th = 1.2 !
@@ -163,19 +165,36 @@ module lid(loc = loc, h = h0, w = w0, t = 2, rt = hr + dr, ang = ang ) {
   fl = (rt+.5)/2;             // feet length/2
   lhh = lh - 3 + .3;         // TODO: correct formula for '2.7' axis of hinge; zh = 11.9
   echo("lid: [zh, rt, ht, sep, wxm, xm, ym, lh, lhh] =", [zh, rt, ht, sep, wxm, xm, ym, lh, lhh]);
+  // czz: cut slot for card depth (so: czz > t01 sleeved-card thickness)
+  // cz: extent of 'hook' in z dir; beyond czz; (overhang when printing!)
+  // cx: extent of 'hook' in x dir
+  module clip(czz = t01+.9, cz = 1, cx = ty+2*tcg+.5) {
+    dc = 0; // cut a bit wider than card
+    lh0 = lh/4;
+    // cl: length of clip along the lid; w0 = tl-2*ty-2*tcg; lid-width: bw = w0+2*tcg; bw = tl - 2*ty; tl = bw+2*ty
+    differenceN(1) 
+    {
+      trr([0 -ty, lh0  , 0 ]) cube([bw+2*ty, cl,    czz+cz+lt], false); // base clip
+      trr([cx-ty, lh0-p, lt]) cube([bw+2*ty-2*cx, cl+pp, czz+cz+pp], false); // cut center
+      trr([1 -dc, lh0-p, lt]) cube([bw+2*dc-1.8, cl+pp, czz   ], false); // cut card slot
+      trr([0 -dc, lh0-p, lt]) cube([bw+2*dc, cl+pp, czz/2      ], false); // cut card slot
+    }
+  }
 
   // offset from tray: (hy & zd are both 4.1; zh = (15-4.1) = 11.9)
   trr([ty, -zh -lhh, 0]) {
     trr([0, -ym, 0])
-    differenceN(2)
+    differenceN(3)
     {
-      color ("green") cube([w, lh, t]);                // base lid
-      trr([-ty, ce-pp, 0-pp ]) cube([tl, cl-p, t], false);    // clips
+      color ("green") cube([w, lh, lt]);                // base lid
+      trr([-ty, ce, 0 ]) cube([tl, cl, lt], false);    // clips
+      clip();
       partsGrid(w, lh, w > 60 ? [8, 6, 5]: [8, 2, 2]); // perforation
     }
+
     // hinge connection & "tray"
     differenceN(4) {
-      trr([xm, lh-ym, 0])  cube([wxm, ym-hr, t*1], false); // tang (extend to support angle block)
+      trr([xm, lh-ym, 0])  cube([wxm, ym-hr, lt], false); // tang (extend to support angle block)
       trr([xm, lh-rt, dr+3, [-90-ang,0,0]]) trr([0,.22,.42]) cube([wxm, 2*rt, 1*rt], false); // angle block
       trr([w/2, lh-rt, dr+3, [50,0,0]]) trr([0,0,fl]) cube([wxm, 1.5*dr, 2*fl], true); // feet
       trr([w/2, lhh, hy, [0, 90, 0]]) cylinder(wxm, rt, rt, $fn=30, center = true); // cyl block
@@ -183,8 +202,8 @@ module lid(loc = loc, h = h0, w = w0, t = 2, rt = hr + dr, ang = ang ) {
       trr([w/2, lh-ym/2+p, 7]) cube([bwc, 16, 18], true); // cut center of blocks & tang
       trr([w/2, lh-ym, -2 -p]) cube([tl, ym * 2, 4], true); // cut bottom of ang block 
     }
-  atrans(loc, [undef, [0, 0, 2, [2, 0, 0]], 1]) // tilt 2-degrees
-    card([(bw-w0)/2, zd-ht, t01], 1, [w0, h0, t01]);//lh/2-ym+rt -w0/2
+  atrans(loc, [undef, [0, 0, 2, [0, 0, 0]], 1]) // tilt 2-degrees
+    card([(bw-w0)/2, zd-ht, 0], 1, [w0, h0, t01]);//lh/2-ym+rt -w0/2
   }
 }
 ce = 0;     // clip offset
@@ -226,7 +245,7 @@ module trayAndLid(loc=loc) {
       trr([tl/2+p, by/2 +p + tw, bz/2]) cube([bwc+pp, by+pp, bz+pp], true); // back wall cut
     }
     color("red") 
-    for (x=[0: (dieSize+2.8) : bw*.4]) {
+    for (x = [0: (dieSize+2.8) : bw*.4]) {
       trr([bw/2+x, tw, tz-pp]) cube([ty, bh-rs+6, 1.2]);
       trr([bw/2-x, tw, tz-pp]) cube([ty, bh-rs+6, 1.2]);
       atrans(loc, [undef, [0,0,0],1,1,0,0,1])
@@ -243,7 +262,7 @@ module trayAndLid(loc=loc) {
 tw = 1.4;   // thickness of tray back wall (in print z-coord); tray-x
 ty = 1.1; // thickness of walls, tray endcap (in print y-coord);
 tz = 1;   // thickness of tray bottom 
-tcg = sample ?  .1 : (95-w0-2*ty)/2;  // inset for cardguide
+tcg = sample ?  1.15 : (95-w0-2*ty)/2;  // inset for cardguide (bw+2*ty NTE tl = 95)
 bw = w0 + 2 * tcg; // interior width of box (y-extent @ loc = 2)
 bwc = bw * .7;  // center cut (backwall, hinge)
 ot = .5;       // vbox extends over card. still fit upright in 70mm packing box
@@ -254,7 +273,7 @@ vbd = 6;   // 11.5 * t01; 3 * (ht+vbd) = 66; fits beside maps!
 lt = 1.8;   // lid thickness
 
 tt = 1;    // tw or tz
-tl = w0 + 2 * ty + 2 * tcg; // total y-length (width of card + ty + tcg)
+tl = bw + 2 * ty; // total y-length: box & lid (width of card + 2*ty + 2*tcg)
 
 ht = dieSize + .6 + tz + lt;   // height of tray
 rs = 18;   // radius of scoop
@@ -319,3 +338,12 @@ differenceN(1,1) {
 }
 
 loc = 0;
+
+// 0: print
+// 1: view w/dice & card @ 90
+// 2: view w/dice & card @-25
+// 3: view w/dice & lid  @ 0
+// 4: print - no lid 
+// 5: print - lid open?
+// 6: view w/dice & lid @ -90
+// 7: view - no lid

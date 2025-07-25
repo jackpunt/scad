@@ -120,6 +120,16 @@ module lidTray(len = xs, wid = ys, h = high+tz-6, dx = dxs, dy = dys) {
     box([len+dx, wid+dy, h], [tw, tw, tz] );
   }
 }
+
+// 0: all
+// binary: [4: lid, 2: base, 1: parts]
+// 1: 2 partsTrays
+// 2: baseTray
+// 3: parts in baseTray
+// 4: lidTray?
+// 5: parts in lid
+// 6: base in lid
+// 7: parts in lid in base
 echo("parts trays: [xs, ys, tw, tz, high]", [xs, ys, tw, tz, high]);
 loc = 0;
 atrans(loc, [[0,0,0], [0,0,0], undef, 1, undef, 1, 2, 1 ]) {
