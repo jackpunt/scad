@@ -174,8 +174,8 @@ module lid(loc = loc, h = h0, w = w0, lt = lt, rt = rt, ang = ang ) {
     // cl: length of clip along the lid; w0 = tl-2*ty-2*tcg; lid-width: bw = w0+2*tcg; bw = tl - 2*ty; tl = bw+2*ty
     differenceN(1) 
     {
-      trr([0 -ty, lh0  , -p ]) cube([bw+2*ty, cl,    czz+cz+lt], false); // base clip
-      trr([cx-ty, lh0-p, lt]) cube([bw+2*ty-2*cx, cl+pp, czz+cz+pp], false); // cut center
+      trr([0 -ty, lh0  ,   -p]) cube([bw+2*ty,  cl,        czz+cz+lt], false); // base clip
+      trr([cx-ty, lh0-p, lt-p]) cube([bw+2*ty-2*cx, cl+pp, czz+cz+pp], false); // cut center
       trr([0 -dc, lh0+1.8-(2), -czz*1.8+lt/2]) divXZ([czz*3.6, bw+2*dc, 0+pp], czz*1.3, 2, cl*1.1);
     }
   }
