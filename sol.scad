@@ -7,7 +7,6 @@ t0 = 1.6;           // wall thickness of box
 f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
-pb0 = t0 + 2;        // thickness of bottom of parts boxes, for inset
 
 tf = t0/2;           // slack between part boxes
 
@@ -36,12 +35,15 @@ cbf = 2.5;                // slack on side of cards
 cbz = hmax - docz;        // height
 cbw = w0 + cbf + 2 * t0;  // outer width of long box [93 + 2*t0 = ~95.4]
 cbl = wmax  - tf;        // outer length
-tilt = asin((2 * cbz - pb0) / (cbw)); // ~ 57 degrees: asin(56/66)
+divx = w0 + 1;
+opp = cbz - t0;// cbz - t0; 
+hyp = divx;
+tilt = asin(opp/hyp); // ~ 38 degrees
 //
 // parts box: 250/4 X (250 - cbw)
 pbw = wmax/4 - tf;
 pbl = wmax - cbw - tf;   // 
-pbz = (cbz + pb0) / 2;    // pb0 overlap
+pbz = cbz / 2;           //
 //
 hcz =   6;        // hold-cards stack z 
 hcy = 100;
@@ -56,19 +58,29 @@ mtw = pbl - hcy - tf;    // hcy hold-card length (y-axis)
 etz = cbz - pbz - hcz;  
 etl = mtl / 2 - tf;       // x-axis
 etw = pbl - mtw - tf; // y-axiz
-echo("[etl, etw, etz]", [etl, etw, etz], pbl, mtw);
+echo("[etl, etw, etz]", [etl, etw, etz], opp, hyp, tilt);
 
 // diva: y-angle of divs
-// divx: offsets to each div
-module cardBox(diva, divx = [0, 10, 20], t0 = t0) {
-  ndiv = len(divx);
+module cardBox(diva, ndiv=1, s0 = t0, t0 = t0) {
+  cdz = sin(diva) * divx;
+  dx = (cbl-cdz-t0/cos(diva)) / (ndiv+1);
+  differenceN() { 
+  union()  {
   box([cbl, cbw, cbz], t0);
-  // for (i = [0 : ndiv-1]) {
-  //   trr([divx[i], 0, 0, [0, diva, 0]])
-  //   cube([mtz, mtw, t0]);
-  // }
+  for (i = [1 : ndiv]) {
+    trr([t0 + i * dx, 0, 0, [0, 90-diva, 0, [s0, 0, 0]]])
+    slotify2([divx, cbw/2, 2*s0], [s0/2, cbw/2, divx*.7], undef, 4, false)
+    {
+      cube([s0+pp, cbw, divx-s0]);
+    }
+  }
+  }
+    trr([cbl-t0-p, t0, t0-p]) cube([max(s0, t0)+pp, cbw-2*t0, cbz+pp]);
+    // trr([cbl-0-p, -p, t0-p]) cube([max(s0, t0)+pp, cbw+pp, cbz+pp]);
+  }
 }
-module partsBox(t0 = t0) {
+module partsBox(t0 = t0, color = undef) {
+  color(color)
   box([pbw, pbl, pbz], t0);
 }
 
@@ -80,18 +92,36 @@ module energyTray(t0 = t0) {
   box([etl, etw, etz], t0);
 }
 
+z2 = pbz + .1;  // slight raise for visibility
+x2 = cbl + tf;  // offset x when z == 0
+
+// loc = 0: assembled view
+// loc = 1: all at z=0;
+// (if you have 250 mm plate!) 
+// loc = 2: print 1 
+// loc = 3: print 2
 loc = 0;
-echo("cards");
-atrans(loc, [[tf/2, tf/2, 0], 0]) { trr([0, 0, 0]) cardBox(tilt); }
-echo("parts");
-atrans(loc, [[tf/2, cbw + tf, 0], 0]) { 
+
+echo("cardBox");
+atrans(loc, [[0, 0, 0], 0, 0, undef]) { 
+  trr([0, 0, 0]) cardBox(tilt, 10, 3); 
+}
+
+echo("partBox");
+// optional colors:
+colors = ["lightblue", "silver", "purple", "lightgreen", "grey"];
+atrans(loc, [[0, cbw, 0], 0, 0, undef]) { 
   for (i = [0 : 3]) 
-  trr([i * (pbw+tf), 0, 0]) partsBox(); 
-  trr([3 * (pbw+tf), 0, pbz-pb0]) partsBox();
-  }
+  trr([i * (pbw+tf), 0, 0]) partsBox(t0, colors[i]); 
+}
+atrans(loc, [[0, cbw, z2], [x2, cbw + tf, 0], undef, 1]) { 
+   partsBox(t0, colors[4]);
+}
+
 echo("markerTray");
-atrans(loc, [[tf/2, cbw + tf, pbz+.1], 0]) { markerTray(); }
+atrans(loc, [[tf + pbw, cbw, z2], [x2 + pbw + tf, cbw + tf, 0], undef, 1]) { markerTray(); }
+
 echo("energyTray");
-atrans(loc, [[tf/2, cbw + tf + mtw + tf, pbz+.1], 0]) { 
-  for (i = [0 : 1]) trr([i * (etl+ tf), 0, 0]) color("grey") energyTray(); 
+atrans(loc, [[tf + pbw, cbw + mtw + tf, z2], [x2 + pbw + tf, cbw + tf + mtw + tf, 0], undef, 1]) { 
+  for (i = [0 : 1]) trr([i * (etl+ tf), 0, 0]) color("darkgrey") energyTray(); 
 }
