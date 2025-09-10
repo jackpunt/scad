@@ -65,22 +65,24 @@ etw = pbl - mtw - tf; // y-axiz
 // diva: y-angle of divs
 // 30 Effect cards, 13 of each Instability X 7
 module cardBox(diva, ndiv=1, s0 = t0, t0 = t0) {
-  cdx = sin(diva) * divx; // dx per card slot
-  dx = (cbl-cdx-2*t0-s0*1.5) / (ndiv+1);
+  cdx = sin(diva) * divx+s0; // dx per card slot
+      dx = (cbl-cdx-t0-s0*1.5) / (ndiv+1);
   echo ("cbz=", cbz, "dx = ", dx, "dxa=", dx * cos(diva) ); // confirm: dxa >> 13 * t01
-  differenceN() { 
-  union()  {
-  box([cbl, cbw, cbz], t0);
-  for (i = [1 : ndiv]) {
-    trr([t0 + i * dx, 0, 0, [0, 90-diva, 0, [s0, 0, 0]]])
-    slotify2([divx, cbw/2, 2*s0], [s0/2, cbw/2, divx*.7], undef, 4, false)
-    {
-      cube([s0+pp, cbw, divx-s0]);
+  differenceN(2) 
+  {
+    difference() { 
+      box([cbl, cbw, cbz], t0); // remove end of box:
+      trr([cbl-t0-p, t0, t0-p]) cube([max(s0, t0)+pp, cbw-2*t0, cbz+pp]); 
     }
-  }
-  }
-    trr([cbl-t0-p, t0, t0-p]) cube([max(s0, t0)+pp, cbw-2*t0, cbz+pp]);
-    // trr([cbl-0-p, -p, t0-p]) cube([max(s0, t0)+pp, cbw+pp, cbz+pp]);
+    union() {
+      for (i = [1 : ndiv]) {
+        trr([t0 + i * dx, 0, 0, [0, 90-diva, 0, [s0, 0, 0]]])
+        slotify2([divx, cbw/2, 2*s0], [s0/2, cbw/2, divx*.7], undef, 4, false)
+        trr([0,p,0]) cube([s0+pp, cbw-pp, divx]);
+      }
+    }
+    trr([cbl, 0, 0]) cube([4*max(s0, t0), cbw, cbz+p]); // remove x-axis overshoot
+    trr([0, 0, cbz]) cube([4*max(s0, t0)+cbl, cbw, s0]); // remove z-axis overshoot
   }
 }
 module partsBox(t0 = t0, color = undef) {
@@ -111,21 +113,20 @@ atrans(loc, [[0, 0, 0], 0, 0, undef]) {
   trr([0, 0, 0]) cardBox(tilt, 10, 2.5); 
 }
 
-echo("partBox");
-// optional colors:
+echo("partBox");   // optional colors:
 colors = ["lightblue", "silver", "purple", "lightgreen", "grey"];
-atrans(loc, [[0, cbw, 0], 0, 0, undef]) { 
+atrans(loc, [[0, cbw+tf, 0], 0, 0, undef]) { 
   for (i = [0 : 3]) 
   trr([i * (pbw+tf), 0, 0]) partsBox(t0, colors[i]); 
 }
-atrans(loc, [[0, cbw, z2], [x2, cbw + tf, 0], undef, 1]) { 
+atrans(loc, [[0, cbw+tf, z2], [x2, cbw + tf, 0], undef, 1]) { 
    partsBox(t0, colors[4]);
 }
 
 echo("markerTray");
-atrans(loc, [[tf + pbw, cbw, z2], [x2 + pbw + tf, cbw + tf, 0], undef, 1]) { markerTray(); }
+atrans(loc, [[tf + pbw, cbw+tf, z2], [x2 + pbw + tf, cbw + tf, 0], undef, 1]) { markerTray(); }
 
 echo("energyTray");
-atrans(loc, [[tf + pbw, cbw + mtw + tf, z2], [x2 + pbw + tf, cbw + tf + mtw + tf, 0], undef, 1]) { 
+atrans(loc, [[tf + pbw, cbw + tf + mtw + tf, z2], [x2 + pbw + tf, cbw + tf + mtw + tf, 0], undef, 1]) { 
   for (i = [0 : 1]) trr([i * (etl+ tf), 0, 0]) color("darkgrey") energyTray(); 
 }
