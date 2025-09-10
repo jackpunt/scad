@@ -13,9 +13,10 @@ tf = t0/2;           // slack between part boxes
 sample = false;
 
 // box size and placement constraint (3x4 grid in square box)
-wmax = 250;    // box
-hmax =  74;    // box
-docz =  16;    // height of docs & map
+lmax = 210;    // limit to 250 box or plate size (220)
+wmax = 220;    // limit to 250 box or inset of box (210 is < plate size)
+zmax =  74;    // box
+docz = 16.5;    // height of docs & map
 
 w00 = sample ? 30 : 88;  // official card size [long dimension]
 h00 = sample ? 23 : 63;  // official card size [short dimension]
@@ -32,16 +33,16 @@ h0 = h00+3.0;
 
 // card box: outer size = (w00 + 5mm + 2 * t0) X 250 (full width of box) tilt the divs so only 64mm high
 cbf = 2.5;                // slack on side of cards
-cbz = hmax - docz;        // height
+cbz = zmax - docz;        // height
 cbw = w0 + cbf + 2 * t0;  // outer width of long box [93 + 2*t0 = ~95.4]
-cbl = wmax  - tf;        // outer length
+cbl = lmax - tf;          // outer length
 divx = w0 + 1;
 opp = cbz - t0;// cbz - t0; 
 hyp = divx;
 tilt = asin(opp/hyp); // ~ 38 degrees
 //
 // parts box: 250/4 X (250 - cbw)
-pbw = wmax/4 - tf;
+pbw = lmax/4 - tf;
 pbl = wmax - cbw - tf;   // 
 pbz = cbz / 2;           //
 //
@@ -51,19 +52,22 @@ hcx = 174;
 
 // marker tray
 mtz = cbz - pbz;
-mtl = wmax - pbw - 2* tf;         // 3 of 4 widths; pbx*3
-mtw = pbl - hcy - tf;    // hcy hold-card length (y-axis)
+mtl = lmax - pbw - 2 * tf;  // 3 of 4 widths; pbw*3
+mtw = pbl - hcy - tf;       // hcy hold-card length (y-axis)
+echo("mtw - 2*t0", mtw - 2*t0);
 
 // energy trays
 etz = cbz - pbz - hcz;  
 etl = mtl / 2 - tf;       // x-axis
 etw = pbl - mtw - tf; // y-axiz
-echo("[etl, etw, etz]", [etl, etw, etz], opp, hyp, tilt);
+// echo("[etl, etw, etz]", [etl, etw, etz], 13 * t01);
 
 // diva: y-angle of divs
+// 30 Effect cards, 13 of each Instability X 7
 module cardBox(diva, ndiv=1, s0 = t0, t0 = t0) {
-  cdz = sin(diva) * divx;
-  dx = (cbl-cdz-t0/cos(diva)) / (ndiv+1);
+  cdx = sin(diva) * divx; // dx per card slot
+  dx = (cbl-cdx-2*t0-s0*1.5) / (ndiv+1);
+  echo ("cbz=", cbz, "dx = ", dx, "dxa=", dx * cos(diva) ); // confirm: dxa >> 13 * t01
   differenceN() { 
   union()  {
   box([cbl, cbw, cbz], t0);
@@ -104,7 +108,7 @@ loc = 0;
 
 echo("cardBox");
 atrans(loc, [[0, 0, 0], 0, 0, undef]) { 
-  trr([0, 0, 0]) cardBox(tilt, 10, 3); 
+  trr([0, 0, 0]) cardBox(tilt, 10, 2.5); 
 }
 
 echo("partBox");
