@@ -13,8 +13,8 @@ tf = t0/2;           // slack between part boxes
 sample = false;
 
 // box size and placement constraint (3x4 grid in square box)
-lmax = 210;    // limit to 250 box or plate size (220)
-wmax = 220;    // limit to 250 box or inset of box (210 is < plate size)
+lmax = 250;    // limit to 250 box or plate size (220)
+wmax = 250;    // limit to 250 box or inset of box (210 is < plate size)
 zmax =  74;    // box
 docz = 16.5;    // height of docs & map
 
@@ -102,31 +102,31 @@ z2 = pbz + .1;  // slight raise for visibility
 x2 = cbl + tf;  // offset x when z == 0
 
 // loc = 0: assembled view
-// loc = 1: all at z=0;
-// (if you have 250 mm plate!) 
-// loc = 2: print 1 
-// loc = 3: print 2
-loc = 0;
+// loc = 1: print 1 
+// loc = 2: print 2
+// loc = 3: all at z=0;
+loc = 1;
 
 echo("cardBox");
-atrans(loc, [[0, 0, 0], 0, 0, undef]) { 
+atrans(loc, [[0, 0, 0], 0, undef, 0]) { 
   trr([0, 0, 0]) cardBox(tilt, 10, 2.5); 
 }
 
 echo("partBox");   // optional colors:
 colors = ["lightblue", "silver", "purple", "lightgreen", "grey"];
-atrans(loc, [[0, cbw+tf, 0], 0, 0, undef]) { 
+atrans(loc, [[0, cbw+tf, 0], 0, undef, 0]) { 
   for (i = [0 : 3]) 
   trr([i * (pbw+tf), 0, 0]) partsBox(t0, colors[i]); 
 }
-atrans(loc, [[0, cbw+tf, z2], [x2, cbw + tf, 0], undef, 1]) { 
+atrans(loc, [[0, cbw+tf, z2], undef, [x2, cbw + tf, 0], 2]) { 
    partsBox(t0, colors[4]);
 }
 
 echo("markerTray");
-atrans(loc, [[tf + pbw, cbw+tf, z2], [x2 + pbw + tf, cbw + tf, 0], undef, 1]) { markerTray(); }
+atrans(loc, [[tf + pbw, cbw+tf, z2], undef, [x2 + pbw + tf, cbw + tf, 0], 2]) { markerTray(); }
 
 echo("energyTray");
-atrans(loc, [[tf + pbw, cbw + tf + mtw + tf, z2], [x2 + pbw + tf, cbw + tf + mtw + tf, 0], undef, 1]) { 
+atrans(loc, [[tf + pbw, cbw + tf + mtw + tf, z2], undef, [x2 + pbw + tf, cbw + tf + mtw + tf, 0], 2]) { 
   for (i = [0 : 1]) trr([i * (etl+ tf), 0, 0]) color("darkgrey") energyTray(); 
+  // amazingly, the HTML color 'darkgrey' is lighter than 'grey'
 }
