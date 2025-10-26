@@ -45,8 +45,8 @@ module clipcut(xb, xt, y, z) {
   y0 = 1;
   z0 = 1;
   xl = xt-1;
-  dy = y<0 ? y+y0/2 : y-y0/2;
-  trr([0, dy, z+z0/2]) cube([xl, y0, z0],true);
+  dy = y<0 ? (y+y0) : (y-y0);
+  trr([0, dy/2, z+z0/2]) cube([xl, y0, z0],true);
 }
 
 x = 45; // total width
@@ -59,10 +59,10 @@ module block() {
   d1 = 3; // dia of slot
   sl = 11; // slot length (end to end)
   sx = 13; // slot x offset
-  ang = asin((z-z1)/((x-x1)/2));
+  // ang = asin((z-z1)/((x-x1)/2));
   difference() 
   {
-    trr([0,0,z/2]) cube([x-p, y-p, z-pp], true);
+    trr([0,0,z/2]) cube([x-p, y-p, z-p], true);
     dia1(x, y, z, x1, z1);
     dia1(-x, y, z, -x1, z1);
     dia2(x, y, z, x/2-10, 3);
@@ -70,9 +70,9 @@ module block() {
     trr([0, 0, z/2]) cylinder(h = z, r = d0/2, center = true);
     slot(z, d1, sl-d1, sx);
     slot(z, d1, sl-d1, -sx);
-    centercut(10, 8, y, z-7.5);
-    clipcut(10, 8, y/2, z-7.5);
-    clipcut(10, 8, -y/2, z-7.5);
+    centercut(10, 8,  y, z-7.5);
+    clipcut(  10, 8,  y, z-7.5);
+    clipcut(  10, 8, -y, z-7.5);
   }
 }
 
