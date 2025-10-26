@@ -12,10 +12,11 @@ module dia1(x, y, z, x1, z1) {
   linear_extrude(height = y, center = true) 
   polygon([[x1/2, z], [x/2, z1], [x/2, z]]);
 }
-module dia2(x, y, z, x2, z2) {
+module dia2(x, y, z, x2, z2, f=.3) {
+  xf = (x<0) ? (x/2+f) : (x/2-f);
   rotate(90, [1, 0, 0])
   linear_extrude(height = y, center = true) 
-  polygon([[x2, 0], [x/2, 0], [x2, z2]]);
+  polygon([[x2, 0], [xf, 0], [x2, z2]]);
 }
 module slot(z, d, len, x1=11) {
   $fs = .1;
@@ -66,7 +67,7 @@ module block() {
     dia1( x, y, z,  x1, z1);
     dia1(-x, y, z, -x1, z1);
     dia2( x, y, z,  (x/2-10), 3);
-    dia2(-x, y, z, -(x/2-10), 3);
+   # dia2(-x, y, z, -(x/2-10), 3);
     trr([0, 0, z/2]) cylinder(h = z, r = d0/2, center = true);
     slot(z, d1, sl-d1,  sx);
     slot(z, d1, sl-d1, -sx);
