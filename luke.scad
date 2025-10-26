@@ -63,12 +63,12 @@ module block() {
   difference() 
   {
     trr([0,0,z/2]) cube([x-p, y-p, z-p], true);
-    dia1(x, y, z, x1, z1);
+    dia1( x, y, z,  x1, z1);
     dia1(-x, y, z, -x1, z1);
-    dia2(x, y, z, x/2-10, 3);
+    dia2( x, y, z,  (x/2-10), 3);
     dia2(-x, y, z, -(x/2-10), 3);
     trr([0, 0, z/2]) cylinder(h = z, r = d0/2, center = true);
-    slot(z, d1, sl-d1, sx);
+    slot(z, d1, sl-d1,  sx);
     slot(z, d1, sl-d1, -sx);
     centercut(10, 8,  y, z-7.5);
     clipcut(  10, 8,  y, z-7.5);
