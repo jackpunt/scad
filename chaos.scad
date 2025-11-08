@@ -136,16 +136,16 @@ function sumi(ary, i = 0, t0 = t0) = (i > 0 ? (t0 + ary[i-1] + sumi(ary, i-1)) :
 function sumt(ary, i = 0, t0 = t0) = sumi(ary, i) + i * t0;
 
 // four trays stacked by dzz
-module fourTrays() {
+module fourTrays(loc = loc) {
   clr = selectNth(0, parts);
   dzz = selectNth(1, parts); // block size (delta-z in stack)
   crr = selectNth(2, parts);
   rzz = selectNth(3, parts); // k
   bzz = selectNth(4, parts); // box z (wall height)
-  aloc = [[1, 1], [0, 0], [1, 0], [0, 1]];
+  locs = [[1, 1], [0, 0], [1, 0], [0, 1]];
   for (i = [0 : len(dzz)-1])
     let(z = sumt(dzz, i), cr = crr[i], bz = bzz[i], rz = -bz * rzz[i])
-    atrans(loc, [[aloc[i][0]*(width+1), aloc[i][1]*(height+1),0], [-xoff, 0, z], 1])
+    atrans(loc, [[locs[i][0]*(width+1), locs[i][1]*(height+1),0], [xoff, 0, z], 1])
     holesIf(i == 0, [0, height/2, bz-4+p], [0, width], 15, 3, 4, 2.65)
     color(clr[i])
     ctray(bz, cr, height, width, rz);
@@ -153,21 +153,26 @@ module fourTrays() {
 
 // Lid Overhang (below clips)
 loh = 1.5;
-module lid(lz = sumt(dzz, 4) - sumt(dzz, 1) + loh * t0) {
+module lid(loc = loc, lz = sumt(dzz, 4) - sumt(dzz, 1) + loh * t0) {
   d = t0+.2; lw = width+2*d; lh = height+2*d;
   zt = sumt(dzz, 4) + 1.2 * t0 ; // z_offset to display
   echo("lid: lw, lh, zt = ", lw, lh, zt);
 
   atrans(loc, [
     undef, // [ 8, height + 2, 0], 
-    [-d-xoff, -d, zt+p, [0, 180, 0, [lw/2, 0, 0]]],
+    [xoff-d, -d, zt+p, [0, 180, 0, [lw/2, 0, 0]]],
     1,
-    [-d-xoff, -d, 0, ],
+    [xoff-d, -d, 0, ],
     ]) 
     partsLid(lw, lh, lz, lz - (loh + 2.0)*t0, .2);
 }
+module hex(loc = loc, rad = 100/2, h = 1.8) {
+  $fn = 6;
+  atrans(loc, [[-rad, 0, 0], [0, 0, 0]])
+  linear_extrude(h) circle(rad);
+}
 
-// 0: printable, 1: assembled with blocks& cutaway, 2: assembled, 3: lid only
+// 0: printable, 1: assembled with blocks & cutaway, 2: assembled, 3: lid only
 loc = 1;
 
 xoff = 0;
@@ -186,20 +191,28 @@ parts = [
 dzz = selectNth(1, parts);
 for (i = [0 : len(parts)]) echo(i, "sumi() = ", sumi(dzz, i), "sumt() = ", sumt(dzz,i));
 
-differenceN(1,0)
-{
-  // intersection() 
-  union() 
+module trays(loc = loc) {
+  locs = [undef, [0,0,0]];
+  differenceN(1,0)
   {
-    fourTrays();
-    lid();
+    // intersection() 
+    union() 
+    {
+      fourTrays(loc);
+      lid(loc);
+    }
+    over = 2; // oversize the cutaway blocks
+    // cutaway front
+    atrans(loc, locs)
+    trr([xoff-over, -over, -1]) cube([width+over*2, bz+over*2, 50]); // cutaway view
+    // cutaway left
+    atrans(loc, locs)
+    trr([xoff-over, -over, -1]) cube([bz+over*2, height+over*2, 50]) // cutaway view
+    ;
   }
   atrans(loc, [undef, [0,0,0]])
-  trr([-3-xoff, -4, -1]) cube([width+6, bz+5, 50]); // cutaway view
-  atrans(loc, [undef, [0,0,0]])
-  trr([-3-xoff, -4, -1]) cube([bz+5, height+6, 50]) // cutaway view
-  ;
+  blocks();
 }
 
-atrans(loc, [undef, [0,0,0]])
-blocks();
+trays(4);
+hex(1);
