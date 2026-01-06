@@ -82,9 +82,10 @@ module tubes(rint, t0 = t0, nt = nt) {
     x0 = xs/2 + i * (rint * 2 + xs);
     c1 = (i == 0) ? dbz : cut;
     c2 = (i == nt -1) ? dbz : cut;
+    radx = rad + .1;   // slightly oversize
     // vertical pipes:
-    translate([x0, rad, 0])
-    halfpipe(rad, [c1, c2], t0);
+    translate([x0, radx, 0])
+    halfpipe(radx, [c1, c2], t0);
 
     ys = blen - 2 * bty - ns * ct; // extra space in y dir
     atrans(loc, [undef, [x0+rad, rad, bty + ys/2]])
@@ -110,7 +111,7 @@ module chipbox() {
 }
 bty = 2*t0;
 
-sl = 12;
+sl = 8;
 differenceN(2) {
   tubes(crad, t0, nt);
   chipbox();
