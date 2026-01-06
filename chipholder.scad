@@ -12,24 +12,27 @@ nt = 5;
 // number in each stack
 ns = 20; 
 
-// wall thickness
-t0 = 1.5;
 // radius of chip (mm)
 rad = 20;
 dia = 2 * rad;
 // interior of case; 20 chips + gap:
-len = 70; 
+len = 75; 
 // interior of case; 5 tubes + 1mm gap:
-wid = 201; 
+wid = 205; 
+// wall thickness
+t0 = 1.5; // <= (wid - nt * dia)/2;
 
 // thickness of chip
 ct = 10/3;
 // box > nt * dia
 dx = 2; 
-// 
-keep = .742;
-cut = (rad + t0) * 1.258;
-// cut = rad * (2 - keep); 
+// keep bottom of box & tubes:
+keep = .748;
+// cut = (rad + t0) * 1.258;
+cut = (rad+ t0) * (2 - keep); 
+
+echo([rad, len, t0]);
+
 
 module halfpipe(rad = rad, cut = rad, t0 = t0) {
   trr([rad, 0, 0-p])
@@ -44,12 +47,10 @@ module pipe2(rrh = 10, cut = 0, t = t0) {
   sy = dy > 0 ? (dy - t) / dy : 0;
   linear_extrude(height = dz) differenceN() {
     circle(dx);
-    scale([ sx, sx ]) circle(dx); // cut interior
+    scale([ sx, sy ]) circle(dx); // cut interior
     translate([-dx, dx-cut]) square([2*dx, cut]);
   }
 }
-
-echo([rad, len, t0]);
 
 // rint = internal radius, 
 // t0 = thickness to external
@@ -58,30 +59,33 @@ echo([rad, len, t0]);
 module tubes(rint, t0 = t0, nt = nt) {
   rad = rint + t0; // external radius
   dia = rad * 2;  // external diameter
+  c = (wid - 2*t0 - (nt * 2 * rint)) / nt;
   trr([0, len, 0, [90, 0, 0]])
   for (i = [0 : nt - 1]) {
+    c0 = c/2 + i * (rint * 2 + c);
     // vertical pipes:
-    c0 = i * (rint * 2 );
     translate([c0, rad, 0])
     halfpipe(rad, cut, t0);
+
+    atrans(loc, [undef, [c0+rad, rad, 2*t0+1]])
+    chips(i);
   }
 }
 module disk(rad = rad, t0 = ct) {
-  color("pink")
   linear_extrude(height = t0) 
     circle(r = rad);
 }
-module chips(tn = 0) {
+module chips(tn = 0, color = "pink") {
   gap = .05;
-  trr([tn * (rad*2) + rad + t0 + gap, ns*ct + t0 + gap, rad + t0 + gap])
-  rotate([90, 0,0])
+  // trr([ rad , ns*ct , rad ])
+  // rotate([90, 0,0])
   astack(ns, [0, 0, ct]) {
+    color(color)
     disk(rad, ct-.1);
   }
 }
 
 tubes(rad, t0, nt);
-box([wid, len, rad*keep+t0+8]);
-
-chips(0);
-chips(4);
+box([wid, len, rad*keep+2*t0], [t0, 2*t0, t0]); // <=== +8 to see edge
+echo("keep=", rad*keep+2*t0);
+loc = 0;
