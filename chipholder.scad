@@ -15,10 +15,6 @@ ns = 20;
 // radius of chip (mm)
 rad = 20;
 dia = 2 * rad;
-// interior of case; 20 chips + gap:
-len = 75; 
-// interior of case; 5 tubes + 1mm gap:
-wid = 205; 
 // wall thickness
 t0 = 1.5; // <= (wid - nt * dia)/2;
 
@@ -26,19 +22,26 @@ t0 = 1.5; // <= (wid - nt * dia)/2;
 ct = 10/3;
 // box > nt * dia
 dx = 2; 
+
+// empirical: crossover point of adjacent tubes
+tweak = 1.258;
 // keep bottom of box & tubes:
-keep = .748;
-// cut = (rad + t0) * 1.258;
-cut = (rad + t0) * (2 - keep); 
-// height of box
+keep = 2 - tweak;
+cut = (rad + t0) * tweak;
+
+// box length, external; 20 chips + gap:
+blen = 75; 
+// box width, external; 5 tubes + 1mm gap:
+bwid = 205; 
+// box height; 
 bz = rad * keep + 2 * t0;
 
-echo([rad, len, t0]);
+echo([rad, blen, t0]);
 
 
 module halfpipe(rad = rad, cut = rad, t0 = t0) {
   trr([rad, 0, 0-p])
-  pipe2([rad, rad, len], cut, t0);
+  pipe2([rad, rad, blen], cut, t0);
 }
 // pipe with top [y] cut off:
 module pipe2(rrh = 10, cut = 0, t = t0) {
@@ -61,13 +64,13 @@ module pipe2(rrh = 10, cut = 0, t = t0) {
 // rint = internal radius, 
 // t0 = thickness to external
 // nt = number of tubes
-// ambient: len, cut
+// ambient: blen, cut
 module tubes(rint, t0 = t0, nt = nt) {
   rad = rint + t0; // external radius
   dia = rad * 2;   // external diameter
   dbz = dia - bz;  // high cut on end
-  c = (wid - 2*t0 - (nt * 2 * rint)) / nt;
-  trr([0, len, 0, [90, 0, 0]])
+  c = (bwid - 2*t0 - (nt * 2 * rint)) / nt;
+  trr([0, blen, 0, [90, 0, 0]])
   for (i = [0 : nt - 1]) {
     x0 = c/2 + i * (rint * 2 + c);
     c1 = (i == 0) ? dbz : cut;
@@ -91,7 +94,12 @@ module chips(tn = 0, color = "pink") {
   }
 }
 
+// ambient: bwid, blen
+module chipbox() {
+  box([bwid, blen, bz], [t0, 2*t0, t0]); // <=== +8 to see edge
+}
+
 tubes(rad, t0, nt);
-box([wid, len, bz], [t0, 2*t0, t0]); // <=== +8 to see edge
+chipbox();
 echo("bz=", bz);
-loc = 1;
+loc = 0;
