@@ -12,12 +12,14 @@ nt = 5;
 // number in each stack
 ns = 20; 
 
-// radius of chip (mm)
-rad = 20;
-dia = 2 * rad;
 // wall thickness
 t0 = 1.5; // <= (wid - nt * dia)/2;
 
+// radius of chip (mm)
+crad = 20;
+rint = crad;
+rext = crad + t0;
+dia = 2 * crad;
 // thickness of chip
 ct = 10/3;
 // box > nt * dia
@@ -27,21 +29,25 @@ dx = 2;
 tweak = 1.258;
 // keep bottom of box & tubes:
 keep = 2 - tweak;
-cut = (rad + t0) * tweak;
+cut = (crad + t0) * tweak;
 
 // box length, external; 20 chips + gap:
 blen = 75; 
 // box width, external; 5 tubes + 1mm gap:
 bwid = 205; 
 // box height; 
-bz = rad * keep + 2 * t0;
+bz = crad * keep + 2 * t0;
 
-echo([rad, blen, t0]);
+echo([crad, blen, t0]);
 
 
-module halfpipe(rad = rad, cut = rad, t0 = t0) {
+// rad: external radius of pipe
+// cut: number or [c0, c1]
+// t: thickness to interior of pipe
+// ambient: blen (height: dz for pipe2)
+module halfpipe(rad = crad, cut = crad, t = t0) {
   trr([rad, 0, 0-p])
-  pipe2([rad, rad, blen], cut, t0);
+  pipe2([rad, rad, blen], cut, t);
 }
 // pipe with top [y] cut off:
 module pipe2(rrh = 10, cut = 0, t = t0) {
@@ -64,42 +70,53 @@ module pipe2(rrh = 10, cut = 0, t = t0) {
 // rint = internal radius, 
 // t0 = thickness to external
 // nt = number of tubes
-// ambient: blen, cut
+// ambient: blen, cut, loc (1 to see chips)
 module tubes(rint, t0 = t0, nt = nt) {
   rad = rint + t0; // external radius
   dia = rad * 2;   // external diameter
-  dbz = dia - bz;  // high cut on end
-  c = (bwid - 2*t0 - (nt * 2 * rint)) / nt;
+  dbz = dia - bz;  // high cut on ends of box
+  // divey up space between tubes:
+  xs = (bwid - 2 * t0 - (2 * nt * rint)) / nt;
   trr([0, blen, 0, [90, 0, 0]])
   for (i = [0 : nt - 1]) {
-    x0 = c/2 + i * (rint * 2 + c);
+    x0 = xs/2 + i * (rint * 2 + xs);
     c1 = (i == 0) ? dbz : cut;
     c2 = (i == nt -1) ? dbz : cut;
     // vertical pipes:
     translate([x0, rad, 0])
     halfpipe(rad, [c1, c2], t0);
 
-    atrans(loc, [undef, [x0+rad, rad, 2*t0+ct/3]])
-    chips(i);
+    ys = blen - 2 * bty - ns * ct; // extra space in y dir
+    atrans(loc, [undef, [x0+rad, rad, bty + ys/2]])
+      chips(i);
   }
 }
-module disk(rad = rad, t0 = ct) {
+module disk(rad = crad, t0 = ct, c = "pink") {
+  color(c)
   linear_extrude(height = t0) 
     circle(r = rad);
 }
-module chips(tn = 0, color = "pink") {
+// stack of disks, centered at [0,0]
+// ambient: ns, crad
+module chips(c = "pink") {
   astack(ns, [0, 0, ct]) {
-    color(color)
-    disk(rad, ct-.1);
+    disk(crad, ct-.1);
   }
 }
 
-// ambient: bwid, blen
+// ambient: bwid, blen, t0
 module chipbox() {
-  box([bwid, blen, bz], [t0, 2*t0, t0]); // <=== +8 to see edge
+    box([bwid, blen, bz], [t0, bty, t0]); // <=== +8 to see edge
 }
+bty = 2*t0;
 
-tubes(rad, t0, nt);
-chipbox();
+sl = 12;
+differenceN(2) {
+  tubes(crad, t0, nt);
+  chipbox();
+  // slots for clips on lid:
+  trr([(bwid-sl)/2, 0-p, 0-p]) cube([sl, 1+pp, 3]);
+  trr([(bwid-sl)/2, blen-1+p, 0-p]) cube([sl, 1+pp, 3]);
+}
 echo("bz=", bz);
 loc = 0;
