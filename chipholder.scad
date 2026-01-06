@@ -26,7 +26,7 @@ ct = 10/3;
 dx = 2; 
 
 // empirical: crossover point of adjacent tubes
-tweak = 1.258;
+tweak = 1.269;
 // keep bottom of box & tubes:
 keep = 2 - tweak;
 cut = (crad + t0) * tweak;
@@ -73,7 +73,8 @@ module pipe2(rrh = 10, cut = 0, t = t0) {
 // ambient: blen, cut, loc (1 to see chips)
 module tubes(rint, t0 = t0, nt = nt) {
   rad = rint + t0; // external radius
-  dia = rad * 2;   // external diameter
+  radx = rad + .2; // slightly oversize radius
+  dia = radx * 2;  // external diameter
   dbz = dia - bz;  // high cut on ends of box
   // divey up space between tubes:
   xs = (bwid - 2 * t0 - (2 * nt * rint)) / nt;
@@ -82,7 +83,6 @@ module tubes(rint, t0 = t0, nt = nt) {
     x0 = xs/2 + i * (rint * 2 + xs);
     c1 = (i == 0) ? dbz : cut;
     c2 = (i == nt -1) ? dbz : cut;
-    radx = rad + .1;   // slightly oversize
     // vertical pipes:
     translate([x0, radx, 0])
     halfpipe(radx, [c1, c2], t0);
