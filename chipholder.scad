@@ -29,7 +29,9 @@ dx = 2;
 // keep bottom of box & tubes:
 keep = .748;
 // cut = (rad + t0) * 1.258;
-cut = (rad+ t0) * (2 - keep); 
+cut = (rad + t0) * (2 - keep); 
+// height of box
+bz = rad * keep + 2 * t0;
 
 echo([rad, len, t0]);
 
@@ -45,29 +47,36 @@ module pipe2(rrh = 10, cut = 0, t = t0) {
   dz = is_list(rrh) && !is_undef(rrh[2]) ? rrh[2] : rrh;
   sx = dx > 0 ? (dx - t) / dx : 0;
   sy = dy > 0 ? (dy - t) / dy : 0;
+  c1 = is_list(cut) && !is_undef(cut[0]) ? cut[0] : cut;
+  c2 = is_list(cut) && !is_undef(cut[1]) ? cut[1] : c1;
+  // c2 = def(c2, c1);
   linear_extrude(height = dz) differenceN() {
     circle(dx);
     scale([ sx, sy ]) circle(dx); // cut interior
-    translate([-dx, dx-cut]) square([2*dx, cut]);
+    translate([0 -dx, dx-c1]) square([dx, c1]);
+    translate([dx-dx, dx-c2]) square([dx, c2]);
   }
 }
 
 // rint = internal radius, 
 // t0 = thickness to external
 // nt = number of tubes
-// ambient: len
+// ambient: len, cut
 module tubes(rint, t0 = t0, nt = nt) {
   rad = rint + t0; // external radius
-  dia = rad * 2;  // external diameter
+  dia = rad * 2;   // external diameter
+  dbz = dia - bz;  // high cut on end
   c = (wid - 2*t0 - (nt * 2 * rint)) / nt;
   trr([0, len, 0, [90, 0, 0]])
   for (i = [0 : nt - 1]) {
-    c0 = c/2 + i * (rint * 2 + c);
+    x0 = c/2 + i * (rint * 2 + c);
+    c1 = (i == 0) ? dbz : cut;
+    c2 = (i == nt -1) ? dbz : cut;
     // vertical pipes:
-    translate([c0, rad, 0])
-    halfpipe(rad, cut, t0);
+    translate([x0, rad, 0])
+    halfpipe(rad, [c1, c2], t0);
 
-    atrans(loc, [undef, [c0+rad, rad, 2*t0+1]])
+    atrans(loc, [undef, [x0+rad, rad, 2*t0+ct/3]])
     chips(i);
   }
 }
@@ -76,9 +85,6 @@ module disk(rad = rad, t0 = ct) {
     circle(r = rad);
 }
 module chips(tn = 0, color = "pink") {
-  gap = .05;
-  // trr([ rad , ns*ct , rad ])
-  // rotate([90, 0,0])
   astack(ns, [0, 0, ct]) {
     color(color)
     disk(rad, ct-.1);
@@ -86,6 +92,6 @@ module chips(tn = 0, color = "pink") {
 }
 
 tubes(rad, t0, nt);
-box([wid, len, rad*keep+2*t0], [t0, 2*t0, t0]); // <=== +8 to see edge
-echo("keep=", rad*keep+2*t0);
-loc = 0;
+box([wid, len, bz], [t0, 2*t0, t0]); // <=== +8 to see edge
+echo("bz=", bz);
+loc = 1;

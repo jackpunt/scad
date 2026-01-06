@@ -289,7 +289,7 @@ module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
   // echo("rc: q, qs=", q, qs);
   qsr = amul(qs, [ r2, r2, -t ]); // quadrant select cylinder sector
 
-//  [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // x-axis
+  // [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // x-axis
 
   cs0 = [
      [[ 1, 0, -1 ], [ 1, 0, 1 ], [ -1, 0, 1 ], [ -1, 0, -1 ]], // x-axis
@@ -337,7 +337,8 @@ module roundedRect(sxy = 10, rc = 2, k = 0) {
 }
 
 // a vertical pipe, centered @ (0,0)
-// rrh: [dx, dy, dz] 
+// rrh: [dx, dy, dz]; dx, dy = radius, dz = height;
+// t = t0;
 module pipe(rrh = 10, t = t0) {
   dx = is_list(rrh) && !is_undef(rrh[0]) ? rrh[0] : rrh;
   dy = is_list(rrh) && !is_undef(rrh[1]) ? rrh[1] : rrh;
