@@ -32,9 +32,9 @@ keep = 2 - tweak;
 cut = (crad + t0) * tweak;
 
 // box length, external; 20 chips + gap:
-blen = 75; 
+blen = 76; 
 // box width, external; 5 tubes + 1mm gap:
-bwid = 205; 
+bwid = 206; 
 // box height; 
 bz = crad * keep + 2 * t0;
 
