@@ -9,23 +9,23 @@ sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 mmpi = 25.4;
 
-xwide = 11 * mmpi;
-yhigh = 8.5 * mmpi;
+xwide = 3 * mmpi;
+yhigh = 8.5 * (xwide/11);
 
-hr = 20; // radius of triangular hook
-psep = 0; // separation of pages
-hd = 0; // underlap pages by depth of hook (offset from center?)
+hr = yhigh/10; // radius of triangular hook
+psep = hr *  .6; // separation of pages .001;// 
+hd = -xwide * 2/3; // underlap pages by depth of hook (offset from center?)
+xc = -xwide-psep;
+yc = yhigh/2 + psep;
 
 solid = false;
 // TODO: test this for laser cutter!
-hsf0 = is2D ? -0.1 : 0.06; // reduce by 2D beam width; increase by 3D-fudge
+hsf0 = is2D ? 0.01 : 0.06; // reduce by 2D beam width; increase by 3D-fudge
 hsf1 = is2D ? (hr+hsf0)/hr : (hr + f)/hr;
-hsf2 = 1-(1-hsf1)*1;
-// hsf = [hsf1, hsf2, 1];
 hsf = [hsf1, hsf1, 1];
 // hsf = [1, 1 ,1];
 tf = 2; // when solid == true (fudge t to make it larger)
-echo([is2D, hsf0, hsf1, hsf2, hsf], "hsf=", hsf);
+echo([is2D, hr, hsf0, hsf1, hsf], "hr=", hr, "hsf=", hsf);
 
 // from settlers-frame:
 // t & center and ignored, there is no z-axis
@@ -140,7 +140,7 @@ module pages(rows) {
       lr = lrs[j];
       c = ((i * 3 + j)) % len(colors);
       color (colors[c])
-      trr([(xwide+hd+psep) * j, (yhigh+hd+psep) * -i, -c*.1])
+      trr([(xwide+psep) * j + xc, (yhigh+psep) * -i + yc, -c*.1])
       addHooks(tb, lr)
       page();
     }
