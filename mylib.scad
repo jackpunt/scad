@@ -165,7 +165,7 @@ module rotatet(rot = [ 0, 0, 0 ], cr = [ 0, 0, 0 ]) {
 // sv: [sx, sy, sz {, cxyz }] ([0, 0, 0 ])
 // - cxyz: [cx, cy, cz] ([0, 0, 0])
 module scalet(sv) {
-  sv = def(sv, [0, 0, 0]);
+  sv = def(sv, [1, 1, 1]);
   cv = def(sv[3], [0, 0, 0]); // TODO: include inverse rotation
   c1 = amul(as3D(cv), [-1, -1, -1]);
   // echo("scalet: sv, cv, c1 = ", sv, cv, c1);
