@@ -9,23 +9,23 @@ sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 mmpi = 25.4;
 
-xwide = 3 * mmpi;
+xwide = 11 * mmpi;
 yhigh = 8.5 * (xwide/11);
 
 hr = yhigh/10; // radius of triangular hook
 psep = hr *  .6; // separation of pages .001;// 
 hd = -xwide * 2/3; // underlap pages by depth of hook (offset from center?)
-xc = -xwide-psep;
-yc = yhigh/2 + psep;
+xc = -(xwide + psep);
+yc = -(yhigh+psep)/2;
 
 solid = false;
 // TODO: test this for laser cutter!
-hsf0 = is2D ? 0.01 : 0.06; // reduce by 2D beam width; increase by 3D-fudge
+hsf0 = is2D ? -0.02 : 0.06; // reduce by 2D beam width; increase by 3D-fudge
 hsf1 = is2D ? (hr+hsf0)/hr : (hr + f)/hr;
 hsf = [hsf1, hsf1, 1];
 // hsf = [1, 1 ,1];
 tf = 2; // when solid == true (fudge t to make it larger)
-echo([is2D, hr, hsf0, hsf1, hsf], "hr=", hr, "hsf=", hsf);
+echo([is2D, hr, hsf0, hsf1, hsf], "hr=", hr, "hsf=", hsf, "hsf1*hr=", hsf1*hr);
 
 // from settlers-frame:
 // t & center and ignored, there is no z-axis
@@ -72,7 +72,7 @@ module page(xwide = xwide, yhigh = yhigh) {
 module tbhook(tb, sf=hsf) {
   dx = xwide/4;
   dy = yhigh/2;
-  rr = [0, 0, 30];
+  rr = [0, 0, 30]; // rotate the T/B hooks
   if (tb > 0) {
     union() {
       children(); // add the protruding 'hook'
@@ -94,7 +94,7 @@ module tbhook(tb, sf=hsf) {
 module lrhook(lr, sf = hsf) {
   dx = xwide/2;
   dy = yhigh/4;
-  rr = [0, 0, 60];
+  rr = [0, 0, 60];  // rotate the L/R hooks
   if (lr > 0) {
     union() {
       children();
@@ -140,13 +140,17 @@ module pages(rows) {
       lr = lrs[j];
       c = ((i * 3 + j)) % len(colors);
       color (colors[c])
-      trr([(xwide+psep) * j + xc, (yhigh+psep) * -i + yc, -c*.1])
+      trr([ (yhigh+psep) * i + yc, (xwide+psep) * j + xc, -c*.1, [0, 0, 90]])
       addHooks(tb, lr)
       page();
     }
   }
 }
 
+intersection() 
+{
 pages([row0, row1]);
+// trr([0, 2.8*mmpi, 0]) square([2*mmpi, 2.5*mmpi], true);
+}
 // pages([ [+1, [[0, 1]]] ]);
 // trr([0,0,-1]) color("lightblue") square([12*mmpi, 12*mmpi], true);
