@@ -113,7 +113,30 @@ module chips(c = "pink") {
 
 // ambient: bwid, blen, t0
 module chipbox() {
-    box([bwid, blen, bz], [t0, bty, t0]); // <=== +8 to see edge
+  box([bwid, blen, bz], [t0, bty, t0]); // <=== +8 to see edge
+}
+
+module boxlid() {
+  rz = 0;
+  ss = 9; ds = 9;
+  xs = bwid - 2*t0;
+  ys = blen - 2*t0;
+  nx = floor((xs+ds) / (ss+ds));
+  ny = floor((ys+ds) / (ss+ds));
+  x0 = ss/2 + t0 + (bwid-nx*(ss+ds)+ds)/2; // bwid
+  y0 = ss/2 + t0 + (blen-ny*(ss+ds)+ds)/2; // blen
+  atrans(loc, [
+    [-t0, -blen - 3*bty, 0], 
+    [-t0, t0, crad+t0+p, [180, 0, 0, [bwid/2, blen/2, (crad+t0)/2]]],
+    1
+    ])
+  color([31, 43, 165, 195]/255)
+  difference() 
+  {
+  box([bwid+2*t0, blen+2*t0, 2*(crad+t0)], t0);
+  gridify([x0, ss+ds, bwid], [y0, ss+ds, blen], 2) 
+  trr([0,0,0,[0,0,rz]]) cube([ss, ss, ss], true);
+  }
 }
 
 sl = 8;
@@ -121,8 +144,9 @@ differenceN(2) {
   tubes(crad, t0, nt);
   chipbox();
   // slots for clips on lid:
-  trr([(bwid-sl)/2, 0-p, 0-p]) cube([sl, 1+pp, 3]);
-  trr([(bwid-sl)/2, blen-1+p, 0-p]) cube([sl, 1+pp, 3]);
+  // trr([(bwid-sl)/2, 0-p, 0-p]) cube([sl, 1+pp, 3]);
+  // trr([(bwid-sl)/2, blen-1+p, 0-p]) cube([sl, 1+pp, 3]);
 }
 echo("bz=", bz);
 loc = 0;
+boxlid();
