@@ -9,14 +9,20 @@ sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 mmpi = 25.4;
 
-xwide = 11 * mmpi;
-yhigh = 8.5 * (xwide/11);
+// scale to indonesia.svg @ 2000 x 1392; 112%
+// margins: T=1.6cm, B=.65cm, L=.9cm, R=.65cm
+tm = 16; bm = 6.5; lm = 9; rm= 6.5;
+xwide = 11*mmpi -lm -rm; 
+yhigh = 8.5*mmpi - tm - bm;
+// 11 * mmpi;
+// 8.5 * (xwide/11);
+// xwide = 263.9; 
+// yhigh = 193.4; 
+echo("xwide=", xwide, "yhigh=", yhigh);
 
 hr = yhigh/10; // radius of triangular hook
 psep = hr *  .6; // separation of pages .001;// 
 hd = -xwide * 2/3; // underlap pages by depth of hook (offset from center?)
-xc = -(xwide + psep);
-yc = -(yhigh+psep)/2;
 
 solid = false;
 // TODO: test this for laser cutter!
@@ -69,7 +75,7 @@ module page(xwide = xwide, yhigh = yhigh) {
 
 // tb: +1 add hook to top, -1 cut hole on bottom
 // children(0) is the page
-module tbhook(tb, sf=hsf) {
+module tbhook(tb, yhigh = yhigh, sf=hsf) {
   dx = xwide/4;
   dy = yhigh/2;
   rr = [0, 0, 30]; // rotate the T/B hooks
@@ -91,7 +97,7 @@ module tbhook(tb, sf=hsf) {
   }
 }
 
-module lrhook(lr, sf = hsf) {
+module lrhook(lr, yhigh = yhigh, sf = hsf) {
   dx = xwide/2;
   dy = yhigh/4;
   rr = [0, 0, 60];  // rotate the L/R hooks
@@ -115,10 +121,10 @@ module lrhook(lr, sf = hsf) {
 // tb: -1 (hole on bottom of page) or +1 (hook on top of page)
 // lr: array of: [(hole on left), +1 (hole on right)]
 // children(0): page
-module addHooks(tb, lr) {
-  tbhook(tb)
-  lrhook(lr[0])
-  lrhook(lr[1])
+module addHooks(tb, lr, yhigh) {
+  tbhook(tb, yhigh)
+  lrhook(lr[0], yhigh)
+  lrhook(lr[1], yhigh)
   children();
 }
 
@@ -130,19 +136,23 @@ c = 0;
 // [(+1 = top, -1 = bottom), [left=(-1, 0, 1), right=(-1, 0, 1)], ...]
 row0 = [-1, [[0, 1], [-1, 1], [-1, 0]]];
 row1 = [+1, [[0, 1], [-1, 1], [-1, 0]]];
+dy_row = [0, -11]; // cut bottom row; balance the tab
 module pages(rows) {
   for (i = [0 : len(rows)-1]) {
     row = rows[i];
     tb = row[0];
     lrs = row[1];
+    yhigh_r = yhigh + dy_row[i];
+    xc = -(xwide + psep);
+    yc = -(yhigh_r+psep)/2;// + yhigh*[0, -1][i];
     echo("row=", row, "lrs=", lrs);
     for (j = [0 : len(lrs)-1]) {
       lr = lrs[j];
       c = ((i * 3 + j)) % len(colors);
       color (colors[c])
-      trr([ (yhigh+psep) * i + yc, (xwide+psep) * j + xc, -c*.1, [0, 0, 90]])
-      addHooks(tb, lr)
-      page();
+      trr([ (yhigh_r+psep) * i + yc, (xwide+psep) * j + xc, -c*.1, [0, 0, 90]])
+      addHooks(tb, lr, yhigh_r)
+      page(xwide, yhigh_r);
     }
   }
 }
