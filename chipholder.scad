@@ -8,30 +8,30 @@ sqrt3_2 = sqrt3/2;  // .866
 
 // 5-tubes, adjacent, in box, cut top
 // number of tubes
-nt = 5;
+nt = 4;
 // number in each stack
-ns = 20; 
+ns = 15; 
 
 // wall thickness
 t0 = 1.5; // <= (wid - nt * dia)/2;
 
 fr = .2;  // fudge radius so chips fit easily in tubes
 // radius of chip (mm) => 
-crad = 20;  // 27/2;
+crad = 27/2;
 rint = crad;
 rext = crad + t0;
 dia = 2 * crad;
 // thickness of chip
-ct = 10/3; //4.15; // 10/3;
-bty0 = 2*t0;  // box thickness in y-direction; 
-bty = (76 - ct * (ns + .7))/2; // space for almost ns+1 chips
+ct = 4.15; // 10/3;
+bty = 2*t0;  // box thickness in y-direction; 
+btyy = (76 - ct * (ns + .7))/2; // space for almost ns+1 chips
 // force tray to fill 76 mm for cardboard lid!
 
 // box > nt * dia
 dx = 2; 
 
 // empirical: crossover point of adjacent tubes
-tweak = 1.25;
+tweak = 1.301;
 // keep bottom of box & tubes:
 keep = 2 - tweak;
 cut = (crad + t0) * tweak;
