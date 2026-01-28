@@ -597,9 +597,9 @@ module align(tr = [0,0,0], rottr = [0,0,0], ss = false) {
 
 
 // array of children(0) suitable for poking holes.
-// d1: [a0, ainc, alimit]
-// d2: [b0, binc, blimit]
-// rid: translation plane -> zy | xz | xy | 00
+// d1: [a0, ainc, alimit] <-- for loop
+// d2: [b0, binc, blimit] <-- for loop
+// rid: translation plane -> zy | xz | xy | 00 (rotation id)
 // children() the item(s) to be placed at each grid point
 module gridify(d1, d2, rid = 0)
 {
@@ -612,6 +612,7 @@ module gridify(d1, d2, rid = 0)
 }
 
 // diagonal grid on XZ for civ0_cardbox sidewall
+// children(0) --> the objects to be placed on grid
 module gridDXZ(nx, nz, k, tr = [ 1, 0, 1 ])
 {
     gridify([ k, 2 * k, nx ], [ 0, 2 * k, nz ], 1) children(0);
