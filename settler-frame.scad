@@ -206,7 +206,7 @@ module frame(nsnc, wf = h2*.45, oz = 1, ring = undef, solid = false) {
   // trt: rotate cutoff part (for corner)
   // child(0) = fullFrame
   module makePart(trf, trt, ys, colr = undef) {
-    hsf = solid ? (hr+hsf0)/hr : hsf;
+    hsf = solid ? (hr+hsf0)/hr : hsf; // <-- maybe should be: is2D ? ... : ... ;
     trh = [wf*.15, ys/2, 0, [0, 0, 30]];
     trh1 = adif(trh, [0, ys, 0]);
 
