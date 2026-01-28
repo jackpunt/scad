@@ -15,30 +15,35 @@ ns = 20;
 // wall thickness
 t0 = 1.5; // <= (wid - nt * dia)/2;
 
-// radius of chip (mm)
-crad = 20;
+fr = .2;  // fudge radius so chips fit easily in tubes
+// radius of chip (mm) => 
+crad = 20;  // 27/2;
 rint = crad;
 rext = crad + t0;
 dia = 2 * crad;
 // thickness of chip
-ct = 10/3;
+ct = 10/3; //4.15; // 10/3;
+bty0 = 2*t0;  // box thickness in y-direction; 
+bty = (76 - ct * (ns + .7))/2; // space for almost ns+1 chips
+// force tray to fill 76 mm for cardboard lid!
+
 // box > nt * dia
 dx = 2; 
 
 // empirical: crossover point of adjacent tubes
-tweak = 1.269;
+tweak = 1.25;
 // keep bottom of box & tubes:
 keep = 2 - tweak;
 cut = (crad + t0) * tweak;
 
 // box length, external; 20 chips + gap:
-blen = 76; 
+blen = ns * ct + .7 * ct + 2 * bty; 
 // box width, external; 5 tubes + 1mm gap:
-bwid = 206; 
+bwid = (crad + fr) * 2 * nt + 2 + t0 + .5;
 // box height; 
 bz = crad * keep + 2 * t0;
 
-echo([crad, blen, t0]);
+echo("[crad, blen, bwid, t0]", [crad, blen, bwid, t0]);
 
 
 // rad: external radius of pipe
@@ -67,13 +72,13 @@ module pipe2(rrh = 10, cut = 0, t = t0) {
   }
 }
 
-// rint = internal radius, 
+// rint = internal radius [crad = chip radius]
 // t0 = thickness to external
 // nt = number of tubes
 // ambient: blen, cut, loc (1 to see chips)
 module tubes(rint, t0 = t0, nt = nt) {
   rad = rint + t0; // external radius
-  radx = rad + .2; // slightly oversize radius
+  radx = rad + fr; // slightly oversize radius
   dia = radx * 2;  // external diameter
   dbz = dia - bz;  // high cut on ends of box
   // divey up space between tubes:
@@ -87,6 +92,7 @@ module tubes(rint, t0 = t0, nt = nt) {
     translate([x0, radx, 0])
     halfpipe(radx, [c1, c2], t0);
 
+    // draw chips in the tube:
     ys = blen - 2 * bty - ns * ct; // extra space in y dir
     atrans(loc, [undef, [x0+rad, rad, bty + ys/2]])
       chips(i);
@@ -109,7 +115,6 @@ module chips(c = "pink") {
 module chipbox() {
     box([bwid, blen, bz], [t0, bty, t0]); // <=== +8 to see edge
 }
-bty = 2*t0;
 
 sl = 8;
 differenceN(2) {
