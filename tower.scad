@@ -8,6 +8,8 @@ f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
+// Small foldable dice tower
+
 sample = false;
 rad = 2.3;  // z-thickness: hinge radius (2.3mm)
 wide = 60-2*rad;  // dist bewteen hinge axis

@@ -8,6 +8,8 @@ f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
+// Dice & Card boxes, with lid
+
 sample = false;
 
 // box size and placement constraint (3x4 grid in square box)

@@ -8,6 +8,8 @@ offx1 = 20+15;
 offy1 = 25+17;
 offx2 = 100;
 
+// cover/bezel for furnace drain opening
+
 rotate([0, 180, 0])
 differenceN(2) {
   trr([0,0,0]) cube([len, high, t0]);

@@ -7,6 +7,8 @@ f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
+// storage box, with trays to hold energy & gems
+
 // radius of each hex; h2 is the measured ortho size (+ ~f)
 R = 2 * 25.4; // h2 * sqrt3_2;
 h0 = R * sqrt3_2;

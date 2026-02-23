@@ -9,6 +9,8 @@ sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 mmpi = 25.4;
 
+// Laser cut wood parts to hold printed map
+
 // scale to indonesia.svg @ 2000 x 1392; 112%
 // margins: T=1.6cm, B=.65cm, L=.9cm, R=.65cm
 tm = 16; bm = 6.5; lm = 9; rm= 6.5;

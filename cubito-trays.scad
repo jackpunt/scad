@@ -1,4 +1,4 @@
-// cubitos trays
+// cubitos trays: hold hands, grey dice, etc
 use <mylib.scad>;
 use <cubitos.scad>;
 

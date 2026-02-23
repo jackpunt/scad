@@ -3,6 +3,8 @@ $fs = 0.4;
 t0 = 1; p=.001; pp=2*p;
 use<./mylib.scad>
 
+// per-Player parts trays
+
 // size: [x: length, y: width_curved, z: height_curved]
 // rt: radii of tray [bl, tl, tr, br]
 // rc: radii of caps

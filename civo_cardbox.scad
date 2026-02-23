@@ -2,10 +2,13 @@ use <mylib.scad>;
 p = .001;
 pp = 2 * p;
 t0 = 1;
+// box to store & display cards
+
 l00 = 87; // official card size (+2mm for sleeves)
 w00 = 56; // official card size (+2mm for sleeves)
 t00 = .4; // card thickness: sleeves bring thickness to ~.625 per card. (from min .4mm)
 t01 = .625; // thickness when stacking sleeved cards
+// dimension of sleeved cards:
 l0 = 92.4;
 w0 = 60.4; // w00 + 2mm (sleeves) + 2mm (slack); retain 60.4 for slider compat
 h0 = 27;

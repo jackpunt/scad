@@ -8,6 +8,8 @@ f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 
+// recreate the Sol box that Luke looked at
+
 tf = t0/2;           // slack between part boxes
 
 sample = false;

@@ -5,6 +5,8 @@ t0 = 1;
 p = .001;
 pp = 2 * p;
 
+// box to hold hexes, dice, hunt & production tokens, etc
+
 // outer dimensions of box:
 l = 140; // length of main box
 w = 53;  // width of main box
