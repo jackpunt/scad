@@ -108,14 +108,20 @@ module vbox(loc = loc, vt0 = bt, vw0 = wi, vh0 = hi, txyz = t2) // txyz=[tz, ty,
 }
 
 // make finger slots on both sides of box...
-module dual_slots(h, sw, dx1, dy) {
+module dual_slots(h, sw, dx1, dy, ss = false) {
   tabh = 20;
   sr = sw/2;
-  slotifyY2([h, sw, t0*2], [dx1, dy[0]-1, -sr], undef, 1, false)
-  slotifyZ([tabh, sw, t0*2], [dx1, dy[0]-0, 1], 2, undef, false)
-  slotifyY2([h, sw, t0*2], [dx1, dy[1]-1, -sr], undef, 1, false)
-  slotifyZ([tabh, sw, t0*2], [dx1, dy[1]-0, 1], 2, undef, false)
-  children();
+  if (len(dy) > 1) {
+    slotifyY2([h, sw, t0*2], [dx1, dy[0]-1, -sr], undef, 1, ss)
+    slotifyZ([tabh, sw, t0*2], [dx1, dy[0]-0, 1], 2, undef, ss)
+    slotifyY2([h, sw, t0*2], [dx1, dy[1]-1, -sr], undef, 1, ss)
+    slotifyZ([tabh, sw, t0*2], [dx1, dy[1]-0, 1], 2, undef, ss)
+    children();
+  } else {
+    slotifyY2([h, sw, t0*2], [dx1, dy[0]-1, -sr], undef, 1, ss)
+    slotifyZ([tabh, sw, t0*2], [dx1, dy[0]-0, 1], 2, undef, ss)
+    children();
+  }
 }
 
 // h: height of wall
@@ -123,13 +129,13 @@ module dual_slots(h, sw, dx1, dy) {
 // tr: [dx, dy]
 // dy: translate on y axis
 // dx: translate on x axis
-module card_slot(h, sw, tr) {
+module card_slot(h, sw, tr, ss = false) {
   tabh = 20;
   sr = sw/2; // slot radius
   dx = def(tr[0], t0/2);
   dy = def(tr[1], 20);
-  slotifyX2([h, sw, t0*2], [dx, dy, -sr], undef, 1, false)
-  slotifyX([tabh, sw, t0*2], [dx, dy, 1], 3, undef, false)
+  slotifyX2([h, sw, t0*2], [dx, dy, -sr], undef, 1, ss)
+  slotifyX([tabh, sw, t0*2], [dx, dy, 1], 3, undef, ss)
   children();
 }
 
@@ -167,12 +173,42 @@ module player_box() {
 }
 module four_box() {
   for (xi = [0: 3]) {
-    trr([xi * (bt+bl+t2+.1), 100, 0 ]) player_box();
+    trr([xi * (bt+bl+t2+.1), 192, 0 ]) player_box();
   }
 }
 
 
+// xyz: size of cube: [w0, 40, 4]
+// tr: translate: [0, tr, t2]
+// r: rotate angle: (-5)
+module wedge(xyz, tr = 20, r = -3) {
+  x = def(xyz.x, w0);
+  y = def(xyz.y, 20);
+  z = def(xyz.z, 4);
+  ra = is_list(r) ? r : [r, 0, 0];
+  tra = is_list(tr) ? tr : [0, tr, t2, ra];
+  difference() {
+    trr(tra) cube([x, y, z]);
+    trr([tra.x-p, tra.y, -z]) cube([x+pp, y*1.1, z]);
+  }
+}
+module tech_box() {
+  bh = bt * 1.2 + t0;
+  dual_slots(bh, 18, w0/2, [t0, l0])
+  box([w0, l0, bh], [t2, t2, t0]);
+  // wedge();
+}
+module three_tech() {
+  for (xi = [0 : 2]) {
+    trr([xi * (w0), 0, 0]) 
+    tech_box();
+  }
+}
+
 loc = 0;
-player_tray(tray_w, tray_l);
-// player_box();
+// trr([200, 0, 0]) player_tray(tray_w, tray_l);
 four_box();
+// tech_box();
+for (xi = [0:2]) {
+  trr([l0 + xi * (l0+.2), 0, 0, [0, 0, 90]]) three_tech();
+}
