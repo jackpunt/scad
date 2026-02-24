@@ -132,7 +132,13 @@ module card_slot(h, sw, tr) {
   slotifyX([tabh, sw, t0*2], [dx, dy, 1], 3, undef, false)
   children();
 }
-module player_tray(w, l) {
+
+divw = 1;  // width of short divider between houses
+// tray_2:  t1 + w00 + t1 + house_dim.x + divw + house_dim.x + t1;
+tray_w = w00 + 3 * t1 + 2 * house_dim.x + divw;  // ~ 140
+tray_l = l00 + 2 * t1;     // 96 > (84 = 7 * house_dim.y)
+
+module player_tray(w = tray_w, l = tray_l) {
   h = house_dim.z + t0;
   sw = 18;
   dx1 = house_dim.x/2+t0;
@@ -151,7 +157,8 @@ module player_tray(w, l) {
 
 }
 
-bl = 64;
+// box length for storing Village pieces:
+bl = 63.5;  // can fit 4 boxes in 288 mm
 module player_box() {
   translate([bl, 0, 0]) union() {
   vbox();
@@ -160,16 +167,12 @@ module player_box() {
 }
 module four_box() {
   for (xi = [0: 3]) {
-    trr([xi * (bt+bl+t2+.1), 0, 0 ]) player_box();
+    trr([xi * (bt+bl+t2+.1), 100, 0 ]) player_box();
   }
 }
 
-divw = 1;  // width of short divider between houses
-// tray_2:  t1 + w00 + t1 + house_dim.x + divw + house_dim.x + t1;
-tray_w = w00 + 3 * t1 + 2 * house_dim.x + divw;  // ~ 140
-tray_l = l00 + 2 * t1;     // 96 > (84 = 7 * house_dim.y)
 
 loc = 0;
-// player_tray(tray_w, tray_l);
+player_tray(tray_w, tray_l);
 // player_box();
 four_box();
