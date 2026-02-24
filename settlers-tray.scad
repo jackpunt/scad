@@ -16,8 +16,8 @@ module slotbox(ch = ch, ss = false) {
   r1 = .1; r2 = 5;
   cz = 3; // cut a wide slot, reducing height of 'box' for 25mm slot
   // 2 + .5mm to meet the roundedBox corner:
-  slotifyY2([cbz, cw-2.5*t0, 2*t0, r1], [0, -(ch-t0+p)/2, ibz], undef, undef, false)
-  slotifyY2([ibz, 25,      2*t0, r2], [0, -(ch-t0+p)/2,   4], undef,     2, ss)
+  slotifyY([2*(cbz-ibz), cw-2.5*t0, 2*t0, r1], [0, -(ch-t0+p)/2, cbz], undef, undef, false)
+  slotifyY2([ibz,        25,        2*t0, r2], [0, -(ch-t0+p)/2,   4], undef,     2, ss)
   children(0);
 }
 module sidebox(dx = 0, y1 = y1, ss = false) {
@@ -348,7 +348,7 @@ echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
 
 // 0: all, 1: cardboxes, 2: bluebox & partsLid, 3: partTrays, 4: cardsLid,
 // 5: packed, 6: bluebox & partsLid (fit); 7: bluebox & partTrays (fit)
-loc = 3;
+loc = 1;
 
 // CardTray-1:
 difference() {
