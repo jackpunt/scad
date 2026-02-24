@@ -7,6 +7,7 @@ t1 = t0 + .4; // side wall for camber
 f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
+sample = false;
 
 // four per-player trays
 // 2 trays for market cards; tray for tech cards
@@ -20,19 +21,89 @@ w0 = 64; // w00 + 2mm (sleeves) + 2mm (slack); retain 60.4 for slider compat
 // house turned on side in box:
 house_dim = [33, 12, 25];
 
-// space for sleeved card:
-w00 = w0 + 2;
+// space for sleeved card with 2mm slack:
+// short side of card (66)
+w00 = w0 + 2; 
+// long side of card (92)
 l00 = l0 + 2;
 
-module vbox(dim=[10, 10, 10], t=t0, dt = undef) {
-  w = dim.x;
-  l = dim.y;
-  h = dim.z;
-  dt = def(dt, t/2);
-  linear_extrude(height = h, center = true, scale = [1+2*dt/w, 1 + 2*dt / l]) 
-  difference() {
-    square([dim.x, dim.y], true);
-    square([dim.x - t0, dim.y - t0], true); 
+t2 = 1;       // thickness for alt boxes
+ty = t2;      // thick in y dir (short side wall)
+tz = t2;      // thick in z dir (bottom of box)
+
+tcg = sample ?  1.15 : (95-w0-2*ty)/2;  // inset for cardguide (wi+2*ty NTE tl = 95)
+
+nc = 10;      // number of cards in box
+t01 = 6.25/12; // = .52mm; thickness when stacking sleeved cards (compressed)
+bt = nc * t01 + 2 * t2;  // box thickness [total for nc cards]
+
+wi = w0 + 2 * tcg; // interior width of box (y-extent @ loc = 2)
+bw = wi + 2 * ty;  // card box width
+
+ot = 1.5;      // vbox extends over card. still fit upright in 70mm packing box
+hi = w0 + ot ; // interior height of vbox (short dimension of card)
+bh = hi + t2;  // card box height
+
+// a stack of cyan cards (on lid) - pro'ly from chaos orientation; BYO 'tr'
+// tr: offset card 
+// x: short dim of card (h00); y: long dim of card (w00); z: thickness (t00)
+module card(tr = [ tw +  (h0 - h00) / 2, ty + tcg + (w0 - w00) / 2, -tz ], n = 1, dxyz=[h00, w00, t00], rgb="cyan")
+{
+  trr(tr) astack(n, [ 0, 0, t01 ]) color(rgb, .5) roundedCube(dxyz, 3, true);
+}
+
+// (from civo?) cards:
+// loc: for atran()
+// vt: interior box depth (~ t01 * number of cards + 2*t0) x-extent
+// vw: interior box width (long dimension of card + 2*t0)  y-extent
+// vh: interior box height (short dimension of card + bottom(t0) + top(3mm)) z-extent
+// txyz: wall thickness (t0) [tx, ty, tz] 
+// ambient: tcg thickness of cardguide
+// total width: [vt + 2 * tx, vw + 2 * ty + 2 * tcg, vh + tz]
+module vbox(loc = loc, vt0 = bt, vw0 = wi, vh0 = hi, txyz = t2) // txyz=[tz, ty, tw]
+{
+  ta = is_list(txyz) ? txyz : [txyz, txyz, txyz];
+  tx = ta.x; ty = ta.y; tz = ta.z;
+  vt = vt0 + 2 * tx; // external x-extent (card thickness)
+  vw = vw0 + 2 * ty; // external y-extent (card width: bw)
+  vh = vh0 + 1 * tz; // internal + back wall
+  echo("------ vbox: vt= ", vt, "vw=", vw, "vh=", vh);
+  // vt: interior x-extent
+  // tcg: width of each cardguide
+  // ambient:
+  module cardGuide(vt = vt0+pp, wcg = tcg) {
+    // wcg: size of inset; squeeze
+    // h0: height of flat part
+    // h1: height of taper part
+    // a: angle of taper
+    wcg = def(wcg, 2); 
+    h0 = 4; h1 = 7; a = 7;
+    vh2 = vh * .7;
+    // TODO: the trig to calc height of green cube (depends on angle a)
+    difference() {
+      translate([wcg/2 + p, 0, vh2]) color("green") cube([wcg, vt, h0 + 4 * h1], true);
+      trr([wcg, 0, vh2+h1+h0, [0, -a, 0]]) color ("pink") cube([wcg, vt+pp, h0 + 2 * h1], true);
+      trr([wcg, 0, vh2-h1-h0, [0, a, 0]]) color ("pink") cube([wcg, vt+pp, h0 + 2 * h1], true);
+    }
+  }
+  // slotify the walls:
+  vl = vt;
+  sw = vw*.7;      // width of slot 
+  dh = vh*.8;      // depth of slot (below the radius of tray)
+  sr = min(5, dh/2, sw/2); // radius of slot
+  hwtr0 = [dh, vw -2*ty, 2*tz, .1]; // ]height, width, translate, radius]
+  hwtr1 = [dh, sw      , 2*tz, sr]; // ]height, width, translate, radius]
+  ss = false;   // show slot
+
+  { 
+    // slotted box with card guides:
+    slotifyX(hwtr1, [vl-tx/2, vw/2, vh-(dh/2-sr)], 1, 3, ss) // outer slot
+    box([vt, vw, vh], ta);
+    if (w0 > 99) {
+    translate([vt/2,  0+ty, 0 ]) rotate([0,0, 90]) cardGuide();
+    translate([vt/2, vw-ty, 0 ]) rotate([0,0,-90]) cardGuide();
+    }
+    atrans(loc, [undef, [bt - tz, 0, 0], 1, 1]) card2(undef, 11); // in the vbox
   }
 }
 
@@ -79,8 +150,26 @@ module player_tray(w, l) {
   // vbox([w, l, h], t0, 1);
 
 }
+
+bl = 64;
+module player_box() {
+  translate([bl, 0, 0]) union() {
+  vbox();
+  trr([t2-bl, 0, 0]) box([bl, bw, bh]);
+  }
+}
+module four_box() {
+  for (xi = [0: 3]) {
+    trr([xi * (bt+bl+t2+.1), 0, 0 ]) player_box();
+  }
+}
+
 divw = 1;  // width of short divider between houses
 // tray_2:  t1 + w00 + t1 + house_dim.x + divw + house_dim.x + t1;
 tray_w = w00 + 3 * t1 + 2 * house_dim.x + divw;  // ~ 140
 tray_l = l00 + 2 * t1;     // 96 > (84 = 7 * house_dim.y)
-player_tray(tray_w, tray_l);
+
+loc = 0;
+// player_tray(tray_w, tray_l);
+// player_box();
+four_box();

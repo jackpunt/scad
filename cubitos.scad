@@ -31,8 +31,14 @@ bt = 10 * t01 + 2 * t0; //
 
 
 // a stack of cyan cards (on lid) - pro'ly from chaos orientation; BYO 'tr'
-// tr: offset card 
-// x: short dim of card (h00); y: long dim of card (w00); z: thickness (t00)
+// tr: offset card [x, y, z, r] with trr()
+// - x: short dim of card (h00); 
+// - y: long dim of card (w00); 
+// - z: thickness (t00)
+// - r: rotation [rx, ry, rz, cr] (cr: center of rotation: [x0, y0, z0])
+// n: [1] cards in stack
+// dxyz: [h00, w00, t00] dimension of card
+// color: [cyan]
 module card(tr = [ tw +  (h0 - h00) / 2, ty + tcg + (w0 - w00) / 2, -tz ], n = 1, dxyz=[h00, w00, t00], rgb="cyan")
 {
   trr(tr) astack(n, [ 0, 0, t01 ]) color(rgb, .5) roundedCube(dxyz, 3, true);
@@ -45,7 +51,7 @@ module card2(tr = undef, n = 1, dxyz=[h0, w0, t00], rgb="blue")
   card(tr, n, dxyz, rgb);
 }
 
-// box for setup (Events, VICI, markers, chips) cards:
+// (from civo? Events/VICI) cards:
 // vt: interior box depth (~ t01 * number of cards + 2*t0) x-extent
 // vw: interior box width (long dimension of card + 2*t0)  y-extent
 // vh: interior box height (short dimension of card + bottom(t0) + top(3mm)) z-extent
