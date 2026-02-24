@@ -173,7 +173,7 @@ module player_box() {
 }
 module four_box() {
   for (xi = [0: 3]) {
-    trr([xi * (bt+bl+t2+.1), 192, 0 ]) player_box();
+    trr([xi * (bt+bl+t2+.1), 193, 0 ]) player_box();
   }
 }
 
@@ -192,16 +192,21 @@ module wedge(xyz, tr = 20, r = -3) {
     trr([tra.x-p, tra.y, -z]) cube([x+pp, y*1.1, z]);
   }
 }
-module tech_box() {
+module tech_box(w = w0, l = l0) {
   bh = bt * 1.2 + t0;
-  dual_slots(bh, 18, w0/2, [t0, l0])
-  box([w0, l0, bh], [t2, t2, t0]);
+  dual_slots(bh, 18, w/2, [t0, l])
+  box([w, l, bh], [t2, t2, t0]);
   // wedge();
 }
-module three_tech() {
+module three_tech(w = w0, l = l0) {
   for (xi = [0 : 2]) {
-    trr([xi * (w0), 0, 0]) 
-    tech_box();
+    trr([xi * (w), 0, 0]) 
+    tech_box(w, l);
+  }
+}
+module more_techs(w = w0, l = l0, n = 3) {
+  for (xi = [0 : n-1]) {
+    trr([l + xi * (l+.2), 0, 0, [0, 0, 90]]) three_tech(w, l);
   }
 }
 
@@ -209,6 +214,6 @@ loc = 0;
 // trr([200, 0, 0]) player_tray(tray_w, tray_l);
 four_box();
 // tech_box();
-for (xi = [0:2]) {
-  trr([l0 + xi * (l0+.2), 0, 0, [0, 0, 90]]) three_tech();
-}
+more_techs(w0, l0, 3);
+
+// TODO: overlay 'map' & booklet
