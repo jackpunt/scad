@@ -752,23 +752,33 @@ module gridDXZ(nx, nz, k, tr = [ 1, 0, 1 ])
 //
 // bw: allocated width (x, cols)
 // bh: allocated height (y, rows)
-// snr: [cs, nc, nr]
+// stt: [cs, tx, ty]
 // - cs: child size; begin grid @ (cs, cs+1)
-// - nc: columns; x
-// - nr: rows; y
+// - tx: x spaceing
+// - ty: y spaceing
 // t: (t0) translate cube
-// ambient children(0)
-module cubesGrid(bw, bh, snr, t = t0) {
-  snr = def(snr, [5, 10, 20]);
-  cs = snr[0]; nc = snr[1]; nr = snr[2];
-  xi = (bw - cs) / nc;
-  x0 = (bw - cs - xi * (nc - 1) + cs)/2;
-  xm = bw - cs;
-  yi = (bh - cs) / nr;
-  y0 = (bh - cs - yi * (nr - 1) + cs)/2;
-  yl = bh - cs;
-  translate([0, 0, t])
-  gridify([x0, xi, xm], [y0, yi, yl], 2) cube([cs, cs, cs], true);
+module cubesGrid(bw, bh, stt, t = t0) {
+  stt = def(stt, [5, 10, 20]);
+  cs = stt[0]; tx = stt[1]; ty = stt[2];
+
+  // compute for-loop range values:
+  function fl3(bw, cs, tx) =
+  let(
+    tw = bw - 2 * tx,
+    nc = floor((tw+tx)/(cs+tx)), 
+    xi = cs + tx, 
+    x0 = cs/2 + (bw - (nc * xi - tx))/2,
+    xm = x0 + nc * xi - .00001
+    // , j = echo("cg: bw, nc, x0, xi, xm=", bw, nc, x0, xi, xm)
+    )
+  [x0, xi, xm];
+
+  flx = fl3(bw, cs, tx);
+  fly = fl3(bh, cs, ty);  
+
+  translate([0, 0, cs])
+  gridify(flx, fly, 2) 
+  cube([cs, cs, cs * t], true);
 }
 
 // grid test:
