@@ -2,8 +2,6 @@ use <mylib.scad>;
 
 p = .001;
 pp = 2 * p;
-t0 = 2; // base & wall thickness
-t1 = t0 + .4; // side wall for camber 
 f = .18;
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
@@ -17,12 +15,16 @@ sample = false;
 box_s = 285; // with .6 mm slack
 box_z = 70;  // inner height of box
 
-// plain card: 63 x 68
-// sleeved card: 65 x 69
+// plain card: 63 x 88
+// sleeved card: 65 x 90
 // l0: inner length of player tray
-ll = (box_s - 6*t1 - 2*.3)/3; // ll = 90; ll / house_dim.y = 7.5
-ww = (209 - 4*t0 - 0)/3; // mtray_l = ~209
-l0 = 88; // extend tray, room for 7.5 houses; ~ 2 * (mtray_h = 3 * (w00 + t0) + t0);
+// 284-270 = 14; 14/6 = 2.33
+
+t0 = 1.2; // base & wall thickness
+t1 = t0 + .10; // side wall for camber 
+
+ll = (box_s - 6*t1 - 2*.3)/3; // ll = >92; ll / house_dim.y = 7.5
+l0 = 90; // extend tray, room for 7.5 houses; ~ 2 * (mtray_h = 3 * (w00 + t0) + t0);
 w0 = 65; // w00 = w0 + slack;
 
 // house turned on side in box:
@@ -31,9 +33,16 @@ house_dim = [33, 12, 25];
 // space for sleeved card with 2mm slack:
 // short side of card (67)
 w00 = w0 + 2; 
-// long side of card (ll = 90)
+// long side of card: ~90 + 2 (ll = 90)
 l00 = l0 + 2;
-echo("ww=", ww, "w00=", w00, "ll = ", ll, "l00=", l00);
+pl0 = min(ll, l00);
+pw0 = w00 + 4; // extend to fill box_s
+echo("pl0 = ", pl0, "ll =", ll, "l00 =", l00, "total_l=", l00 + 2*pl0 + 6*t1, "=", l00, 2*pl0, 6*t1 );
+
+mtray_l0 = 3 * w00 + 4 * t0;    // --> mtray_l; total length of mtray
+rtray_l0 = box_s - mtray_l0;    // 285, but can overlap res_lid by rtl
+
+echo("w00=", w00, "ll = ", ll, "l00=", l00, "total_l0=", mtray_l0+rtray_l0-1, "=", mtray_l0, "+", rtray_l0);
 
 t2 = 1;       // thickness for alt boxes (vbox + player_box)
 ty = t2;      // thick in y dir (short side wall)
@@ -59,18 +68,23 @@ bh = hi + t2;  // card box height
 // a stack of cyan cards (on lid) - pro'ly from chaos orientation; BYO 'tr'
 // tr: offset card stack
 // x: short dim of card (h00); y: long dim of card (w00); z: thickness (t00)
-module card(tr = [ tw +  (h0 - h00) / 2, ty + tcg + (w0 - w00) / 2, -tz ], n = 1, dxyz=[h00, w00, t00], rgb="cyan")
+module card(tr = [ t1 + (l00 - l0) / 2, t1 + (w00 - w0) / 2, t0 ], n, dxyz, rgb="cyan")
 {
+  n = def(n, 1);
+  dxyz = def(dxyz, [l0, w0, t01]);
+  rgb = def(rgb, "#00ffff");
   trr(tr) astack(n, [ 0, 0, t01 ]) color(rgb, .5) roundedCube(dxyz, 3, true);
 }
 
+// parallel arrays... I wish scad had objects!
 house_names = ["RED", "YELLOW", "GREEN", "BLUE"];
-house_colors = ["red", "yellow", "green", "#40acff"];
+house_color = ["red", "yellow", "green", "#40acff"];
+house_dx = [2, 4, 1, 6];
 
 // astack of house sized cubes, colored per-player
 module house(pi = 0, n = 1) {
-  hc = house_colors[pi];
-  dx = [2, 4, 6, 1][pi]; // houses are a bit smaller than house_dim.x
+  hc = house_color[pi];
+  dx = house_dx[pi]; // houses are variously smaller than house_dim.x
   hx = house_dim.x - dx;
   astack(n, [0, house_dim.y + .1, 0])
   color(hc, .6)
@@ -178,12 +192,20 @@ module card_slot(h, sw, tr, ss = false) {
   slotifyX([tabh, sw, t1*2], [dx, dy, 1], 3, undef, ss)
   children();
 }
+module house_slot(h, sw, tr, ss = false) {
+  sr = sw/2; // slot radius
+  dx = def(tr.x, t1/2);
+  dy = def(tr.y, 20);
+  slotifyY2([h, sw, t1*2], [dx, dy, -sr], undef, 1, ss)
+  children();
+}
 
 divw = 1;  // width of short divider between houses
 // ptray_w:  t1 + w00 + t1 + house_dim.x + divw + house_dim.x + t1;
-ptray_w = w00 + 3 * t1 + 2 * house_dim.x + divw;  // ~ 140
-ptray_l = l00 + 2 * t1 + 1;     // 96 > (84 = 7 * house_dim.y)
+ptray_w = pw0 + 3 * t1 + 2 * house_dim.x + divw;  // ~ 140
+ptray_l = pl0 + 2 * t1 + 0;     // 94.6 > (84 = 7 * house_dim.y)
 ptray_h = house_dim.z + 1 + t0; // z-height of player trays (t0 base + t0 map_indent)
+echo("ptray_l=", ptray_l, "ptray_w=", ptray_w, "total_w=", 2*ptray_w );
 
 // w: outer width-x (ptray_w)
 // l: outer length-y (ptray_l)
@@ -196,24 +218,28 @@ module player_tray(pi = 0, w = ptray_w, l = ptray_l, nh = 0) {
   h = ptray_h + 2; // extend for map
   sw = 18;        // slot width
   house_w = 2 * house_dim.x + divw; // interior width of house side
-  card_w = w00; // interior of card side: total - house_interior - main_div = w00
+  card_w = pw0; // interior of card side: total - house_interior - main_div = w00
   name = house_names[pi];
 
   // rotate right-side boxes:
   r0 = pi >= 2 ? [0, 0, 180, [w/2, l/2, 0]] : [0, 0, 0];
   xyr = [xy.x, xy.y, xy.z, r0];
+  // a grand union(), and engrave the name
   trr(xyr)
-  differenceN(5) {
-    trr([t1+card_w+t1+.1,                      t1+.2, 0]) house(pi, nh);
+  differenceN(6) {
+    card([t1+w00+(w00-w0)/2, t1+(l00-l0)/2, t1+.7, [0, 0, 90]], 1, undef, "#d480ff");
+    trr([t1+card_w+t1+.1,                      t1+.2, 0]) house(pi, nh/2);
     trr([t1+card_w+t1+.1 + house_dim.x + divw, t1+.2, 0]) house(pi, nh);
-    color(house_colors[pi])
+    color(house_color[pi])
+    slotifyY2([h, sw, t1*3], [ptray_w-t1-house_dim.x/2, t1, 8], undef, 1)
+    slotifyY2([h, sw, t1*3], [pw0 + 2*t1+house_dim.x/2, pl0+ t1, 8], undef, 1)
     card_slot(h, sw, [t1/2, l/2])
     box([w, l, h], [t1, t1, t0] ); // [x=w, y=l, z=h]
     div([h, l, t1 + card_w], 0, 0, t1); // between cards * villages
     div([10, l, t1 + card_w + t1 + house_dim.x], 0, 0, divw); // between villages
     // engrave:
     trr([w00 + house_w/3, l/2, t0-.5, [0, 0, 90]]) linear_extrude(height = 1.5) 
-    text(name, halign = "center", size=6, font="Nunito:style=Bold");
+    rotate([0,0,180]) text(name, halign = "center", size=6, font="Nunito:style=Bold");
   }
 }
 
@@ -269,7 +295,7 @@ module mkt_box(w = w00, l = l00, ta = [t0, t0, t0]) {
 }
 
 mtray_l = 3 * (w00 + t0) + t0;
-mtray_w = l00 + 2*t0;
+mtray_w = l00 + 2 * t0;
 echo("mtray_l=", mtray_l);
 module mkt_tray(w = w00, l = l00) {
   astack(3, [0, w + t0, 0]) 
@@ -283,6 +309,8 @@ module more_mkts(w = w00, l = l00, n = 3, t = t0) {
 
 ntc = 28;
 tbh = tnc(ntc) * 1.2 + t0;   // tech box height
+tbl = box_s - ptray_l;       // tech box length > 
+assert(tbl > l0);
 module tech_box(w = w00, l = l00, ta = [t0, t0, t0]) {
   bxyz = adif([w, l, tbh], amul(ta, [-2, -2, 0])); // add 2 wall thichness; 0 floor...
   dual_slots(tbh, 18, bxyz.x/2, [t0, bxyz.y])
@@ -294,7 +322,7 @@ module tech_box(w = w00, l = l00, ta = [t0, t0, t0]) {
 // n: astack of n (3)
 // t: thickness of walls & base (t0)
 module tech_tray(w = w00, l = l00, n = 3, t = t0) {
-  astack(n, [w + t0, 0, 0], undef, house_colors) tech_box(w, l);
+  astack(n, [w + t0, 0, 0], undef, house_color) tech_box(w, l);
 }
 // size: [x: length, y: width_curved, z: height_curved]
 // rt: radii of tray [bl, tl, tr, br]
@@ -324,30 +352,31 @@ stackh = mbh + ptray_h + mapz;
 echo("stackh=", stackh, ptray_l);
 
 rtray_w = 3 * (w00 + t0); // res_tray adds extra t0 endcap
-rtray_l = box_s - mtray_l + 1.3; 
+rtray_l = box_s - mtray_l;
 rtl = 1;               // res_tray lid thickness
-rtl2 = 2 * (rtl+f);    // thickness of lid * 2 - fudge
+rtl2 = 2 * (rtl+f);    // shrink res_tray by thickness of (lid * 2 + fudge)
 rtray_h = stackh - mbh - tbh - rtl -.1;
 rtt = 1.6;             // thickness of res_tray walls
 
 // 6 bin tray for resources & coins
-// res_w: width (x) of tube, tray gets extra t-sized endcap
+// res_w: width (x) of tube, tray gets extra rtt endcap
 // res_l: length (y) of tube, 
 module res_tray(res_w = rtray_w - rtl2, res_l = rtray_l - rtl2) {
   res_h = rtray_h;
   rad = res_h * .7;
   ndiv = 5;
-  dx = res_w / (ndiv+1);
-  dl = .6;
+  dx = res_w / (ndiv+1);  // space between short divs
+  dl = .6;  // offset the long div
   echo("res_tray: rtray_l=", rtray_l, " res_l=", res_l, "rtl=", rtl);
+  echo("res_tray: res_l=", res_l, "rtl2=", rtl2, "mtray_l0+res_l+rtl=", mtray_l0 + res_l+rtl);
   echo("res_tray: dx=", dx, "res_l*dl", res_l*dl, "res_h=", res_h, "dx=", dx, 
        "cubic=", (dx-1)*(res_l-rtt)*dl*(res_h-rtt));
   divs = [ for (i = [0 : ndiv] ) i * dx ];
   tray([res_w, res_l, 2 * res_h], [rad, 8, rad, rad], 2, -res_h, divs, rtt);
-  trr([0, dl * res_l, 0]) cube([res_w - dx, 1, res_h]);
+  trr([0, dl * res_l, 0]) cube([res_w - dx, 1, res_h]); // <--- longitudinal div
 }
 module res_lid(res_w = rtray_w + rtt, res_l = rtray_l, res_h = rtray_h - mbh + .5) {
-  echo("res_lid: res_l=", res_l, "rtl=", rtl);
+  echo("res_lid: res_l=", res_l, "rtl=", rtl, "mtray_l0+res_l-rtt=", mtray_l0 + res_l-rtt);
   color("lightblue")
   difference() 
   {
@@ -368,24 +397,28 @@ module spacer(w = (box_s-1)/2 , l = (box_s-1)/2, h = (box_z - stackh) ) {
 module four_space(w = (box_s-1)/2 , l = (box_s-1)/2, h = (box_z - stackh)) {
   astack(2, [w, 0, 0])
   astack(2, [0, l, 0])
+  render()
   spacer();
 }
 
 // loc: 0=whole stack, 1=mkt_trays, 2=tech_tray, 3 = four_tray, 4 = four_tray(7), 5 = res_tray
 loc = 0;
-y1 = ptray_l * 2 + .3;  // maybe displays beyond box_s?
-y2 = mtray_l - rtl + .3;
+y1 = ptray_l * 2 + .1;  // maybe displays beyond box_s?
+y2 = mtray_l - rtl + .03;
 
 // trr([200, 0, 0]) player_tray(ptray_w, ptray_l);
 atrans(loc, [[0, 0, tth+p], undef, undef, [0, 0, 0], 3]) four_tray([7, 0, 0, 0, 7][loc]);
-atrans(loc, [[0, 0, tth+p], undef, undef]) map_block();
-atrans(loc, [[0, 0, 0], 0, undef, undef]) more_mkts();
+*atrans(loc, [[0, 0, tth+p], undef, undef]) map_block();
+*atrans(loc, [[0, y1, stackh - tbh], undef, [0, 0, 0], undef]) tech_tray();
+
+*atrans(loc, [[0, 0, 0], 0, undef, undef]) more_mkts();
 atrans(loc, [[mtray_l, y1, rtray_h+rtl, [0, 0, 90]], 0, undef, undef]) mkt_tray(); //[0, 0, 90, [mtray_w/2, mtray_l/2, 0]]
 
-atrans(loc, [[0, y1, stackh - tbh], undef, [0, 0, 0], undef]) tech_tray();
-atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray();
-atrans(loc, [[0,          y2,  rtl + .1, [180, 0, 0, [0, rtray_l/2, rtray_h/2]]], 
+// center res_lid: inset by rtl2/2
+*atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray();
+*atrans(loc, [[0,     y2 - .3,  rtl + .1, [180, 0, 0, [0, rtray_l/2, rtray_h/2]]], 
               undef, undef, undef, undef, 0, 0]) res_lid();
 // tweaked so res_lid overhangs mkt_tray; extending rtray_l by rtl
 // increase ptray_h by 1, so increase rtray_h by 1; more cubic mm in res_tray.
-atrans(loc, [[0, 0, stackh], [-box_s/2, -box_s/2, 0]]) four_space();
+atrans(loc, [[0, 0, stackh-box_z], undef, undef, undef, undef,undef, undef, undef, undef,[-box_s, -box_s, 0]]) four_space();
+card();
