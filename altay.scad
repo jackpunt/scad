@@ -12,7 +12,7 @@ sample = false;
 // tray for resources
 // tray for {1, 2, 3} hex tokens, VP flags, first-player
 
-box_s = 285; // with .6 mm slack
+box_s = 284; // nominal 285, but: cardboard
 box_z = 67.5;  // inner height of box: 68 - .5 slack
 
 // plain card: 63 x 88
@@ -234,7 +234,7 @@ module player_tray(pi = 0, w = ptray_w, l = ptray_l, nh = 0) {
     slotifyY2([h, sw, t1*3], [ptray_w-t1-house_dim.x/2, t1, 8], undef, 1)
     slotifyY2([h, sw, t1*3], [pw0 + 2*t1+house_dim.x/2, pl0+ t1, 8], undef, 1)
     card_slot(h, sw, [t1/2, l/2])
-    box([w, l, h], [t1, t1, t0] ); // [x=w, y=l, z=h]
+    box([w, l, h], [t1, t1, t0], undef, false, 1.2 ); // [x=w, y=l, z=h]
     div([h, l, t1 + card_w], 0, 0, t1); // between cards * villages
     div([10, l, t1 + card_w + t1 + house_dim.x], 0, 0, divw); // between villages
     // engrave:
@@ -290,7 +290,7 @@ mbh = bt * 1.2 + t0 +.35;
 module mkt_box(w = w00, l = l00, ta = [t0, t0, t0]) {
   bxyz = adif([w, l, mbh], amul(ta, [-2, -2, 0])); // add 2 wall thichness, 0 floor
   dual_slots(mbh, 18, bxyz.x/2, [t0, bxyz.y])
-  box(bxyz, ta);
+  box(bxyz, ta, undef, false, t0);
   // wedge();
 }
 
@@ -314,7 +314,7 @@ assert(tbl > l0);
 module tech_box(w = w00, l = l00, ta = [t0, t0, t0]) {
   bxyz = adif([w, l, tbh], amul(ta, [-2, -2, 0])); // add 2 wall thichness; 0 floor...
   dual_slots(tbh, 18, bxyz.x/2, [t0, bxyz.y])
-  box(bxyz, ta);
+  box(bxyz, ta, undef, false, t0);
 }
 
 // w: inside width (w00)
@@ -390,7 +390,7 @@ module spacer(w = (box_s-1)/2 , l = (box_s-1)/2, h = (box_z - stackh) ) {
   cs = 11.5;
   d = 1.2;
   difference() {
-    cube([w, l, h]);
+    roundedCube([w, l, h], 2);
     cubesGrid(bw = w, bh = l, stt = [cs, d, d], t = h  );
   }
 }
