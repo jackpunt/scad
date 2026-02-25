@@ -372,7 +372,7 @@ module four_space(w = (box_s-1)/2 , l = (box_s-1)/2, h = (box_z - stackh)) {
 }
 
 // loc: 0=whole stack, 1=mkt_trays, 2=tech_tray, 3 = four_tray, 4 = four_tray(7), 5 = res_tray
-loc = 6;
+loc = 0;
 y1 = ptray_l * 2 + .3;  // maybe displays beyond box_s?
 y2 = mtray_l - rtl + .3;
 
