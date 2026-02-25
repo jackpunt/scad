@@ -748,6 +748,29 @@ module gridDXZ(nx, nz, k, tr = [ 1, 0, 1 ])
     gridify([ 0, 2 * k, nx ], [ k, 2 * k, nz ], 1) children(0);
 }
 
+// gridify cubes([cs, cs, cs]) to fit in (bw, bh)
+//
+// bw: allocated width (x, cols)
+// bh: allocated height (y, rows)
+// snr: [cs, nc, nr]
+// - cs: child size; begin grid @ (cs, cs+1)
+// - nc: columns; x
+// - nr: rows; y
+// t: (t0) translate cube
+// ambient children(0)
+module cubesGrid(bw, bh, snr, t = t0) {
+  snr = def(snr, [5, 10, 20]);
+  cs = snr[0]; nc = snr[1]; nr = snr[2];
+  xi = (bw - cs) / nc;
+  x0 = (bw - cs - xi * (nc - 1) + cs)/2;
+  xm = bw - cs;
+  yi = (bh - cs) / nr;
+  y0 = (bh - cs - yi * (nr - 1) + cs)/2;
+  yl = bh - cs;
+  translate([0, 0, t])
+  gridify([x0, xi, xm], [y0, yi, yl], 2) cube([cs, cs, cs], true);
+}
+
 // grid test:
 module gridTest() {
   translate([ 0, -40, 0 ])
