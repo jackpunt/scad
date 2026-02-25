@@ -68,7 +68,7 @@ module atrans(ndx = 0, atran = [[ 0, 0, 0 ]]) {
 // cxy: (false) center XY, Z = 0
 // -
 // diff() { cube(lwh); tr(txyz) cube(adif(lwh, amul(d, txyz))) }
-module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
+module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false, r = 0) {
   t = is_undef(t) ? t0 : t;             // wall thickness
   txyz = is_list(t) ? t : [ t, t, t ];  // in each direction
   d = is_list(d) ? d : [ 2, 2, .9 ]; // reduce inner_cube by 2*txy (enlarge tz for quickview)
@@ -78,8 +78,17 @@ module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false) {
   txyzc = amul(lwh, [dc,dc,0]);
   translate(txyzc) 
   difference() {
-    cube(lwh);
-    translate(txyz) cube(dxyz); // -2*bt or +2*p
+    if (r == 0) {
+      cube(lwh);
+    } else {
+      roundedCube(lwh, r, true);
+    }
+    translate(txyz) 
+    if (r == 0) {
+      cube(dxyz); // -2*bt or +2*p
+    } else {
+      roundedCube(dxyz, r, true);
+    }
   }
 }
 
