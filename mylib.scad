@@ -143,8 +143,10 @@ module astack(n, d, rot) {
   r = is_undef(rot) ? .1 : rot;
   rxyz = is_list(r) ? r : [ 0, 0, 0 ];
   // echo("dxyz=", dxyz) 
-  for (i = [0:n - 1]) {
+  if (n > 0) {
+  for (i = [0 : n - 1]) {
     rotate(rxyz) dup([ i * dxyz.x, i * dxyz.y, i * dxyz.z ]) children(); // amul(dxyz, i)
+  }
   }
 }
 
@@ -395,7 +397,7 @@ module divXY(xyz = 10, r = 2, k, tz = t0) {
 }
 
 // a roundedRect divider (@x) across the YZ plane of a box:
-// hwx: [z,y,x] --> z-height, y-depth, x-translation
+// hwx: [z,y,x] --> z-height, y-depth, x-translation (of leftmost edge)
 // r: radius ([r,r,r,r])
 // k: (0) k<0 cut k from top; k>0 cut k from bottom (keep top)
 // - k == 0 --> keep all
@@ -403,9 +405,9 @@ module divXY(xyz = 10, r = 2, k, tz = t0) {
 module div(zyx = 10, r = 2, k, tx = t0) {
   dx = is_undef(zyx[2]) ? 0 : zyx[2];
   translate([ dx + tx, 0, 0 ])    //
-      rotate([ 0, -90 ])         //
-      linear_extrude(height = tx) //
-      roundedRect([ zyx[0], zyx[1] ], r, k);
+      rotate([ 0, -90 ])          // flip XY to YZ, extrude to -X
+      linear_extrude(height = tx) // extrude up Z
+      roundedRect([ zyx[0], zyx[1] ], r, k); // in XY plane
 }
 
 // on the XZ plane, displaced by y
