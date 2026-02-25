@@ -361,14 +361,15 @@ rtt = 1.6;             // thickness of res_tray walls
 // 6 bin tray for resources & coins
 // res_w: width (x) of tube, tray gets extra rtt endcap
 // res_l: length (y) of tube, 
-module res_tray(res_w = rtray_w - rtl2, res_l = rtray_l - rtl2) {
+module res_tray(res_w, res_l, ndiv = 5) {
+  res_w = def(res_w, rtray_w - rtl2);
+  res_l = def(res_l, rtray_l - rtl2);
   res_h = rtray_h;
   rad = res_h * .7;
-  ndiv = 5;
   dx = res_w / (ndiv+1);  // space between short divs
   dl = .6;  // offset the long div
-  echo("res_tray: rtray_l=", rtray_l, " res_l=", res_l, "rtl=", rtl);
-  echo("res_tray: res_l=", res_l, "rtl2=", rtl2, "mtray_l0+res_l+rtl=", mtray_l0 + res_l+rtl);
+  echo("res_tray: rtray_l=", rtray_l, " res_l=", res_l, "rtl2=", rtl2);
+  echo("res_tray: res_l=", res_l, "rtl=", rtl, "mtray_l0+res_l+rtl=", mtray_l0 + res_l+rtl);
   echo("res_tray: dx=", dx, "res_l*dl", res_l*dl, "res_h=", res_h, "dx=", dx, 
        "cubic=", (dx-1)*(res_l-rtt)*dl*(res_h-rtt));
   divs = [ for (i = [0 : ndiv] ) i * dx ];
@@ -402,7 +403,7 @@ module four_space(w = (box_s-1)/2 , l = (box_s-1)/2, h = (box_z - stackh)) {
 }
 
 // loc: 0=whole stack, 1=mkt_trays, 2=tech_tray, 3 = four_tray, 4 = four_tray(7), 5 = res_tray
-loc = 0;
+loc = 5;
 y1 = ptray_l * 2 + .1;  // maybe displays beyond box_s?
 y2 = mtray_l - rtl + .03;
 
@@ -416,9 +417,10 @@ atrans(loc, [[mtray_l, y1, rtray_h+rtl, [0, 0, 90]], 0, undef, undef]) mkt_tray(
 
 // center res_lid: inset by rtl2/2
 atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray();
+// atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray(33.7*2, undef, 1);
 atrans(loc, [[0,     y2 - .3,  rtl + .1, [180, 0, 0, [0, rtray_l/2, rtray_h/2]]], 
-              undef, undef, undef, undef, 0, 0]) res_lid();
+              undef, undef, undef, undef, undef, 0]) res_lid();
 // tweaked so res_lid overhangs mkt_tray; extending rtray_l by rtl
 // increase ptray_h by 1, so increase rtray_h by 1; more cubic mm in res_tray.
 atrans(loc, [[0, 0, stackh-box_z], undef, undef, undef, undef,undef, undef, undef, undef,[-box_s, -box_s, 0]]) four_space();
-card();
+
