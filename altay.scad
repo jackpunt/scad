@@ -13,7 +13,7 @@ sample = false;
 // tray for {1, 2, 3} hex tokens, VP flags, first-player
 
 box_s = 285; // with .6 mm slack
-box_z = 70;  // inner height of box
+box_z = 67.5;  // inner height of box: 68 - .5 slack
 
 // plain card: 63 x 88
 // sleeved card: 65 x 90
@@ -259,7 +259,7 @@ module four_tray(nh = 0) {
 // map dimensions:
 mapw = 240;
 mapl = 171;
-mapz = 10+2;   // +2 for rule book
+mapz = 11+1;   // +1 for rule book
 module map_block() {
   x0 = (2 * ptray_w - mapw) / 2; // center over four trays
   y0 = (2 * ptray_l - mapl) / 2; // center over four trays
@@ -408,15 +408,15 @@ y2 = mtray_l - rtl + .03;
 
 // trr([200, 0, 0]) player_tray(ptray_w, ptray_l);
 atrans(loc, [[0, 0, tth+p], undef, undef, [0, 0, 0], 3]) four_tray([7, 0, 0, 0, 7][loc]);
-*atrans(loc, [[0, 0, tth+p], undef, undef]) map_block();
-*atrans(loc, [[0, y1, stackh - tbh], undef, [0, 0, 0], undef]) tech_tray();
+atrans(loc, [[0, 0, tth+p], undef, undef]) map_block();
+atrans(loc, [[0, y1, stackh - tbh], undef, [0, 0, 0], undef]) tech_tray();
 
-*atrans(loc, [[0, 0, 0], 0, undef, undef]) more_mkts();
+atrans(loc, [[0, 0, 0], 0, undef, undef]) more_mkts();
 atrans(loc, [[mtray_l, y1, rtray_h+rtl, [0, 0, 90]], 0, undef, undef]) mkt_tray(); //[0, 0, 90, [mtray_w/2, mtray_l/2, 0]]
 
 // center res_lid: inset by rtl2/2
-*atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray();
-*atrans(loc, [[0,     y2 - .3,  rtl + .1, [180, 0, 0, [0, rtray_l/2, rtray_h/2]]], 
+atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray();
+atrans(loc, [[0,     y2 - .3,  rtl + .1, [180, 0, 0, [0, rtray_l/2, rtray_h/2]]], 
               undef, undef, undef, undef, 0, 0]) res_lid();
 // tweaked so res_lid overhangs mkt_tray; extending rtray_l by rtl
 // increase ptray_h by 1, so increase rtray_h by 1; more cubic mm in res_tray.
