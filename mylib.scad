@@ -138,13 +138,15 @@ module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = t0) 
 // n: number
 // dxyz: each iteration
 // rot: rotate from dx --> dy or dz
-module astack(n, d, rot) {
+module astack(n, d, rot, colors) {
   dxyz = is_list(d) ? d : [ d, 0, 0 ];
   r = is_undef(rot) ? .1 : rot;
   rxyz = is_list(r) ? r : [ 0, 0, 0 ];
   // echo("dxyz=", dxyz) 
   if (n > 0) {
   for (i = [0 : n - 1]) {
+    // if (!is_undef(colors) && i <= len(colors))
+    color(colors[i])
     rotate(rxyz) dup([ i * dxyz.x, i * dxyz.y, i * dxyz.z ]) children(); // amul(dxyz, i)
   }
   }
@@ -188,16 +190,16 @@ module trr(rtr) {
 // duplicate: insert multiple references to children();
 // each instance rotated then translated 
 // suitable inside hull() { ... }
-// trr: translate (after rotate with offset) ([0, 0, 0])
+// tr: trr (translate & rotate around center) ([0, 0, 0])
 // nc: number of copies (1)
 // c1: color copies
-// c0: color original
-module dup(trr, nc = 1, c1, c0) {
-  trr = def(trr, [0, 0, 0 ]);
-  color(c0) children();
+// c0: color original [obsolete]
+module dup(tr, nc = 1, c1, c0) {
+  tr = def(tr, [0, 0, 0 ]);
+  if(!is_undef(c0)) color(c0) children(); // debug settler-frame
   color(c1) 
   for(i = [1:nc])
-    trr(amul(trr, i))
+    trr(amul(tr, i))
       children();
 }
 
@@ -361,7 +363,8 @@ module pipe(rrh = 10, t = t0) {
 
 // A Z-extruded roundedRect: (kut across the YZ plane)
 // sxy: [dx, dy, dz] EXTERNAL SIZE
-// r: radius (2), k: keep/cut (0), 
+// r: radius (2) 
+// k: keep/cut (0) 
 // txyz = thick ([t0, t0, t0])
 module roundedTube(sxy = 10, r = 2, k = 0, txyz = t0) {
   s = is_list(sxy) ? sxy : [ sxy, sxy, sxy ];
