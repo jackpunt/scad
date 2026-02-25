@@ -33,23 +33,38 @@ tz = t2;      // thick in z dir (bottom of box)
 
 tcg = sample ?  1.15 : (95-w0-2*ty)/2;  // inset for cardguide (wi+2*ty NTE tl = 95)
 
-nc = 10;      // number of cards in box
+nc = 10;      // number of cards in vbox (& mkt_tray)
 t01 = 6.25/12; // = .52mm; thickness when stacking sleeved cards (compressed)
-bt = nc * t01 + 2 * t2;  // box thickness [total for nc cards]
+bt = nc * t01 + 2 * t2;  // vbox thickness [total for nc cards]
+tth = bt * 1.2 + t0;     // mkt_tray height
 
 wi = w0 + 2 * tcg; // interior width of box (y-extent @ loc = 2)
 bw = wi + 2 * ty;  // card box width
 
+// player box:
 ot = 1.5;      // vbox extends over card. still fit upright in 70mm packing box
 hi = w0 + ot ; // interior height of vbox (short dimension of card)
 bh = hi + t2;  // card box height
 
 // a stack of cyan cards (on lid) - pro'ly from chaos orientation; BYO 'tr'
-// tr: offset card 
+// tr: offset card stack
 // x: short dim of card (h00); y: long dim of card (w00); z: thickness (t00)
 module card(tr = [ tw +  (h0 - h00) / 2, ty + tcg + (w0 - w00) / 2, -tz ], n = 1, dxyz=[h00, w00, t00], rgb="cyan")
 {
   trr(tr) astack(n, [ 0, 0, t01 ]) color(rgb, .5) roundedCube(dxyz, 3, true);
+}
+
+house_names = ["RED", "YELLOW", "BLUE", "GREEN"];
+house_colors = ["red", "yellow", "#40acff", "green"];
+
+// astack of house sized cubes, colored per-player
+module house(pi = 0, n = 1) {
+  hc = house_colors[pi];
+  dx = [2, 4, 6, 1][pi]; // houses are a bit smaller than house_dim.x
+  hx = house_dim.x - dx;
+  astack(n, [0, house_dim.y + .1, 0])
+  color(hc, .6)
+  trr([dx/2, 0, 0]) cube([hx, house_dim.y, house_dim.z]);
 }
 
 // (from civo?) cards:
@@ -112,14 +127,14 @@ module dual_slots(h, sw, dx1, dy, ss = false) {
   tabh = 20;
   sr = sw/2;
   if (len(dy) > 1) {
-    slotifyY2([h, sw, t0*2], [dx1, dy[0]-1, -sr], undef, 1, ss)
-    slotifyZ([tabh, sw, t0*2], [dx1, dy[0]-0, 1], 2, undef, ss)
-    slotifyY2([h, sw, t0*2], [dx1, dy[1]-1, -sr], undef, 1, ss)
-    slotifyZ([tabh, sw, t0*2], [dx1, dy[1]-0, 1], 2, undef, ss)
+    slotifyY2([h,   sw, t1*2], [dx1, dy[0]-1, -sr], undef, 1, ss)
+    slotifyZ([tabh, sw, t1*2], [dx1, dy[0]-0,   1], 2, undef, ss)
+    slotifyY2([h,   sw, t1*2], [dx1, dy[1]-1, -sr], undef, 1, ss)
+    slotifyZ([tabh, sw, t1*2], [dx1, dy[1]-0,   1], 2, undef, ss)
     children();
   } else {
-    slotifyY2([h, sw, t0*2], [dx1, dy[0]-1, -sr], undef, 1, ss)
-    slotifyZ([tabh, sw, t0*2], [dx1, dy[0]-0, 1], 2, undef, ss)
+    slotifyY2([h,   sw, t1*2], [dx1, dy[0]-1, -sr], undef, 1, ss)
+    slotifyZ([tabh, sw, t1*2], [dx1, dy[0]-0,   1], 2, undef, ss)
     children();
   }
 }
@@ -132,50 +147,87 @@ module dual_slots(h, sw, dx1, dy, ss = false) {
 module card_slot(h, sw, tr, ss = false) {
   tabh = 20;
   sr = sw/2; // slot radius
-  dx = def(tr[0], t0/2);
+  dx = def(tr[0], t1/2);
   dy = def(tr[1], 20);
-  slotifyX2([h, sw, t0*2], [dx, dy, -sr], undef, 1, ss)
-  slotifyX([tabh, sw, t0*2], [dx, dy, 1], 3, undef, ss)
+  slotifyX2([h, sw, t1*2], [dx, dy, -sr], undef, 1, ss)
+  slotifyX([tabh, sw, t1*2], [dx, dy, 1], 3, undef, ss)
   children();
 }
 
 divw = 1;  // width of short divider between houses
-// tray_2:  t1 + w00 + t1 + house_dim.x + divw + house_dim.x + t1;
+// tray_w:  t1 + w00 + t1 + house_dim.x + divw + house_dim.x + t1;
 tray_w = w00 + 3 * t1 + 2 * house_dim.x + divw;  // ~ 140
 tray_l = l00 + 2 * t1;     // 96 > (84 = 7 * house_dim.y)
+tray_h = house_dim.z + t0; // z-height of player trays (t0 base + t0 map_indent)
 
-module player_tray(w = tray_w, l = tray_l) {
-  h = house_dim.z + t0;
-  sw = 18;
-  dx1 = house_dim.x/2+t0;
-  dy = [t0, l];
-  house_w = 2 * house_dim.x + divw;
-  card_w = w - house_w - t1;
+// w: outer width-x (tray_w)
+// l: outer length-y (tray_l)
+// pi: player id (0)
+// nh: number of houses in tray (0)
+module player_tray(pi = 0, w = tray_w, l = tray_l, nh = 0) {
+  w = def(w, tray_w);
+  l = def(l, tray_l);
+  xy = amul([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]][pi], [w+.1, l+.1, 1]);
+  h = tray_h + 2; // extend for map
+  sw = 18;        // slot width
+  house_w = 2 * house_dim.x + divw; // interior width of house side
+  card_w = w00; // interior of card side: total - house_interior - main_div = w00
+  name = house_names[pi];
 
-  // suitable for card boxes:
-  card_slot(h, sw, [t0/2, l/2])
-  box([w, l, h], t1 ); // [x=w, y=l, z=h]
-  div([h, l, t1 + w00], 0, 0, t1); // between cards * villages
-  div([10, l, t0 + w00 + t0 + house_dim.x + divw/2], 0, 0, divw); // between villages
-
-  // translate(v = [w/2, l/2-l*1.1, h/2]) 
-  // vbox([w, l, h], t0, 1);
-
-}
-
-// box length for storing Village pieces:
-bl = 63.5;  // can fit 4 boxes in 288 mm
-module player_box() {
-  translate([bl, 0, 0]) union() {
-  vbox();
-  trr([t2-bl, 0, 0]) box([bl, bw, bh]);
+  // rotate right-side boxes:
+  r0 = pi >= 2 ? [0, 0, 180, [w/2, l/2, 0]] : [0, 0, 0];
+  xyr = [xy.x, xy.y, xy.z, r0];
+  trr(xyr)
+  differenceN(5) {
+    trr([t1+card_w+t1+.1,                      t1+.2, 0]) house(pi, nh);
+    trr([t1+card_w+t1+.1 + house_dim.x + divw, t1+.2, 0]) house(pi, nh);
+    card_slot(h, sw, [t1/2, l/2])
+    box([w, l, h], [t1, t1, t0] ); // [x=w, y=l, z=h]
+    div([h, l, t1 + card_w], 0, 0, t1); // between cards * villages
+    div([10, l, t1 + card_w + t1 + house_dim.x], 0, 0, divw); // between villages
+    // engrave:
+    trr([w0+ house_w/3, l/2, t0-.5, [0, 0, 90]]) linear_extrude(height = 1.5) 
+    text(name, halign = "center", size=6, font="Nunito:style=Bold");
   }
 }
-module four_box() {
-  for (xi = [0: 3]) {
-    trr([xi * (bt+bl+t2+.1), 193, 0 ]) player_box();
+
+// player box length for storing Village pieces:
+// echo("pbl ~~", 287/4 - (bt+t2));
+pbl = 63.5;  // can fit 4 boxes in ~287 mm
+
+// pi: player_id: 0..3
+module player_box(pi = 0) {
+  xy = amul([[0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0]][pi], [bt + t2 + pbl+.1, 193, 1]);
+  trr(xy)
+  translate([pbl, 0, 0]) union() {
+    vbox();
+    trr([t2-pbl, 0, 0]) box([pbl, bw, bh]);
   }
 }
+module four_box(nh = 0) {
+  difference() {
+  union() {
+    player_tray(0, undef, undef, nh);
+    player_tray(1, undef, undef, nh);
+    player_tray(2, undef, undef, nh);
+    player_tray(3, undef, undef, nh);
+  }
+  map_block();
+  }
+}
+
+module map_block() {
+  mapw = 240;
+  mapl = 171;
+  mapz = 10;
+  x0 = (2 * tray_w - mapw) / 2; // center over four trays
+  y0 = (2 * tray_l - mapl) / 2; // center over four trays
+  z0 = tray_h;
+  trr([x0, y0, z0]) 
+  color("lightblue", .3)
+  cube([mapw, mapl, mapz]);
+}
+
 
 
 // xyz: size of cube: [w0, 40, 4]
@@ -192,28 +244,30 @@ module wedge(xyz, tr = 20, r = -3) {
     trr([tra.x-p, tra.y, -z]) cube([x+pp, y*1.1, z]);
   }
 }
-module tech_box(w = w0, l = l0) {
-  bh = bt * 1.2 + t0;
-  dual_slots(bh, 18, w/2, [t0, l])
-  box([w, l, bh], [t2, t2, t0]);
+module mkt_box(w = w0, l = l0) {
+  tth = bt * 1.2 + t0;
+  dual_slots(tth, 18, w/2, [t0, l])
+  box([w, l, tth], [t2, t2, t0]);
   // wedge();
 }
-module three_tech(w = w0, l = l0) {
+module three_mkt(w = w0, l = l0) {
   for (xi = [0 : 2]) {
     trr([xi * (w), 0, 0]) 
-    tech_box(w, l);
+    mkt_box(w, l);
   }
 }
-module more_techs(w = w0, l = l0, n = 3) {
+module more_mkts(w = w0, l = l0, n = 3) {
   for (xi = [0 : n-1]) {
-    trr([l + xi * (l+.2), 0, 0, [0, 0, 90]]) three_tech(w, l);
+    trr([l + xi * (l+.2), 0, 0, [0, 0, 90]]) three_mkt(w, l);
   }
 }
 
+// loc: 0=whole stack, 1=mkt_trays, 2 = four_box, 3 = four_box(7)
 loc = 0;
 // trr([200, 0, 0]) player_tray(tray_w, tray_l);
-four_box();
-// tech_box();
-more_techs(w0, l0, 3);
+atrans(loc, [[0, 0, tth+p], undef, [0, 0, 0], 2]) four_box([7, 0, 0, 7][loc]);
+atrans(loc, [[0, 0, tth+p], undef]) map_block();
+
+atrans(loc, [[0, 0, 0], 0, undef]) more_mkts(w0, l0, 3);
 
 // TODO: overlay 'map' & booklet
