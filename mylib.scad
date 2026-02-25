@@ -66,6 +66,8 @@ module atrans(ndx = 0, atran = [[ 0, 0, 0 ]]) {
 // t: ([t0,t0,t0]) thickness of x_wall, y_wall, z_floor 
 // d: ([2, 2, 1-p]) delta --> reduction to create inner box: lwh-d*t 
 // cxy: (false) center XY, Z = 0
+// r: corner radius (0); 
+// - (r == 0) ? square_corners : (r > 0) ? sidesonly : also top & bottom
 // -
 // diff() { cube(lwh); tr(txyz) cube(adif(lwh, amul(d, txyz))) }
 module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false, r = 0) {
@@ -81,13 +83,13 @@ module box(lwh = [ 10, 10, 10 ], t = t0, d, cxy = false, r = 0) {
     if (r == 0) {
       cube(lwh);
     } else {
-      roundedCube(lwh, r, true);
+      roundedCube(lwh, abs(r), r > 0);
     }
     translate(txyz) 
     if (r == 0) {
       cube(dxyz); // -2*bt or +2*p
     } else {
-      roundedCube(dxyz, r, true);
+      roundedCube(dxyz, abs(r), r > 0);
     }
   }
 }
