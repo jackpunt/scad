@@ -149,13 +149,13 @@ module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = t0) 
 // n: number
 // dxyz: each iteration
 // rot: rotate from dx --> dy or dz
-module astack(n, d, rot, colors) {
+module astack(n, d, rot, colors, i0 = 0) {
   dxyz = is_list(d) ? d : [ d, 0, 0 ];
   r = is_undef(rot) ? .1 : rot;
   rxyz = is_list(r) ? r : [ 0, 0, 0 ];
   // echo("dxyz=", dxyz) 
   if (n > 0) {
-  for (i = [0 : n - 1]) {
+  for (i = [i0 : n - 1]) {
     // if (!is_undef(colors) && i <= len(colors))
     color(colors[i])
     rotate(rxyz) dup([ i * dxyz.x, i * dxyz.y, i * dxyz.z ]) children(); // amul(dxyz, i)
