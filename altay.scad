@@ -449,8 +449,8 @@ atrans(loc, [[0, 0, tth+p], undef, undef, [0, 0, 0]]) four_tray(nh, pi);
 atrans(loc, [[0, 0, tth+ptray_h+p], undef, undef]) map_bezel();
 atrans(loc, [[0, y1, stackh - tbh], undef, [0, 0, 0], undef]) tech_tray();
 
-atrans(loc, [[0, 0, 0], 0, undef, undef]) more_mkts();
-atrans(loc, [[mtray_l, y1, rtop, [0, 0, 90]], 0, undef, undef]) mkt_tray(); //[0, 0, 90, [mtray_w/2, mtray_l/2, 0]]
+atrans(loc, [[mtray_l, y1, rtop, [0, 0, 90]], 0]) mkt_tray();
+atrans(loc, [[0, 0, 0], undef, undef, undef, 0]) more_mkts();
 
 // center within res_lid: inset by rtl2/2
 atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, rbot], undef, undef, undef, undef, 0]) res_tray();
