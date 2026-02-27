@@ -254,7 +254,7 @@ module four_player(nh = 0, pi) {
 }
 
 // map dimensions:
-map_dims = [240, 171, 11 + 1];   // +1 for rule book
+map_dims = amul([240, 171, 11 + 1], [1.01, 1.01, 1]);   // +1 for rule book
 
 
 // cube representing map
@@ -267,15 +267,11 @@ module map_block() {
 module map_bezel0(h = map_dims.z) {
   w = ptray_w * 2;
   l = ptray_l * 2;
-  dw = w - map_dims.x;
-  dl = l - map_dims.y;
-  echo("map_bezel: dw, dl", w - map_dims.x, l - map_dims.y);
   color("grey", .75)
   difference() {
     cube([w, l, h]);
-    translate([0, 0, -h/2]) scale([1.01, 1.01, 2]) map_block();
+    translate([0, 0, -h/2]) scale([1, 1, 2]) map_block();
   }
-  cubesGrid(bw = dw/2, bh = l, stt = [5, 2, 2], 3);
 }
 
 // set mbp = true for map_bezel print
@@ -285,6 +281,7 @@ module map_bezel(h = map_dims.z, print = mbp) {
   dw = w - map_dims.x;
   dl = l - map_dims.y;
   iw = w*.5 - 1;
+  echo("map_bezel: dw, dl", dw, dl);
 
   intersection() 
   {
