@@ -33,7 +33,7 @@ w00 = w0 + 2;
 // long side of card: ~90 + 2 (ll = 90)
 l00 = l0 + 2;
 pl0 = min(ll, l00);
-pw0 = w00 + 4; // extend to fill box_s
+pw0 = w00 + 2; // extend to fill box_s
 echo("pl0 = ", pl0, "ll =", ll, "l00 =", l00, "total_l=", l00 + 2*pl0 + 6*t1, "=", l00, 2*pl0, 6*t1 );
 
 mtray_l0 = 3 * w00 + 4 * t0;    // --> mtray_l; total length of mtray
@@ -74,7 +74,7 @@ module card(tr = [ t1 + (l00 - l0) / 2, t1 + (w00 - w0) / 2, t0 ], n, dxyz, rgb=
 }
 
 // house turned on side in box:
-house_dim = [33, 12, 33];         // [33, 12, 25] (green, lying on size)
+house_dim = [34, 12, 33];         // [33, 12, 25] (green, lying on size)
 
 // parallel arrays... I wish scad had objects!
 house_names = ["RED", "YELLOW", "GREEN", "BLUE"];
@@ -367,7 +367,7 @@ rtl2 = 2 * (rtl+f);    // shrink res_tray by thickness of (lid * 2 + fudge)
 // rtray_h = stackh - mbh - tbh - rtl -.1;
 rtray_h = 24 + t1;     // sufficient to fit map tokens.
 
-rlid_h = stackh - tbh - mbh - mbh - .5;
+rlid_h = stackh - tbh - mbh - mbh - 1.5;
 
 rtt = 1.4;             // thickness of res_tray walls
 
@@ -399,8 +399,8 @@ module res_lid(res_w = rtray_w + rtt, res_l = rtray_l, res_h = rlid_h) {
   color("lightblue")
   difference() 
   {
-    box([res_w, res_l, res_h], rtl);
-    cubesGrid(bw = res_w, bh = res_l, stt = [5, 2, 2], t = 3);
+    box([res_w, res_l, res_h], [rtl+.05, rtl+.05, rtl+.9]); // squeeze a bit to offset 'f'
+    cubesGrid(bw = res_w, bh = res_l, stt = [5, 2.5, 2.5], t = 3);
   }
 }
 
@@ -437,8 +437,9 @@ module four_space(w, l, h , q = 0) {
   }
 }
 
-// loc: 0=whole stack, 1=mkt_trays, 2=tech_tray, 3 = four_tray,  
-// 5 = res_tray, 6 = res_lid, , 9: four_space(1), 10: four_space(2)
+// loc: 0=whole stack, 1=mkt_trays, 2=tech_tray, 3 = four_tray, 
+// 4 = more_mkts 
+// 5 = res_tray, 6 = res_lid, 9: four_space(1), 10: four_space(2)
 loc = 0; 
 // player_tray: (player_id, nun_houses, card_p)
 pi = undef; nh = 2; card_p = false;
@@ -451,8 +452,8 @@ rcut = abs(rbot);
 echo("rbot=", rbot, "rcut=", rcut);
 
 // trr([200, 0, 0]) player_tray(ptray_w, ptray_l);
-*atrans(loc, [[0, 0, tth+p], undef, undef, [0, 0, 0]]) four_tray(nh, pi);
-*atrans(loc, [[0, 0, tth+ptray_h+p], undef, undef]) map_bezel();
+atrans(loc, [[0, 0, tth+p], undef, undef, [0, 0, 0]]) four_tray(nh, pi);
+atrans(loc, [[0, 0, tth+ptray_h+p], undef, undef]) map_bezel();
 atrans(loc, [[0, y1, stackh - tbh], undef, [0, 0, 0], undef]) tech_tray();
 
 atrans(loc, [[mtray_l, y1, rtop, [0, 0, 90]], 0]) mkt_tray();
@@ -465,7 +466,7 @@ atrans(loc, [[0,     y2 - .3,  rtop-rlid_h, [180, 0, 0, [0, rtray_l/2, rlid_h/2]
               undef, undef, undef, undef, undef, [0, 0, 0]]) res_lid();
 // tweaked so res_lid overhangs mkt_tray; extending rtray_l by rtl
 // increase ptray_h by 1, so increase rtray_h by 1; more cubic mm in res_tray.
-*atrans(loc, [[0, 0, stackh-box_z], undef, undef, undef, undef,
+atrans(loc, [[0, 0, stackh-box_z], undef, undef, undef, undef,
               undef, undef, undef, undef, [-box_s, -box_s, 0], [-box_s/2, -box_s/2, 0]]) 
               four_space(undef, undef, undef, [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2 ][loc]);
 
