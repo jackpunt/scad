@@ -215,18 +215,18 @@ echo("ptray_l=", ptray_l, "ptray_w=", ptray_w, "total_w=", 2*ptray_w );
 module player_tray(pi = 0, w = ptray_w, l = ptray_l, nh = 0) {
   w = def(w, ptray_w);
   l = def(l, ptray_l);
-  xy = amul([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]][pi], [w+.1, l+.1, 1]);
-  h = ptray_h + 2; // extend for map
+  h = ptray_h;
   sw = 18;        // slot width
   house_w = 2 * house_dim.x + divw; // interior width of house side
   card_w = pw0; // interior of card side: total - house_interior - main_div = w00
   name = house_names[pi];
 
+  xy = amul([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]][pi], [w+.1, l+.1, 1]);
   // rotate right-side boxes:
-  r0 = pi >= 2 ? [0, 0, 180, [w/2, l/2, 0]] : [0, 0, 0];
-  xyr = [xy.x, xy.y, xy.z, r0];
+  // r0 = pi >= 2 ? [0, 0, 180, [w/2, l/2, 0]] : [0, 0, 0];
+  // xyr = [xy.x, xy.y, xy.z, r0];
   // a grand union(), and engrave the name
-  trr(xyr)
+  trr(xy)
   differenceN(6) {
     if (card_p) card([t1+w00+(w00-w0)/2, t1+(l00-l0)/2, t1+.7, [0, 0, 90]], 1, undef, "#d480ff");
     trr([t1+card_w+t1+.1,                      t1+.2, 0]) house(pi, nh/2);
@@ -246,28 +246,32 @@ module player_tray(pi = 0, w = ptray_w, l = ptray_l, nh = 0) {
 
 // player_tray in 2 X 2 array:
 module four_tray(nh = 0, pi) {
-  difference() {
-  union() {
     for (i = [0 : 3]) {
       if (is_undef(pi) || pi == i)
       player_tray(i, undef, undef, nh);
     }
-  }
-  map_block();
-  }
 }
 
 // map dimensions:
-mapw = 240;
-mapl = 171;
-mapz = 11+1;   // +1 for rule book
+map_dims = [240, 171, 11 + 1];   // +1 for rule book
+
+
+// cube representing map
 module map_block() {
-  x0 = (2 * ptray_w - mapw) / 2; // center over four trays
-  y0 = (2 * ptray_l - mapl) / 2; // center over four trays
-  z0 = ptray_h;
-  trr([x0, y0, z0]) 
-  color("tan", .3)
-  cube([mapw, mapl, mapz]);
+  x0 = (2 * ptray_w - map_dims.x) / 2; // center over four trays
+  y0 = (2 * ptray_l - map_dims.y) / 2; // center over four trays
+  trr([x0, y0, 0]) 
+  cube(map_dims);
+}
+module map_bezel(h = map_dims.z-p) {
+  w = ptray_w * 2;
+  l = ptray_l * 2;
+  echo("map_bezel: dw, dl", w - map_dims.x, l - map_dims.y);
+  color("grey", .5)
+  difference() {
+    cube([w, l, h]);
+    translate([0, 0, -h/2]) scale([1.001, 1.001, 2]) map_block();
+  }
 }
 
 
@@ -349,7 +353,7 @@ module tray(size = 10, rt = 2, rc = 2, k0, divs = [], t = t0) {
   }
 }
 
-stackh = mbh + ptray_h + mapz;
+stackh = mbh + ptray_h + map_dims.z;
 echo("stackh=", stackh, ptray_l);
 
 rtray_w = 3 * (w00 + t0); // res_tray adds extra t0 endcap
@@ -442,7 +446,7 @@ echo("rbot=", rbot, "rcut=", rcut);
 
 // trr([200, 0, 0]) player_tray(ptray_w, ptray_l);
 atrans(loc, [[0, 0, tth+p], undef, undef, [0, 0, 0]]) four_tray(nh, pi);
-atrans(loc, [[0, 0, tth+p], undef, undef]) map_block();
+atrans(loc, [[0, 0, tth+ptray_h+p], undef, undef]) map_bezel();
 atrans(loc, [[0, y1, stackh - tbh], undef, [0, 0, 0], undef]) tech_tray();
 
 atrans(loc, [[0, 0, 0], 0, undef, undef]) more_mkts();
