@@ -312,12 +312,16 @@ module more_mkts(w = w00, l = l00, n = 3, t = t0) {
   astack(n, [tw, 0, 0]) mkt_tray();
 }
 
+// confirm tec_box fits with four_trays inside box_s:
+assert((box_s - ptray_l) >= (l00 + 2 * t0));
+
 ntc = 28;
 tbh = tnc(ntc) * 1.2 + t0;   // tech box height
-tbl = box_s - ptray_l;       // tech box length > 
-assert(tbl > l0);
+echo("techbox: h", (tbh + mbh + rtray_h + rtl) - (stackh) );
+assert((tbh + mbh + rtray_h + rtl) <= (stackh) );
+
 module tech_box(w = w00, l = l00, ta = [t0, t0, t0]) {
-  bxyz = adif([w, l, tbh], amul(ta, [-2, -2, 0])); // add 2 wall thichness; 0 floor...
+  bxyz = [ w00 + 2 * t0, l00 + 2 * t0, tbh];  // Note: same as mtray
   dual_slots(tbh, 18, bxyz.x/2, [t0, bxyz.y])
   box(bxyz, ta, undef, false, t0);
 }
@@ -387,6 +391,8 @@ module res_tray(res_w, res_l, ndiv = 5) {
   trr([0, 2, 0]) cube([res_w+rtt, 20, rtt]);
   trr([0, dl * res_l, 0]) cube([res_w - dx, 1, res_h]); // <--- longitudinal div
 }
+
+// Note: ok to make rlt += .1 OR rtray_h += .1
 module res_lid(res_w = rtray_w + rtt, res_l = rtray_l, res_h = rlid_h) {
   echo("res_lid: res_l=", res_l, "rtl=", rtl, "mtray_l0+res_l-rtt=", mtray_l0 + res_l-rtt);
   echo("res_lid: res_h=", res_h);
@@ -440,13 +446,13 @@ pi = undef; nh = 2; card_p = false;
 y1 = ptray_l * 2 + .1;  // maybe displays beyond box_s?
 y2 = mtray_l - rtl + .03;
 rtop = stackh - tbh - mbh; // top of resource lid
-rbot = rtop - rtray_h - rtl*1 -.1 ;
+rbot = rtop - rtray_h - rtl -.1 ; // <== .1 mm slack
 rcut = abs(rbot);
 echo("rbot=", rbot, "rcut=", rcut);
 
 // trr([200, 0, 0]) player_tray(ptray_w, ptray_l);
-atrans(loc, [[0, 0, tth+p], undef, undef, [0, 0, 0]]) four_tray(nh, pi);
-atrans(loc, [[0, 0, tth+ptray_h+p], undef, undef]) map_bezel();
+*atrans(loc, [[0, 0, tth+p], undef, undef, [0, 0, 0]]) four_tray(nh, pi);
+*atrans(loc, [[0, 0, tth+ptray_h+p], undef, undef]) map_bezel();
 atrans(loc, [[0, y1, stackh - tbh], undef, [0, 0, 0], undef]) tech_tray();
 
 atrans(loc, [[mtray_l, y1, rtop, [0, 0, 90]], 0]) mkt_tray();
