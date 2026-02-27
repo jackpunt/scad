@@ -27,9 +27,6 @@ ll = (box_s - 6*t1 - 2*.3)/3; // ll = >92; ll / house_dim.y = 7.5
 l0 = 90; // extend tray, room for 7.5 houses; ~ 2 * (mtray_h = 3 * (w00 + t0) + t0);
 w0 = 65; // w00 = w0 + slack;
 
-// house turned on side in box:
-house_dim = [33, 12, 25];
-
 // space for sleeved card with 2mm slack:
 // short side of card (67)
 w00 = w0 + 2; 
@@ -75,6 +72,9 @@ module card(tr = [ t1 + (l00 - l0) / 2, t1 + (w00 - w0) / 2, t0 ], n, dxyz, rgb=
   rgb = def(rgb, "#00ffff");
   trr(tr) astack(n, [ 0, 0, t01 ]) color(rgb, .5) roundedCube(dxyz, 3, true);
 }
+
+// house turned on side in box:
+house_dim = [33, 12, 33];         // [33, 12, 25] (green, lying on size)
 
 // parallel arrays... I wish scad had objects!
 house_names = ["RED", "YELLOW", "GREEN", "BLUE"];
@@ -204,7 +204,8 @@ divw = 1;  // width of short divider between houses
 // ptray_w:  t1 + w00 + t1 + house_dim.x + divw + house_dim.x + t1;
 ptray_w = pw0 + 3 * t1 + 2 * house_dim.x + divw;  // ~ 140
 ptray_l = pl0 + 2 * t1 + 0;     // 94.6 > (84 = 7 * house_dim.y)
-ptray_h = house_dim.z + 1 + t0; // z-height of player trays (t0 base + t0 map_indent)
+// z: 25 => rbot: 5.7; z:33 => rbot: 0; z+rbot = 30.7
+ptray_h = min(30.7, house_dim.z + 5.7) + t0 + t0; // z-height of player trays (t0 base + t0 map_indent)
 echo("ptray_l=", ptray_l, "ptray_w=", ptray_w, "total_w=", 2*ptray_w );
 
 // w: outer width-x (ptray_w)
@@ -239,7 +240,7 @@ module player_tray(pi = 0, w = ptray_w, l = ptray_l, nh = 0) {
     div([10, l, t1 + card_w + t1 + house_dim.x], 0, 0, divw); // between villages
     // engrave:
     trr([w00 + house_w/3, l/2, t0-.6, [0, 0, 90]]) linear_extrude(height = 1.5) 
-    rotate([0,0,180]) text(name, halign = "center", size=6, font="Nunito:style=Bold");
+    rotate([0,0,180]) text(name, halign = "center", size=10, font="Nunito:style=Bold");
   }
 }
 
@@ -430,7 +431,7 @@ module four_space(w, l, h , q = 0) {
 // 5 = res_tray, 6 = res_lid, , 9: four_space(1), 10: four_space(2)
 loc = 0; 
 // player_tray: (player_id, nun_houses, card_p)
-pi = undef; nh = 0; card_p = false;
+pi = undef; nh = 2; card_p = false;
 
 y1 = ptray_l * 2 + .1;  // maybe displays beyond box_s?
 y2 = mtray_l - rtl + .03;
@@ -451,11 +452,10 @@ atrans(loc, [[mtray_l, y1, rtop, [0, 0, 90]], 0, undef, undef]) mkt_tray(); //[0
 atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, rbot], undef, undef, undef, undef, 0]) res_tray();
 // atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray(33.7*2, undef, 1);
 atrans(loc, [[0,     y2 - .3,  rtop-rlid_h, [180, 0, 0, [0, rtray_l/2, rlid_h/2]]],
-// atrans(loc, [[0,     0,  0, [180, 0, 0, [0, rtray_l/2, rlid_h/2]]],
-              undef, undef, undef, undef, undef, 0]) res_lid();
+              undef, undef, undef, undef, undef, [0, 0, 0]]) res_lid();
 // tweaked so res_lid overhangs mkt_tray; extending rtray_l by rtl
 // increase ptray_h by 1, so increase rtray_h by 1; more cubic mm in res_tray.
-atrans(loc, [[0, 0, stackh-box_z], undef, undef, undef, undef,
+*atrans(loc, [[0, 0, stackh-box_z], undef, undef, undef, undef,
               undef, undef, undef, undef, [-box_s, -box_s, 0], [-box_s/2, -box_s/2, 0]]) 
               four_space(undef, undef, undef, [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2 ][loc]);
 
