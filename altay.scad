@@ -2,7 +2,7 @@ use <mylib.scad>;
 
 p = .001;
 pp = 2 * p;
-f = .18;
+f = .13;        // .18 was too loose, 0.4 nozzle?
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 sample = false;
@@ -37,10 +37,7 @@ pl0 = min(ll, l00);
 pw0 = w00 + 2; // extend to fill box_s
 echo("pl0 = ", pl0, "ll =", ll, "l00 =", l00, "total_l=", l00 + 2*pl0 + 6*t1, "=", l00, 2*pl0, 6*t1 );
 
-mtray_l0 = 3 * w00 + 4 * t0;    // --> mtray_l; total length of mtray
-rtray_l0 = box_s - mtray_l0;    // 285, but can overlap res_lid by rtl
-
-echo("w00=", w00, "ll = ", ll, "l00=", l00, "total_l0=", mtray_l0+rtray_l0-1, "=", mtray_l0, "+", rtray_l0);
+echo("w00=", w00, "ll = ", ll, "l00=", l00);
 
 t2 = 1;       // thickness for alt boxes (vbox + player_box)
 ty = t2;      // thick in y dir (short side wall)
@@ -380,11 +377,11 @@ module tray(size = 10, rt = 2, rc = 2, k0, divs = [], t = t0) {
 stackh = mbh + ptray_h + map_dims.z;
 echo("stackh=", stackh, ptray_l);
 
-rtt = 1.4;             // res_tray thickness of walls & bottom & divs
+rtt = 1.4;             // res_tray thickness of tray (walls & bottom & divs)
 rtl = 2.0;             // res_tray thickness of lid (walls & top)
 rtl2 = 2 * (rtl+f);    // shrink res_tray by thickness of (lid * 2 + fudge)
 
-rlid_w = mtray_w;      // 
+rlid_w = mtray_l;      // external width of res lid
 rlid_l = box_s - mtray_l; // do not overlap...
 rlid_h = stackh - tbh - mbh - mbh - 1.5;
 
@@ -403,28 +400,38 @@ module res_tray(res_w, res_l, ndiv = 5) {
   res_l = def(res_l, rtray_l - rtl2);
   res_h = rtray_h;
   rad = res_h * .7;
-  dx = res_w / (ndiv+1);  // space between short divs
+  dx = res_w / (ndiv+1);  // space between short divs (res segments > coin segment!)
   dl = .6;  // offset the long div
-  echo("res_tray: rtray_l=", rtray_l, " res_l=", res_l, "res_h=", res_h, "rtl2=", rtl2);
-  echo("res_tray: res_l=", res_l, "rtl=", rtl, "mtray_l0+res_l+rtl=", mtray_l0 + res_l+rtl);
-  echo("res_tray: dx=", dx, "res_l*dl", res_l*dl, "res_h=", res_h, "dx=", dx, 
-       "cubic=", (dx-1)*(res_l-rtt)*dl*(res_h-rtt));
-  divs = [ for (i = [0 : ndiv] ) i * dx ];
+  echo("res_tray: rtray_w=", rtray_w, " rtray_l=", rtray_l, " res_l=", res_l, "res_h=", res_h, "rtl2=", rtl2);
+  echo("res_tray: dx=", dx, "(res_l-2*rtt)*dl", (res_l-2*rtt)*dl, "res_h-rtt=", res_h-rtt, "dx-rtt=", dx-rtt, 
+       "cubic=", (dx-rtt)*(res_l-2*rtt)*dl*(res_h-rtt));
+  divs = [ for (i = [1 : ndiv] ) i * dx ];
   color("tan")
   tray([res_w, res_l, 2 * res_h], [rad, 8, rad, rad], 2, -res_h, divs, rtt);
-  trr([0, dl * res_l, 0]) cube([res_w - dx, 1, res_h]); // <--- longitudinal div
+  trr([rtt/2, dl * res_l, 0]) cube([ndiv * dx, 1, res_h]); // <--- longitudinal div
 }
+// as printed: h=25.30 (now 26.4); l=~76+ (now 78.2); 2=~203.5 (now 204.8)
 
 // Note: ok to make rlt += .1 OR rtray_h += .1
-module res_lid(res_w = rlid_w, res_l = rlid_l, res_h = rlid_h) {
-  echo("res_lid: res_l=", res_l, "rtl=", rtl, "mtray_l0+res_l-rtt=", mtray_l0 + res_l-rtt);
-  echo("res_lid: res_h=", res_h);
+module res_lid(w = rlid_w, l = rlid_l, h = rlid_h) {
+  echo("res_lid: w=", w, "l=", l, "rtl=", rtl, "res_lid: h=", h);
   translate([0, 0, p]) 
   color("lightblue", .9)
   difference() 
   {
-    box([res_w, res_l, res_h], [rtl+.05, rtl+.05, rtl-pp]); // squeeze a bit to offset 'f'
-    cubesGrid(bw = res_w, bh = res_l, stt = [5, 2.5, 2.5], t = 3);
+    box([w, l, h], [rtl, rtl, rtl-pp]); // squeeze a bit to offset 'f'
+    cubesGrid(bw = w, bh = l, stt = [5, 2.5, 2.5], t = 3);
+  }
+}
+
+box_dims = [box_s -1 - mtray_l, box_s -1 - mtray_l, box_z];
+echo("far_box: box_dims=", box_dims);
+// box: true -> box, false -> solid cube
+module far_box(as_box = true) {
+  trr([mtray_l, mtray_l, -spacer_h]) union() {
+    if (as_box) { box(box_dims, t0, undef, false, 1 ); }
+    else { cube(box_dims); }
+    trr([10,0,0,[0, -45, 0]]) card();
   }
 }
 
@@ -445,27 +452,31 @@ module spacer(w = (box_s-1)/2 , l = (box_s-1)/2, h = spacer_h ) {
 // h: height of spacer (box_z - stackh)
 // i0: initial y index (0) --> 1
 // j0: initial x index (0) --> 1
-// m: max indes (2) --> 
+// m: max index (2) --> 
+// q: 
+// = 0 [0, 0, 2] all four
+// = 1 [0, 0, 1] near corner
+// = 2 [1, 1, 2] far corner
 module four_space(w, l, h , q = 0) {
   w = def(w, (box_s-1)/2);
   l = def(l, (box_s-1)/2);
   h = def(h, (box_z - stackh));
-  jim = [[0, 0, 2], [1, 1, 2], [0, 0, 1]][q];
+  jim = [[0, 0, 2], [0, 0, 1], [1, 1, 2]][q];
   echo("spacer: h=", h, "h-rcut=", h-rcut, stackh+rcut);
-  // difference() 
+  difference() 
   {
     astack(jim.z, [w, 0, 0], undef, undef, jim.y)
     astack(jim.z, [0, l, 0], undef, undef, jim.x)
     render()
     spacer();
-    // trr([0, mtray_l, h-rcut]) cube([box_s, rtray_l, rcut]);
+    far_box(false);
   }
 }
 
 // loc: 0=whole stack, 1=mkt_trays, 2=tech_tray, 3 = four_player,
 // 4 = more_mkts, 5 = res_tray, 6 = res_lid, 
-// 7 = map_bezel, 8 = map_bezel(pring), 9: four_space(1), 10: four_space(2)
-loc = 8; 
+// 7 = map_bezel, 8 = map_bezel(print), 9: four_space(near), 10: four_space(far)
+loc = 5; 
 // player_tray: (player_id, nun_houses, card_p)
 pi = undef; nh = 0; card_p = false;
 mbp = (loc == 8);
@@ -490,12 +501,10 @@ atrans(loc, [[0, 0, 0], undef, undef, undef, 0]) more_mkts();
 
 // center within res_lid: inset by rtl2/2
 atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray();
-// atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray(33.7*2, undef, 1); // mini-tray
+*atrans(loc, [[0 + rtl2/2, y2 + rtl2/2, 0], undef, undef, undef, undef, 0]) res_tray(66.7134, undef, 1); // mini-tray
 atrans(loc, [[0,     y2 - .3,  z2-rlid_h, [180, 0, 0, [0, rlid_l/2, rlid_h/2]]],
               undef, undef, undef, undef, undef, [0, 0, 0]]) res_lid();
-// tweaked so res_lid overhangs mkt_tray; extending rtray_l by rtl
-// increase ptray_h by 1, so increase rtray_h by 1; more cubic mm in res_tray.
 atrans(loc, [[0, 0, stackh - box_z], undef, undef, undef, undef,
-              undef, undef, undef, undef, [-box_s, -box_s, 0], [-box_s/2, -box_s/2, 0]]) 
+              undef, undef, undef, undef, [0, 0, 0], [0, 0, 0]]) 
               four_space(undef, undef, undef, [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2 ][loc]);
-
+atrans(loc, [[0,0,0]]) far_box();
