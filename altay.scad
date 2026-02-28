@@ -429,9 +429,13 @@ echo("far_box: box_dims=", box_dims);
 // box: true -> box, false -> solid cube
 module far_box(as_box = true) {
   trr([mtray_l, mtray_l, -spacer_h]) union() {
-    if (as_box) { box(box_dims, t0, undef, false, 1 ); }
-    else { cube(box_dims); }
-    trr([10,0,0,[0, -45, 0]]) card();
+    if (as_box) { 
+      box(box_dims, t1, undef, false, 1 ); 
+      if (card_p) 
+        trr([10,0,0,[0, -45, 0]]) card();
+    } else { 
+      cube(box_dims); 
+    }
   }
 }
 
@@ -476,7 +480,7 @@ module four_space(w, l, h , q = 0) {
 // loc: 0=whole stack, 1=mkt_trays, 2=tech_tray, 3 = four_player,
 // 4 = more_mkts, 5 = res_tray, 6 = res_lid, 
 // 7 = map_bezel, 8 = map_bezel(print), 9: four_space(near), 10: four_space(far)
-loc = 5; 
+loc = 11; 
 // player_tray: (player_id, nun_houses, card_p)
 pi = undef; nh = 0; card_p = false;
 mbp = (loc == 8);
@@ -507,4 +511,5 @@ atrans(loc, [[0,     y2 - .3,  z2-rlid_h, [180, 0, 0, [0, rlid_l/2, rlid_h/2]]],
 atrans(loc, [[0, 0, stackh - box_z], undef, undef, undef, undef,
               undef, undef, undef, undef, [0, 0, 0], [0, 0, 0]]) 
               four_space(undef, undef, undef, [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2 ][loc]);
-atrans(loc, [[0,0,0]]) far_box();
+atrans(loc, [[0,0,0], undef, undef, undef, undef, undef, undef, undef
+              , undef, undef, undef, [box_dims.x - box_s, box_dims.y - box_s, 0]]) far_box();
