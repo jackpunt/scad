@@ -24,17 +24,18 @@ doc=0;
 t0 = 1.2; // base & wall thickness
 t1 = t0 + .10; // side wall for camber 
 
-ll = (box_s - 6*t1 - 2*.3)/3; // ll = >92; ll / house_dim.y = 7.5
+// room for 3 card-length + 6 t1 walls:
+ll = (box_s -1 - 6*t1 - 0*.3)/3; // ll = >92; ll / house_dim.y = 7.5
 l0 = 90; // extend tray, room for 7.5 houses; ~ 2 * (mtray_h = 3 * (w00 + t0) + t0);
 w0 = 65; // w00 = w0 + slack;
 
 // space for sleeved card with 2mm slack:
 // short side of card (67)
 w00 = w0 + 2; 
-// long side of card: ~90 + 2 (ll = 90)
-l00 = l0 + 2;
-pl0 = min(ll, l00);
-pw0 = w00 + 2; // extend to fill box_s
+// long side of card: 92 = 90 + 2 (ll = 91.7333)
+l00 = min(ll, l0 + 2); // mtray not larger than rtray
+pl0 = min(ll, l00); // length for card side (maybe oversize)
+pw0 = w00 + 2;      // width of card side (larger than mkt tray)
 echo("pl0 = ", pl0, "ll =", ll, "l00 =", l00, "total_l=", l00 + 2*pl0 + 6*t1, "2*pl0=", 2*pl0, 6*t1 );
 
 echo("w00=", w00, "ll = ", ll, "l00=", l00);
@@ -200,7 +201,7 @@ module house_slot(h, sw, tr, ss = false) {
 divw = 1;  // width of short divider between houses
 // ptray_w:  t1 + w00 + t1 + house_dim.x + divw + house_dim.x + t1;
 ptray_w = pw0 + 3 * t1 + 2 * house_dim.x + divw;  // ~ 140
-ptray_l = pl0 + 2 * t1 + 0;     // 94.6 > (84 = 7 * house_dim.y)
+ptray_l = pl0 + 2 * t1 + 0;     // 94.333 > (84 = 7 * house_dim.y)
 // z: 25 => rbot: 5.7; z:33 => rbot: 0; z+rbot = 30.7
 ptray_h = min(33.1, house_dim.z + 5.7) + t0; // z-height of player trays (t0 base + t0 map_indent)
 echo("ptray_l=", ptray_l, "ptray_w=", ptray_w, "total_w=", 2*ptray_w, "ptray_h=", ptray_h );
@@ -218,13 +219,8 @@ module player_tray(pi = 0, w = ptray_w, l = ptray_l, nh = 0) {
   card_w = pw0; // interior of card side: total - house_interior - main_div = w00
   name = house_names[pi];
 
-  xy = amul([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]][pi], [w+.1, l+.1, 1]);
-  // rotate right-side boxes:
-  // r0 = pi >= 2 ? [0, 0, 180, [w/2, l/2, 0]] : [0, 0, 0];
-  // xyr = [xy.x, xy.y, xy.z, r0];
   // a grand union(), and engrave the name
   idw = t1 + .1;   // inner div width; t1 was delaminating!
-  trr(xy)
   differenceN(6) {
     if (card_p) card([t1+w00+(w00-w0)/2, t1+(l00-l0)/2, t1+.7, [0, 0, 90]], 1, undef, "#d480ff");
     trr([t1+card_w+idw+.1,                      t1+.2, 0]) house(pi, nh/2);
@@ -243,11 +239,20 @@ module player_tray(pi = 0, w = ptray_w, l = ptray_l, nh = 0) {
 }
 
 // player_tray in 2 X 2 array:
-module four_player(nh = 0, pi) {
-    for (i = [0 : 3]) {
-      if (is_undef(pi) || pi == i)
+// nh: number of houses
+// pi: supplied ? specific box : all boxes
+// w: ptray_w
+// l: ptray_l
+// dgap: display gap between rows and columns.
+module four_player(nh = 0, pi, w = ptray_w, l = ptray_l, dgap = .0) {
+  // four quadrants:
+  for (i = [0 : 3]) {
+    xy0 = amul([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]][i], [w + dgap, l + dgap, 1]);
+    if (is_undef(pi) || pi == i) {
+      trr(xy0)
       player_tray(i, undef, undef, nh);
     }
+  }
 }
 
 // map dimensions:
@@ -309,7 +314,7 @@ module wedge(xyz, tr = 20, r = -3) {
 }
 
 mbh = bt * 1.2 + t0;
-module mkt_box(w = w00, l = l00, ta = [t0, t0, t0]) {
+module mkt_box(w = w00, l = l00, ta = [t1, t1, t0]) {
   bxyz = adif([w, l, mbh], amul(ta, [-2, -2, 0])); // add 2 wall thichness, 0 floor
   dual_slots(mbh, 18, bxyz.x/2, [t0, bxyz.y])
   box(bxyz, ta, undef, false, t0);
@@ -329,13 +334,12 @@ module more_mkts(w = w00, l = l00, n = 3, t = t0) {
   astack(n, [tw, 0, 0]) mkt_tray();
 }
 
-// confirm tec_box fits with four_trays inside box_s:
+// confirm tech_box fits with four_trays inside box_s:
 assert((box_s - ptray_l) >= (l00 + 2 * t0));
 
-ntc = 28;
+ntc = 28;      // number of tech cards (4 * 7? maybe room to spare)
 tbh = tnc(ntc) * 1.1 + t0;   // tech box height
 echo("techbox: tbh=", tbh, "delta=", (tbh + mbh + rtray_h + rtlz) - (stackh) );
-assert((tbh + mbh + rtray_h + rtlz) <= (stackh) );
 
 module tech_box(w = w00, l = l00, ta = [t0, t0, t0]) {
   bxyz = [ w00 + 2 * t0, l00 + 2 * t0, tbh];  // Note: same as mtray
@@ -378,25 +382,26 @@ stackh = mbh + ptray_h + map_dims.z;
 echo("stackh=", stackh, ptray_l);
 
 rtt = 1.4;             // res_tray thickness of tray (walls & bottom & divs)
-// rtl = 2.0;             // res_tray thickness of lid (W, l, & top)
-rtll = 2.0;
-rtlw = 1.0;
-rtlz = 2.0;
+// res_lid: thickness of end, side & top:
+rtlw = 1.4;
+rtll = 1.6;
+rtlz = 1.6;
 
 // shrink res_tray by thickness of 2 * (lid + fudge)
 rtl2l = 2 * (rtll+f);
 rtl2w = 2 * (rtlw+f);
 
-// sample = true;
+lap = 0 * rtl2l/2;
+// sample = true; // ndiv = 1
 rlid_w = !sample ? mtray_l : ((33.3567) * 2 + rtt + rtl2w);  // external width of res lid
-rlid_l = box_s -1  - mtray_l + rtll; // partial overlap (or snug to box)
+rlid_l = box_s -1  - mtray_l + lap; // 0*partial overlap (or snug to box)
 rlid_h = stackh - tbh - mbh - mbh - 1.5;
 
 // external size of res_tray LID, res_tray will shrink to fit
 rtray_w = rlid_w - rtt;    // res_tray adds extra rtt endcap (was: -t0!)
 rtray_l = rlid_l;          // will shrink rtray to fit in res_lid
-// rtray_h = stackh - mbh - tbh - rtl -.1;
-rtray_h = 25 + rtt;     // sufficient to fit map tokens.
+rtray_h = stackh - mbh - tbh - rtlz;
+// rtray_h = 25 + rtt;     // sufficient to fit map tokens.
 
 
 // 6 bin tray for resources & coins
@@ -494,13 +499,14 @@ module four_space(w, l, h , q = 0) {
 // 4 = more_mkts, 5 = res_tray, 6 = res_lid, 
 // 7 = map_bezel, 8 = map_bezel(print), 
 // 9: four_space(near), 10: four_space(far) 11: far_box()
-loc = 6; 
+loc = 0; 
 // player_tray: (player_id, nun_houses, card_p)
 pi = undef; nh = 0; card_p = false;
 mbp = (loc == 8);
 
-y1 = ptray_l * 2 + .1;  // maybe displays beyond box_s?
-y2 = mtray_l;
+y1 = ptray_l * 2;      // maybe displays beyond box_s?
+y1 = box_s -1 - mtray_w;
+y2 = mtray_l - lap;    // res_tray lid (overlaps mtray)
 // left-side stack:
 z0 = stackh;    // <-- top of tech_tray (& map_bezel)
 z1 = z0 - tbh;  // <-- top of mkt_tray
@@ -508,15 +514,15 @@ z2 = z1 - mbh;  // <-- top of rlid
 z3 = z2 - (rtlz + rtray_h);  // bottom of res_tray
 
 atrans(loc, [[0, 0, mbh+p], undef, undef, [0, 0, 0]]) four_player(nh, pi);
-atrans(loc, [[0, 0, mbh+ptray_h+pp], undef, undef, undef, undef, undef, undef, 0, 0]) map_bezel();
-atrans(loc, [[0, y1, z1], undef, [0, 0, 0], undef]) tech_tray();
+*atrans(loc, [[0, 0, mbh+ptray_h+pp], undef, undef, undef, undef, undef, undef, 0, 0]) map_bezel();
+*atrans(loc, [[0, y1, z1], undef, [0, 0, 0], undef]) tech_tray();
 
 atrans(loc, [[mtray_l, y1, z2, [0, 0, 90]], 0]) mkt_tray();
 atrans(loc, [[0, 0, 0], undef, undef, undef, 0]) more_mkts();
 
 // center within res_lid: inset by [rtl2w/2, rtl2l/2]
-atrans(loc, [[0 + rtl2w/2, y2 + rtl2l/2, 0], undef, undef, undef, undef, 0, [rtl2w/2, rtl2l/2, rtlz]]) res_tray();
-atrans(loc, [[0,     y2 - .3,  z2-rlid_h, [180, 0, 0, [0, rlid_l/2, rlid_h/2]]],
+atrans(loc, [[0 + rtl2w/2, y2+ rtl2l/2, 0], undef, undef, undef, undef, 0, [rtl2w/2, rtl2l/2, rtlz]]) res_tray();
+atrans(loc, [[0,     y2,  z2-rlid_h, [180, 0, 0, [0, rlid_l/2, rlid_h/2]]],
               undef, undef, undef, undef, undef, [0, 0, 0]]) res_lid();
 atrans(loc, [[0, 0, stackh - box_z], undef, undef, undef, undef,
               undef, undef, undef, undef, [0, 0, 0], [0, 0, 0]]) // [all .. full, cut]
