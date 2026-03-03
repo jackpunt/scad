@@ -161,17 +161,21 @@ module player_box(pi = 0) {
 
 // make finger slots on both sides of box...
 module dual_slots(h, sw, dx1, dy, ss = false) {
-  tabh = 20;
-  sr = sw/2;
+  // finger slot on corner of Y & Z planes
+  module slotifyYZ(h, sw, dx1, dy, ss = false) {
+    tabh = 12;
+    sr = sw/2;
+    slotifyY2([h,   sw, t1*2], [dx1, dy-1, -sr], undef, 1, ss)
+    slotifyZ([tabh, sw, t1*2], [dx1, dy-0,   1], 2, undef, ss)
+    children();
+  }
+
   if (len(dy) > 1) {
-    slotifyY2([h,   sw, t1*2], [dx1, dy[0]-1, -sr], undef, 1, ss)
-    slotifyZ([tabh, sw, t1*2], [dx1, dy[0]-0,   1], 2, undef, ss)
-    slotifyY2([h,   sw, t1*2], [dx1, dy[1]-1, -sr], undef, 1, ss)
-    slotifyZ([tabh, sw, t1*2], [dx1, dy[1]-0,   1], 2, undef, ss)
+    slotifyYZ(h, sw, dx1, dy[0], ss)
+    slotifyYZ(h, sw, dx1, dy[1], ss)
     children();
   } else {
-    slotifyY2([h,   sw, t1*2], [dx1, dy[0]-1, -sr], undef, 1, ss)
-    slotifyZ([tabh, sw, t1*2], [dx1, dy[0]-0,   1], 2, undef, ss)
+    slotifyYZ(h, sw, dx1, dy[0], ss)
     children();
   }
 }
