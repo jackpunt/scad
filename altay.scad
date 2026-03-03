@@ -21,8 +21,8 @@ box_z = 67.5;  // inner height of box: 68 - .5 slack
 // 284-270 = 14; 14/6 = 2.33
 doc=0;
 
-t0 = 1.2; // base & wall thickness
-t1 = t0 + .10; // side wall for camber 
+t0 = 1.3;  // base thickness (z)
+t1 = 1.16; // side walls (x, y)
 
 // room for 3 card-length + 6 t1 walls:
 ll = (box_s -1 - 6*t1 - 0*.3)/3; // ll = >92; ll / house_dim.y = 7.5
@@ -94,7 +94,7 @@ module house(pi = 0, n = 1) {
 // vt: interior box depth (~ t01 * number of cards + 2*t0) x-extent
 // vw: interior box width (long dimension of card + 2*t0)  y-extent
 // vh: interior box height (short dimension of card + bottom(t0) + top(3mm)) z-extent
-// txyz: wall thickness (t0) [tx, ty, tz] 
+// txyz: wall thickness (t2) [tx, ty, tz] 
 // ambient: tcg thickness of cardguide
 // total width: [vt + 2 * tx, vw + 2 * ty + 2 * tcg, vh + tz]
 module vbox(loc = loc, vt0 = bt, vw0 = wi, vh0 = hi, txyz = t2) // txyz=[tz, ty, tw]
@@ -316,21 +316,21 @@ module wedge(xyz, tr = 20, r = -3) {
 mbh = bt * 1.2 + t0;
 module mkt_box(w = w00, l = l00, ta = [t1, t1, t0]) {
   bxyz = adif([w, l, mbh], amul(ta, [-2, -2, 0])); // add 2 wall thichness, 0 floor
-  dual_slots(mbh, 18, bxyz.x/2, [t0, bxyz.y])
-  box(bxyz, ta, undef, false, t0);
+  dual_slots(mbh, 18, bxyz.x/2, [t1, bxyz.y])
+  box(bxyz, ta, undef, false, t1);
   // wedge();
 }
 
-mtray_l = 3 * (w00 + t0) + t0;
-mtray_w = l00 + 2 * t0;
+mtray_l = 3 * (w00 + t1) + t1;
+mtray_w = l00 + 2 * t1;
 echo("mtray_l=", mtray_l);
 module mkt_tray(w = w00, l = l00) {
-  astack(3, [0, w + t0, 0]) 
-  trr([l + 2 * t0, 0, 0, [0, 0, 90]]) mkt_box(w, l);
+  astack(3, [0, w + t1, 0]) 
+  trr([l + 2 * t1, 0, 0, [0, 0, 90]]) mkt_box(w, l);
 }
 
-module more_mkts(w = w00, l = l00, n = 3, t = t0) {
-  tw = (l + t0) + t0 + .3;
+module more_mkts(w = w00, l = l00, n = 3, t = t1) {
+  tw = (l + t) + t + .01;   // <--- display gap!
   astack(n, [tw, 0, 0]) mkt_tray();
 }
 
@@ -341,25 +341,24 @@ ntc = 28;      // number of tech cards (4 * 7? maybe room to spare)
 tbh = tnc(ntc) * 1.1 + t0;   // tech box height
 echo("techbox: tbh=", tbh, "delta=", (tbh + mbh + rtray_h + rtlz) - (stackh) );
 
-module tech_box(w = w00, l = l00, ta = [t0, t0, t0]) {
-  bxyz = [ w00 + 2 * t0, l00 + 2 * t0, tbh];  // Note: same as mtray
-  dual_slots(tbh, 18, bxyz.x/2, [t0, bxyz.y])
-  box(bxyz, ta, undef, false, t0);
+module tech_box(w = w00, l = l00, ta = [t1, t1, t0]) {
+  bxyz = [ w00 + 2 * t1, l00 + 2 * t1, tbh];  // Note: same as mtray
+  dual_slots(tbh, 18, bxyz.x/2, [t1, bxyz.y])
+  box(bxyz, ta, undef, false, t1);
 }
 
 // w: inside width (w00)
 // l: inside length (w00)
 // n: astack of n (3)
-// t: thickness of walls & base (t0)
-module tech_tray(w = w00, l = l00, n = 3, t = t0) {
-  astack(n, [w + t0, 0, 0], undef, house_color) tech_box(w, l);
+module tech_tray(w = w00, l = l00, n = 3) {
+  astack(n, [w + t1, 0, 0], undef, house_color) tech_box(w, l);
 }
 // size: [x: length, y: width_curved, z: height_curved]
 // rt: radii of tray [bl, tl, tr, br]
 // rc: radii of caps
 // k0: cut_end default: cut max(top radii) -> k
 // divs: [divx0, divx1, ...]
-// t: (t0) thickness of tube
+// t: (t0) thickness of tube & divs & endcaps
 module tray(size = 10, rt = 2, rc = 2, k0, divs = [], t = t0) {
   s = is_list(size) ? size : [size,size,size]; // tube_size
   rm = is_list(rt) ? max(rt[1], rt[2]) : rt;   // round_max
@@ -398,7 +397,7 @@ rlid_l = box_s -1  - mtray_l + lap; // 0*partial overlap (or snug to box)
 rlid_h = stackh - tbh - mbh - mbh - 1.5;
 
 // external size of res_tray LID, res_tray will shrink to fit
-rtray_w = rlid_w - rtt;    // res_tray adds extra rtt endcap (was: -t0!)
+rtray_w = rlid_w - rtt;    // res_tray adds extra rtt endcap
 rtray_l = rlid_l;          // will shrink rtray to fit in res_lid
 rtray_h = stackh - mbh - tbh - rtlz;
 // rtray_h = 25 + rtt;     // sufficient to fit map tokens.
