@@ -314,11 +314,10 @@ module wedge(xyz, tr = 20, r = -3) {
 }
 
 mbh = bt * 1.2 + t0;
-module mkt_box(w = w00, l = l00, ta = [t1, t1, t0]) {
+module mkt_box(w = w00, l = l00, ta = [t1, t1, t0], h = mbh) {
   bxyz = adif([w, l, mbh], amul(ta, [-2, -2, 0])); // add 2 wall thichness, 0 floor
   dual_slots(mbh, 18, bxyz.x/2, [t1, bxyz.y])
   box(bxyz, ta, undef, false, t1);
-  // wedge();
 }
 
 mtray_l = 3 * (w00 + t1) + t1;
@@ -341,10 +340,8 @@ ntc = 28;      // number of tech cards (4 * 7? maybe room to spare)
 tbh = tnc(ntc) * 1.1 + t0;   // tech box height
 echo("techbox: tbh=", tbh, "delta=", (tbh + mbh + rtray_h + rtlz) - (stackh) );
 
-module tech_box(w = w00, l = l00, ta = [t1, t1, t0]) {
-  bxyz = [ w00 + 2 * t1, l00 + 2 * t1, tbh];  // Note: same as mtray
-  dual_slots(tbh, 18, bxyz.x/2, [t1, bxyz.y])
-  box(bxyz, ta, undef, false, t1);
+module tech_box(w = w00, l = l00, ta = [t1, t1, t0], h = tbh) {
+  mkt_box(w, l, ta, h);   // a deeper mkt_box
 }
 
 // w: inside width (w00)
