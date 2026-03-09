@@ -54,9 +54,8 @@ module tabline(n = 3, dy = 0, hm) {
   hr = inch/16;
   th = tabh;
   fr = f * .5;
-  differenceN(2) {
+  difference() {
     union() {
-      // -20, -12, -4 4 8 12
       for (dxi = [1: n]) {
         trr([-30+8*dxi, dy, 0]) cube([4, 10, th]);
       }
