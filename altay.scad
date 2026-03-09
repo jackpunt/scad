@@ -2,7 +2,7 @@ use <mylib.scad>;
 
 p = .001;
 pp = 2 * p;
-f = .13;        // .18 was too loose, 0.4 nozzle?
+f = .15;        // .18 was too loose, 0.4 nozzle?
 sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 sample = false;
@@ -423,6 +423,7 @@ module res_tray(res_w, res_l, ndiv = sample ? 1 : 5) {
   echo("res_tray: rtray_w=", rtray_w, " rtray_l=", rtray_l, " res_l=", res_l, "res_h=", res_h, "rtl2=", [rtl2w, rtl2l]);
   echo("res_tray: dx=", dx, "sl", sl, "res_h-rtt=", res_h-rtt, "dy=", dy,
        "cubic=", (dx) * sl * (res_h-rtt));
+  hz = res_h - (rlid_h - rtlz) + t0;  // zheight of hook
   divs = [ for (i = [1 : ndiv] ) i * dx ];
   color("tan")
   difference() 
@@ -431,6 +432,8 @@ module res_tray(res_w, res_l, ndiv = sample ? 1 : 5) {
     trr([(sample ? -dx/2: dx/2), res_l-15.25, res_h, [0, 90, 0]])
       scale([1.2, 1, 1])
       cylinder(h = res_w - (sample ? 0 : 2) * dx, r = 11);
+    for (i = [0, res_w]) // hole for hook
+      trr([i, res_l/2, hz]) cube([3*t1, 6, 1.5*t0], true);
   }
   trr([rtt/2, dy, 0]) cube([ndiv * dx, 1, res_h]); // <--- longitudinal div
 }
@@ -440,12 +443,15 @@ module res_tray(res_w, res_l, ndiv = sample ? 1 : 5) {
 module res_lid(w = rlid_w, l = rlid_l, h = rlid_h) {
   echo("res_lid: w=", w, "l=", l, "rtlz=", rtlz, "--> h=", h);
   translate([0, 0, p]) 
-  color("lightblue", .9)
+  color("lightblue", .8)
   difference() 
   {
     box([w, l, h], [rtlw, rtll, rtlz-pp]); // squeeze a bit to offset 'f'
     cubesGrid(bw = w, bh = l, stt = [5, 2.5, 2.5], t = 3);
   }
+  // hook:
+  for (x = [rtlw-p, w-rtlw+p])
+    trr([x, l/2, h - t0]) cube([1.2, 4, t0], true);
 }
 
 box_dims = [box_s -1 - mtray_l, box_s -1 - mtray_l, box_z];
@@ -502,7 +508,7 @@ module four_space(w, l, h , q = 0) {
 
 // loc: 0=whole stack, 1=mkt_trays, 2=tech_tray, 3 = four_player,
 // 4 = more_mkts, 5 = res_tray, 6 = res_lid, 
-// 7 = map_bezel, 8 = map_bezel(print), 
+// 7 = map_bezel, 8 = map_bezel(print),  9 = map_bezel (view)
 // 9: four_space(near), 10: four_space(far) 11: far_box()
 loc = 0; 
 // player_tray: (player_id, nun_houses, card_p)
@@ -517,21 +523,21 @@ z1 = z0 - tbh;  // <-- top of mkt_tray
 z2 = z1 - mbh;  // <-- top of rlid
 z3 = z2 - (rtlz + rtray_h);  // bottom of res_tray
 
-atrans(loc, [[0, 0, mbh+ptray_h+pp], undef, undef, undef, undef, undef, undef, 0, 0]) map_bezel();
-atrans(loc, [[0, 0, mbh+p], undef, undef, [0, 0, 0]]) four_player(nh, pi);
-atrans(loc, [[0, 0, 0], undef, undef, undef, 0]) more_mkts();
+atrans(loc, [[0, 0, mbh+ptray_h+pp], undef, undef, undef, undef, undef, undef, 0, 0]) map_bezel(); // #7 #8
+atrans(loc, [[0, 0, mbh+p], undef, undef, [0, 0, 0]]) four_player(nh, pi); // #3
+atrans(loc, [[0, 0, 0], undef, undef, undef, 0]) more_mkts();              // #4
 
-atrans(loc, [[0,           y1, z1], undef, [0, 0, 0], undef]) tech_tray();
+atrans(loc, [[0,           y1, z1], undef, [0, 0, 0], undef]) tech_tray(); // #2
 atrans(loc, [[mtray_l,     y1, z2, [0, 0, 90]], 0]) mkt_tray();
 atrans(loc, [[0,           y2, z2-rlid_h, [180, 0, 0, [0, rlid_l/2, rlid_h/2]]], undef, undef, undef, undef, undef, [0, 0, 0]]) 
-              res_lid();
-// center within res_lid: inset by [rtl2w/2, rtl2l/2]
-atrans(loc, [[0 + rtl2w/2, y2 + rtl2l/2, 0], undef, undef, undef, undef, 0, [rtl2w/2, rtl2l/2, rtlz]]) 
+              res_lid();   // #6
+// center within res_lid: inset by [rtl2w/2, rtl2l/2] #5
+atrans(loc, [[0 + rtl2w/2, y2 + rtl2l/2, 0], undef, undef, undef, undef, 0, undef]) //, [rtl2w/2, rtl2l/2, rtlz]]) // tray w/lid #6
               res_tray();
 
 atrans(loc, [[0, 0, stackh - box_z], undef, undef, undef, undef,
               undef, undef, undef, undef, [0, 0, 0], [0, 0, 0]]) // [all .. full, cut]
-              four_space(undef, undef, undef, [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2 ][loc]);
+              four_space(undef, undef, undef, [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2 ][loc]); // #9 #10
 atrans(loc, [[0,0,0], undef, undef, undef, undef, undef, undef, undef,
               undef, undef, undef, [box_dims.x - box_s, box_dims.y - box_s, 0]]) 
-              far_box();
+              far_box();  // #11
