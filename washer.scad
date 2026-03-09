@@ -33,7 +33,7 @@ module spipe(h = 20, crad = inch/2) {
 s = inch;
 tabh = s*.25+p;
 module fixhalf(part = 3, s = s) {
-  ofy = s * .6;
+  ofy = s * .7;
   difference() {
     trr([0, ofy, 0]) cube([2*s, 1.5*s, s * .5], true);
     if (part == 1 || part == 0) trr([0, ofy, s*.25-p]) cube([2*s+pp, 1.5*s+pp, s*.5], true);
@@ -50,37 +50,26 @@ module fixhalf(part = 3, s = s) {
 
 }
 
-module tabline(n = 3, dy = 0) {
+module tabline(n = 3, dy = 0, hm) {
   hr = inch/16;
   th = tabh;
   fr = f * .5;
   differenceN(2) {
     union() {
+      // -20, -12, -4 4 8 12
       for (dxi = [1: n]) {
-        trr([4-8*dxi, 0, 0]) cube([4, 10, th]);
+        trr([-30+8*dxi, dy, 0]) cube([4, 10, th]);
       }
       if (!hm)
-        trr([3, 5, s*.125, [0, -90, 0]]) cylinder(h = n * 8 + 6, r = hr+fr); 
+        trr([2+ 8*(n-3), dy+5, s*.125, [0, -90, 0]]) cylinder(h = n * 8 + 6, r = hr+fr); 
     }
     if (hm)
-      trr([3, 5, s*.125, [0, -90, 0]]) cylinder(h = n * 8 + 6, r = hr+fr); 
+      trr([2+ 8*(n-3), dy + 5, s*.125, [0, -90, 0]]) cylinder(h = n * 8 + 6, r = hr+fr); 
   }
 }
 module tabs(hm = true) {
-  hr = inch/16;
-  th = tabh;
-  fr = f * .5;
-  difference() {
-    union() {
-      trr([-4, 0, 0]) cube([4, 10, th]);
-      trr([-12, 0, 0]) cube([4, 10, th]);
-      trr([-20, 0, 0]) cube([4, 10, th]);
-      if (!hm)
-        trr([3, 5, s*.125, [0, -90, 0]]) cylinder(h = 30, r = hr+fr); 
-    }
-    if (hm)
-      trr([3, 5, s*.125, [0, -90, 0]]) cylinder(h = 30, r = hr+fr); 
-  }
+  tabline(3, 0, hm);
+  tabline(6, 24, hm);
 }
 module fixture(part = 3, s = inch) {
   fixhalf(1);
