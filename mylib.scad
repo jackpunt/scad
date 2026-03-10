@@ -275,9 +275,8 @@ module rc0(tr = [ 0, 0, 0 ], rot = [ 0, 0, 0 ], q = 0, rad = 5, t = t0, ss = fal
   difference() 
   {
     children(0);
-    show(ss) 
+    show(ss, tr) 
     color("blue") 
-    translate(tr)
     difference() {
       translate(org) cube([ rad + pp, rad + pp, t + pp ]);
       translate(add) cylinder(t + 2* pp, rad, rad);
@@ -479,6 +478,38 @@ module slotify2(hwtr, tr, rid, riq, ss) {
   children();
 }
 
+// make 2 opposing rounded corners, in the given plane:
+// plane: 0: YZ, 1: XZ, 2: XY
+// h, w, t, r, ss, riq
+module rc2(XYZ, h, w, t, r, tr, ss, riq) {
+  riq = is_list(riq) ? riq : [riq]; // riq as simple radius
+  rad = is_undef(riq[0]) ? 2 * t : riq[0]; // corner radius
+  // rid,q1,q2: X(1,3,2) Y(0, 0, 3) Z(0, 0, 3)
+  ridds = [[1, 3, 2], [0, 0, 3], [0, 0, 3]][XYZ];
+  rid = is_undef(riq[1]) ? ridds[0] : riq[1];
+  q1 = is_undef(riq[2]) ? ridds[1] : riq[2];
+  q2 = is_undef(riq[3]) ? ridds[2] : riq[3];
+  rm = rad;
+
+  // echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
+  // cr1,2: X(0, w, h) Y(w, 0, h) Z(w, h, 0)
+  cr1 = [[0, -w/2, -(h/2-r)], [-w/2, 0, -(h/2-r)],[-w/2, -(h/2-r), 0]][XYZ];
+  cr2 = [[0, +w/2, -(h/2-r)], [+w/2, 0, -(h/2-r)],[+w/2, -(h/2-r), 0]][XYZ];
+  // echo("cr1=", cr1, "cr2=", cr2);
+  trt1 = adif(tr, cr1 );
+  trt2 = adif(tr, cr2);
+  if (ss) {
+    // translate(tr) translate(cr1) color("cyan") cube([1,1,1]);
+    // translate(tr) translate(cr2) color("black") cube([1,1,1]);
+    translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
+    translate(trt2) color("red")  cube([ 1, 1, 1 ], true);
+  }
+  // echo("rc: ", trt1, rott, q1, rad, t, ss);
+  // rc(trt1, rottr, q1, rad, t, ss)
+  rc(trt1, rid, q1, rad, t, ss)
+  rc(trt2, rid, q2, rad, t, ss)
+  children();
+}
 // cut a slot in child object: [YZ plane?]
 // difference() { child(0); trans(tr) slot(hwtr); }
 // hwtr: [h: dz (40), w: 5, t: (t0), r: slot_radius (w/2)]
@@ -489,6 +520,7 @@ module slotify2(hwtr, tr, rid, riq, ss) {
 // Note: slotifyX does rounded corner only in YZ plane;
 // Use slotifyY2 (XZ-plane) or slotifyZ2 (XY-plane)
 module slotifyX(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
+  tr = is_undef(tr) ? [0,0,0] : tr;
   h = is_undef(hwtr[0]) ? 40 : hwtr[0];
   w = is_undef(hwtr[1]) ? 5 : hwtr[1];
   t = is_undef(hwtr[2]) ? t0 : hwtr[2];
@@ -496,37 +528,7 @@ module slotifyX(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   rot0 = is_undef(rot) ? 1 : rot; // flip XY to YZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
   // echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
-  module maybe_rc0(ss = ss, riq = riq) {
-    if (!is_undef(riq)) {
-      riq = is_list(riq) ? riq : [riq]; // riq as simple radius
-      rad = is_undef(riq[0]) ? 2 * t : riq[0]; // corner radius
-      rid = is_undef(riq[1]) ? 1 : riq[1];
-      q1 = is_undef(riq[2]) ? 3 : riq[2];
-      q2 = is_undef(riq[3]) ? 2 : riq[3];
-      rm = rad;
-
-      // echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
-      cr1 = [ -0, -(w/2), -(h/2 - r) ];
-      cr2 = [ -0, +(w/2), -(h/2 - r) ];
-      // echo("cr1=", cr1, "cr2=", cr2);
-      if (ss) translate(tr) translate(cr1) color("cyan") cube([1,1,1]);
-      rottr = [rott[0], rott[1], rott[2], rid];
-      // trt1 = tr;
-      trt1 = adif(tr, cr1 );
-      trt2 = adif(tr, cr2);
-      // translate(trt1) translate(amul(cr1, [-1,-1,-1])) rotatet(rott, cr1) color("blue") cube([ 1, 1, 1 ], true);
-      if (ss) translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
-      if (ss) translate(trt2) color("red")  cube([ 1, 1, 1 ], true);
-      // echo("rc: ", trt1, rott, q1, rad, t, ss);
-      // rc(trt1, rottr, q1, rad, t, ss)
-      rc(trt1, rid, q1, rad, t, ss)
-      rc(trt2, rid, q2, rad, t, ss)
-      children();
-    } else {
-      children();
-    }
-  }
-  maybe_rc0(ss, riq) 
+  if (!is_undef(riq)) rc2(0, h, w, t, r, tr, ss, riq) 
   difference() 
   {
     children(0);
@@ -577,37 +579,7 @@ module slotifyY(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   rot0 = is_undef(rot) ? [0,90,90] : rot; // flip XY to XZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
   // echo("slotifyY: hwtr=", [ h, w, t, r ], "rott=", rott);
-  module maybe_rc0(ss = ss, riq = riq) {
-    if (!is_undef(riq)) {
-      riq = is_list(riq) ? riq : [riq]; // riq as simple radius
-      rad = is_undef(riq[0]) ? 2 * t : riq[0]; // corner radius
-      rid = is_undef(riq[1]) ? 0 : riq[1];
-      q1 = is_undef(riq[2]) ? 0 : riq[2];
-      q2 = is_undef(riq[3]) ? 3 : riq[3];
-      rm = rad;
-
-      // echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
-      cr1 = [-(w/2), -0, -(h/2 - r) ];
-      cr2 = [+(w/2), -0, -(h/2 - r) ];
-      // echo("cr1=", cr1, "cr2=", cr2);
-      if (ss) translate(tr) translate(cr1) color("cyan") cube([1,1,1]);
-      rottr = [rott[0], rott[1], rott[2], rid];
-      // trt1 = tr;
-      trt1 = adif(tr, cr1 );
-      trt2 = adif(tr, cr2);
-      // translate(trt1) translate(amul(cr1, [-1,-1,-1])) rotatet(rott, cr1) color("blue") cube([ 1, 1, 1 ], true);
-      if (ss) translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
-      if (ss) translate(trt2) color("red")  cube([ 1, 1, 1 ], true);
-      // echo("rc: ", trt1, rott, q1, rad, t, ss);
-      // rc(trt1, rottr, q1, rad, t, ss)
-      rc(trt1, rid, q1, rad, t, ss)
-      rc(trt2, rid, q2, rad, t, ss)
-      children();
-    } else {
-      children();
-    }
-  }
-  maybe_rc0(ss, riq) 
+  if (!is_undef(riq)) rc2(1, h, w, t, r, tr, ss, riq) 
   difference() 
   {
     children(0);
@@ -659,38 +631,7 @@ module slotifyZ(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   rot0 = is_undef(rot) ? 2 : rot; // flip XY to XZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
   // echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
-  module maybe_rc0(ss = ss, riq = riq) {
-    if (!is_undef(riq)) {
-      riq = is_list(riq) ? riq : [riq]; // riq as simple radius
-      rad = is_undef(riq[0]) ? 2 * t : riq[0]; // corner radius
-      // TODO: adjust for Z plane:
-      rid = is_undef(riq[1]) ? 0 : riq[1];
-      q1 = is_undef(riq[2]) ? 0 : riq[2];
-      q2 = is_undef(riq[3]) ? 3 : riq[3];
-      rm = rad;
-
-      // echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
-      cr1 = [-(w/2), -(h/2 - r), -0 ];
-      cr2 = [+(w/2), -(h/2 - r), -0 ];
-      // echo("cr1=", cr1, "cr2=", cr2);
-      if (ss) translate(tr) translate(cr1) color("cyan") cube([1,1,1]);
-      rottr = [rott[0], rott[1], rott[2], rid];
-      // trt1 = tr;
-      trt1 = adif(tr, cr1 );
-      trt2 = adif(tr, cr2);
-      // translate(trt1) translate(amul(cr1, [-1,-1,-1])) rotatet(rott, cr1) color("blue") cube([ 1, 1, 1 ], true);
-      if (ss) translate(trt1) color("blue") cube([ 1, 1, 1 ], true);
-      if (ss) translate(trt2) color("red")  cube([ 1, 1, 1 ], true);
-      // echo("rc: ", trt1, rott, q1, rad, t, ss);
-      // rc(trt1, rottr, q1, rad, t, ss)
-      rc(trt1, rid, q1, rad, t, ss)
-      rc(trt2, rid, q2, rad, t, ss)
-      children();
-    } else {
-      children();
-    }
-  }
-  maybe_rc0(ss, riq) 
+  if (!is_undef(riq)) rc2(2, h, w, t, r, tr, ss, riq) 
   difference() 
   {
     children(0);
