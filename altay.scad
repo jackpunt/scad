@@ -84,6 +84,7 @@ module house(pi = 0, n = 1) {
   hc = house_color[pi];
   dx = house_dx[pi]; // houses are variously smaller than house_dim.x
   hx = house_dim.x - dx;
+  if (n > 0) 
   astack(n, [0, house_dim.y + .1, 0])
   color(hc, .6)
   trr([dx/2, 0, 0]) cube([hx, house_dim.y, house_dim.z]);
