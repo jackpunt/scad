@@ -8,12 +8,12 @@ sqrt3_2 = sqrt3/2;  // .866
 sample = false;
 
 inch = 25.4;
-prad = (3/8 * inch) / 2;
-
-echo("prad=", prad);
 // h: height (20)
 // crad: corner radius (inch/2)
-module spipe(h = 20, crad = inch/2) {
+module spipe(scal = 1, h = 20, crad = inch/2) {
+  prad = scal * (3/8 * inch) / 2;
+
+  echo("prad=", prad);
   trr([0, 0, -prad])
   color("white") {
 
@@ -47,7 +47,7 @@ module fixhalf(part = 3, s = s) {
   differenceN(1) 
   {
     cube([fixw, fixl, fixh], true);
-
+    trr([-fixl0, -ofy, 0]) spipe(1.04);
     if (part == 1 || part == 0) trr([0, 0, fixh/2-p]) cube([fixw+pp, fixl+pp, fixh], true);
     if (part == 2 || part == 0) trr([0, 0, -fixh/2+p]) cube([fixw+pp, fixl+pp, fixh], true);
     // cut slots for tabs in part==2
@@ -97,10 +97,13 @@ module fixture(part = 3, s = inch) {
  % fixhalf(2);     // top half, with slots
 }
 
-stick_angle = 9;
+stick_angle = 11;
+stick_ofx = 38; // right side of bracket
+
 module stick(yl = yl) {
   sl = yl + 55;
-  trr([47+sl/2*sin(stick_angle), 45-sl, 0, [-90, 0, stick_angle]]) cylinder(h = sl, r = inch*1/8);
+  trr([stick_ofx, 0, 0, [90, 0, stick_angle]]) 
+    trr([0, 0, -55]) cylinder(h = sl, r = inch*1/8);
 }
 
 module holes(nx, ny, dx, dy, dz) {
@@ -132,7 +135,8 @@ module bracket(nx, ny, dx, dy, dz, sf = [1, 1, 1]) {
   {
     // alignment pegs:
     astack(3, [0, 2*dy, 0], undef, "red") trr([0, -dy*2, -dz-p]) scale(sfa) cylinder(1.51*dz+pp, 3, 3);
-    trr([0, 0, p-(ch/2+dz), [0, stick_angle, 0]]) difference() {
+    trr([0, 0, p-(ch/2+dz), [0, stick_angle, 0, [0, 0, ch/2]]]) 
+      difference() {
       cylinder(ch, crad, crad, true); // stick terminus
       trr([0,0,-p]) cylinder(ch+pp, srad, srad, true); // stick terminus
     }
@@ -155,19 +159,22 @@ module holder(nx = 6, ny = 10) {
   difference() {
     plate(nx, ny, dx, dy, dz);
     holes(nx, ny, dx, dy, dz);
-    color("green") trr([0,0,-p]) bracket(nx, ny, dx, dy, dz, 2*f);
   }
-  bracket(nx, ny, dx, dy, dz);
+ % bracket(nx, ny, dx, dy, dz);
 }
 
 loc = 0;
 yl = 170;
 
+atrans(loc, [[0,0,0]])
 spipe();
 
 fixture();
 
 stick(yl);
 
-atrans(loc, [[60.56, -yl, 0, [90, 0, 0]], [90, 0, 0], [90, 0, 0, [180, 0, 0]]])
+bracket_ofy = -yl;
+bracket_ofx = stick_ofx + tan(-stick_angle) * (bracket_ofy + 5);
+echo("bracket: ofx, ofy =", [bracket_ofx, bracket_ofy], 60.56+2.5);
+atrans(loc, [[bracket_ofx, -yl, 0, [90, 0, 0]], [90, 0, 0], [90, 0, 0, [180, 0, 0]]])
   holder();
