@@ -148,7 +148,7 @@ module cbstack(n = 1, hwt = [ 18, 20, 2 ], c = "tan", d = .01) {
   w = hwt[1];
   t = hwt[2];
   rot = is_undef(hwt[3]) ? [ 0, 0, 0 ] : hwt[3];
-  astack(n, t + d, rot) color(c) cube([ t, h, w ]);
+  astack(n, t + d, rot, c) cube([ t, h, w ]);
 }
 
 // main box:
