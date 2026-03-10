@@ -35,22 +35,32 @@ module spipe(h = 20, crad = inch/2) {
 // size
 s = inch;
 tabh = s * 0.25 + p;
-fixw = s * 2.8;
+fixw = s * 2.85;
 fixl = s * 1.5;
 fixh = s * 0.5;
 
 module fixhalf(part = 3, s = s) {
+  pz = .1;
   fixl0 = fixw/2 - 26;
   ofy = s * .7;
-  difference() {
-    trr([fixl0, ofy, 0]) cube([fixw, fixl, fixh], true);
-    if (part == 1 || part == 0) trr([fixl0, ofy, fixh/2-p]) cube([fixw+pp, fixl+pp, fixh], true);
-    if (part == 2 || part == 0) trr([fixl0, ofy, -fixh/2+p]) cube([fixw+pp, fixl+pp, fixh], true);
+  trr([fixl0, ofy, 0])
+  differenceN(1) 
+  {
+    cube([fixw, fixl, fixh], true);
+
+    if (part == 1 || part == 0) trr([0, 0, fixh/2-p]) cube([fixw+pp, fixl+pp, fixh], true);
+    if (part == 2 || part == 0) trr([0, 0, -fixh/2+p]) cube([fixw+pp, fixl+pp, fixh], true);
     // cut slots for tabs in part==2
     if (part == 2 || part == 3) {
-      tabs(false); // with hole for locking dowel
+      trr([-fixl0, -ofy, 0]) tabs(false); // with hole for locking dowel
     }
-    # trr([fixw - fixl0, fixl/2, 0]) cylinder(h = 4*fixh+pp, r = 1/8 * inch, true);
+    // trim the center plane:
+    cube([fixw+pp, fixl+pp, pz], true);
+    // try make hole for squeeze bolt:
+    trr([fixw/2-fixl0+4, 9, 0]) 
+      cylinder(h = 2*fixh+pp, r = 1/12 * inch, center = true);
+    trr([fixw/2-fixl0-9, -9, 0]) 
+      cylinder(h = 2*fixh+pp, r = 1/12 * inch, center = true);
   }
   // tabs on part==1:
   if (part == 1 || part == 3) {
@@ -61,12 +71,15 @@ module fixhalf(part = 3, s = s) {
 
 module tabline(n = 3, dy = 0, hm) {
   hr = inch/16;
+  tw = 4;   // tab width(x)
+  tl = 10;  // tab length(y)
   th = tabh;
   fr = f * .5;
+  ff = hm ? -fr : fr;
   difference() {
     union() {
       for (dxi = [1: n]) {
-        trr([-30+8*dxi, dy, 0]) cube([4, 10, th]);
+        trr([-30+(tw/2)+8*dxi, dy+tl/2, th/2]) cube([tw+ff, tl+ff, th], true);
       }
       if (!hm)
         trr([2+ 8*(n-3), dy+5, s*.125, [0, -90, 0]]) cylinder(h = n * 8 + 6, r = hr+fr); 
@@ -80,8 +93,8 @@ module tabs(hm = true) {
   tabline(6, 24, hm);
 }
 module fixture(part = 3, s = inch) {
-  fixhalf(1);
-  %fixhalf(2);
+  fixhalf(1);     // bottom half, with tabs
+ % fixhalf(2);     // top half, with slots
 }
 
 stick_angle = 9;
@@ -113,12 +126,16 @@ module bracket(nx, ny, dx, dy, dz, sf = [1, 1, 1]) {
   sfa = is_list(sf) ? sf : [(wx+sf)/wx, (ly+sf)/ly, 1];
   ch = 20;
   crad = inch * .25;
+  srad = inch * .125;
   atrans(loc, [[0, 0, 0], [0, 0, 0], [0, 0, 0, [0, 0, 0]]]) 
   // scale(sfa)
   {
     // alignment pegs:
     astack(3, [0, 2*dy, 0], undef, "red") trr([0, -dy*2, -dz-p]) scale(sfa) cylinder(1.51*dz+pp, 3, 3);
-    trr([0, 0, p-(ch+dz)]) cylinder(ch, crad, crad); // stick terminus
+    trr([0, 0, p-(ch/2+dz), [0, stick_angle, 0]]) difference() {
+      cylinder(ch, crad, crad, true); // stick terminus
+      trr([0,0,-p]) cylinder(ch+pp, srad, srad, true); // stick terminus
+    }
     color("tan")
     difference() {
       trr([0, 0, -dz]) cube([wx, ly, dz], true);
@@ -142,7 +159,8 @@ module holder(nx = 6, ny = 10) {
   }
   bracket(nx, ny, dx, dy, dz);
 }
-loc = 2;
+
+loc = 0;
 yl = 170;
 
 spipe();
@@ -151,5 +169,5 @@ fixture();
 
 stick(yl);
 
-atrans(loc, [[80, -yl, 0, [90, 0, 0]], [90, 0, 0], [90, 0, 0, [180, 0, 0]]])
+atrans(loc, [[60.56, -yl, 0, [90, 0, 0]], [90, 0, 0], [90, 0, 0, [180, 0, 0]]])
   holder();
