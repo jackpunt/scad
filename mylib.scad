@@ -145,21 +145,20 @@ module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = t0) 
   repeat(xyz, dxyz, n) cube([ dia, dia, zh ]);
 }
 
-// stack of children()
-// n: number
-// dxyz: each iteration
-// rot: rotate from dx --> dy or dz
+// stack of children() offset by i * dxyz (and maybe rotated)
+// n: iterate from [i0 : n - 1]
+// dxyz: each iteration ([dx, 0, 0])
+// rxyz: ([0, 0, 0]) or rotOfId(rot)
+// colors: color for each iteration (undef), array or scalar constant.
+// i0: initial iteration (0), so can do segments.
 module astack(n, d, rot, colors, i0 = 0) {
   dxyz = is_list(d) ? d : [ d, 0, 0 ];
-  r = is_undef(rot) ? .1 : rot;
-  rxyz = is_list(r) ? r : [ 0, 0, 0 ];
+  rxyz = is_list(rot) ? rot : is_undef(rot) ? [ 0, 0, 0 ] : rotOfId(rot);
   // echo("dxyz=", dxyz) 
-  if (n > 0) {
   for (i = [i0 : n - 1]) {
-    // if (!is_undef(colors) && i <= len(colors))
-    color(colors[i])
-    rotate(rxyz) dup([ i * dxyz.x, i * dxyz.y, i * dxyz.z ]) children(); // amul(dxyz, i)
-  }
+    c = is_list(colors) ? colors[min(i, len(colors))] : colors;
+    color(c)
+    rotate(rxyz) dup(amul(dxyz, i)) children();
   }
 }
 
