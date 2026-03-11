@@ -107,7 +107,7 @@ module fixture(part = 3, s = inch) {
 }
 
 stick_angle = 11;
-stick_ofx = 38; // right side of bracket
+stick_ofx = 38; // right side of fixture
 
 module stick(yl = yl) {
   sl = yl + 55;
@@ -116,11 +116,13 @@ module stick(yl = yl) {
     trr([0, 0, -55]) cylinder(h = sl, r = inch*1/8);
 }
 
+hw = 4.2;
+hl = 5.1;
 module holes(nx, ny, dx, dy, dz) {
   trr([dx/2 * (-nx), dy/2* (-ny), 0])
   astack(5, [0, 20, 0], undef, undef, 1)
   astack(4, 20)
-  cube([4.2, 5.1, 20], true);
+  cube([hw, hl, 20], true);
 }
 
 // spiked plate to hold sponge
@@ -153,12 +155,20 @@ module bracket(nx, ny, dx, dy, dz, pf = 0) {
       trr([0,0,p]) 
       cylinder(ch+ 5+2*pp, srad, srad, true); // stick terminus
     }
-    // rc2()
+    // use negative w, to put corners on different holes
+    // use t = (hl - f) because holes is that much smaller!
+    // tr [dx, dy, dz]; dy is biased by .5 !
+    // rc2(XYZ, h,   w,   t,  r,     tr,             ss, riq)
+    rc2(    2, dz, -16, hl-f, 2, [0, 29.5, 1.5*dz], false, [4])
+    rc2(    2, dz, -16, hl-f, 2, [0, 09.5, 1.5*dz], false, [4])
+    rc2(    2, dz, -16, hl-f, 2, [0, -10.5, 1.5*dz], false, [4])
+    rc2(    2, dz, -16, hl-f, 2, [0, -30.5, 1.5*dz], false, [4])
+    // Hmm... rc2 if off by x+=.5, and z/=3?
     color("tan")
     difference() {
       trr([0, 0, dz]) cube([wx, ly, dz], true);
       holes(nx, ny, dx, dy, dz);
-     trr([0,0,dz+p]) three_pegs(dy, dz, pf);
+      trr([0, 0, dz+p]) three_pegs(dy, dz, pf);
     }
   }
 }
@@ -210,7 +220,7 @@ bracket_ofx = stick_ofx + tan(-stick_angle) * (bracket_ofy + 5);
 echo("bracket: ofx, ofy =", [bracket_ofx, bracket_ofy], 60.56+2.5);
 atrans(loc, [[bracket_ofx, -yl, 0, [90, 0, 0]], undef, [90, 0, 0, [0, 0, 0]]])
   holder(1); // plate
-atrans(loc, [[bracket_ofx, -yl, 0, [-90, 0, 0]], undef, undef, [80, 0, -dz], 2, [80, 0, -dz]])
+atrans(loc, [[bracket_ofx, -yl, 0, [-90, 0, 0]], undef, undef, [0, 0, -dz], 2, [00, 0, -dz]])
   holder(2); // bracket
 
 atrans(loc, [undef, undef, undef, undef, [140, 0, dz], 2]) three_pegs(dy, dz, 0);
