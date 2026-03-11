@@ -135,62 +135,76 @@ module plate(nx, ny, dx, dy, dz) {
 // peg scale radius
 module bracket(nx, ny, dx, dy, dz, pf = 0) {
   wx = 3 * dx;
-  ly = 5 * dy;
-  ch = 20;
+  ly = 7 * dy;
+  ch = 20;  // cylinder height, stick length
   crad = inch * .25;
   srad = inch * .125;
   pr = (1/4 * inch + pf)/2;   // peg radius
-  atrans(loc, [[0, 0, 0], [0, 0, 0], [0, 0, 0, [0, 0, 0]]]) 
+  // atrans(loc, [[0, 0, 0], [0, 0, 0], [0, 0, 0, [0, 0, 0]]]) 
   {
-    // alignment pegs:
-    astack(3, [0, 2*dy, 0], undef, "red") trr([0, -dy*2, -dz-p]) cylinder(1.51*dz+pp, pr, pr);
     trr([0, 0, p-(ch/2+dz), [0, stick_angle, 0, [0, 0, ch/2]]]) 
       difference() {
-      cylinder(ch, crad, crad, true); // stick terminus
-      trr([0,0,-p]) cylinder(ch+pp, srad, srad, true); // stick terminus
+      cylinder(ch+0*pp, crad, crad, true); // stick terminus
+      trr([0,0,p]) 
+      cylinder(ch+2*pp, srad, srad, true); // stick terminus
     }
     color("tan")
     difference() {
       trr([0, 0, -dz]) cube([wx, ly, dz], true);
       holes(nx, ny, dx, dy, dz);
+      three_pegs(dy, dz, pf);
     }
   }
 }
 
-// sponge holder, with attachment holes
-// nx: number of spikes
-// ny: number of spikes
+module three_pegs(dy, dz, pf = 0) {
+  crad = inch * .25;
+  srad = inch * .125;
+  pr = (1/4 * inch + pf)/2;   // peg radius
+  ch = 20;  // cylinder height, stick length
+  // alignment pegs:
+  astack(3, [0, 2*dy, 0], undef, "red") trr([0, -dy*2, -.5*dz-p]) cylinder(2*dz+pp, pr, pr, true);
+}
+
 // dx: incr-x for spikes
 // dy: incr-y for spikes
 // dz: thickness of plate
+dx = 10; dy = 10; dz = 5;
+
+// sponge holder, with attachment holes
+// part: 0 (both), 1 (plate), 2: (bracket)
+// nx: number of spikes
+// ny: number of spikes
 module holder(part = 0) {
   nx = 6; ny = 10;
-  dx = 10; dy = 10; dz = 5;
   if (part == 0 || part ==1)
   difference() {
     plate(nx, ny, dx, dy, dz);
     holes(nx, ny, dx, dy, dz);
-    bracket(nx, ny, dx, dy, dz+p, f); // enlarge peg radius
+    three_pegs(dy, dz+p, f); // enlarge peg radius
   }
   if (part == 0 || part == 2)
   bracket(nx, ny, dx, dy, dz);
 }
 
-loc = 0;
+// 0: all/assembled, 1: bracket-print, 2: all-print, 3: holder-print
+loc = 3;
 yl = 170;
 
 atrans(loc, [[0,0,0]]) spipe();
 
 // fixture();
 atrans(loc, [[0,0,0], 0, 0]) fixhalf(1);
-%atrans(loc, [[0,0,0], [0, -5, 0, [180, 0, 0]], 1]) fixhalf(2);
+atrans(loc, [[0,0,0], [0, -5, 0, [180, 0, 0]], 1]) fixhalf(2);
 
-*atrans(loc, [[0,0,0]]) stick(yl);
+atrans(loc, [[0,0,0]]) stick(yl);
 
 bracket_ofy = -yl;
 bracket_ofx = stick_ofx + tan(-stick_angle) * (bracket_ofy + 5);
 echo("bracket: ofx, ofy =", [bracket_ofx, bracket_ofy], 60.56+2.5);
-atrans(loc, [[bracket_ofx, -yl, 0, [90, 0, 0]], undef, [90, 0, 0, [180, 0, 0]]])
-  holder(1);
-atrans(loc, [[bracket_ofx, -yl, 0, [90, 0, 0]], undef, [190, 0, 0, [180, 0, 0]]])
-  holder(2);
+atrans(loc, [[bracket_ofx, -yl, 0, [90, 0, 0]], undef, [90, 0, 0, [0, 0, 0]], 2])
+  holder(1); // plate
+atrans(loc, [[bracket_ofx, -yl, 0, [90, 0, 0]], undef, [170, 0, -dz, [180, 0, 0]], 2])
+  holder(2); // bracket
+
+atrans(loc, [undef, undef, [140, 0, dz], 2]) three_pegs(dy, dz, 0);
