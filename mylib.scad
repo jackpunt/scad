@@ -308,8 +308,6 @@ module rc(tr = [ 0, 0, 0 ], rotId = 1, q = 0, rad = 5, t = t0, ss = false) {
   // echo("rc: q, qs=", q, qs);
   qsr = amul(qs, [ r2, r2, -t ]); // quadrant select cylinder sector
 
-  // [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // x-axis
-
   cs0 = [
      [[ 1, 0, -1 ], [ 1, 0, 1 ], [ -1, 0, 1 ], [ -1, 0, -1 ]], // x-axis
      [[ 0, 1, 1 ], [ 0, -1, 1 ], [ 0, -1, -1 ], [ 0, 1, -1 ]], // y-axis
@@ -480,7 +478,18 @@ module slotify2(hwtr, tr, rid, riq, ss) {
 
 // make 2 opposing rounded corners, in the given plane:
 // plane: 0: YZ, 1: XZ, 2: XY
-// h, w, t, r, ss, riq
+// h, w, t, r, tr, ss, riq
+// 
+// tr: position of corner to be rounded
+// rotId: (1) [x-axis: [+-90, 0, 0], y-axis: [0, +-90, 0], z-axis: [0, 0, +-90]]
+// q:     (0) index of orientation of corner to be rounded: [ll, ul, ur, lr]
+// t:     thickness of wall to remove
+// r:     corner radius ? interaction with rid: riq[1]
+// ss:    show cut with '#'
+// riq:   [rad, rid, q1, q2] (or just rad)
+// configure 2 calls:
+//  rc(trt1, rid, q1, rad, t, ss)
+//  rc(trt2, rid, q2, rad, t, ss)
 module rc2(XYZ, h, w, t, r, tr, ss, riq) {
   riq = is_list(riq) ? riq : [riq]; // riq as simple radius
   rad = is_undef(riq[0]) ? 2 * t : riq[0]; // corner radius
@@ -491,7 +500,7 @@ module rc2(XYZ, h, w, t, r, tr, ss, riq) {
   q2 = is_undef(riq[3]) ? ridds[2] : riq[3];
   rm = rad;
 
-  // echo("[tr, w, h, riq, r, rm, rid, rad, rott]", [ tr, w, h, riq, r, rm, rid, rad, rott ]);
+  // echo("[tr, w, h, riq, r, rm, rid, rad]", [ tr, w, h, riq, r, rm, rid, rad ]);
   // cr1,2: X(0, w, h) Y(w, 0, h) Z(w, h, 0)
   cr1 = [[0, -w/2, -(h/2-r)], [-w/2, 0, -(h/2-r)],[-w/2, -(h/2-r), 0]][XYZ];
   cr2 = [[0, +w/2, -(h/2-r)], [+w/2, 0, -(h/2-r)],[+w/2, -(h/2-r), 0]][XYZ];
