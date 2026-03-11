@@ -147,7 +147,7 @@ module bracket(nx, ny, dx, dy, dz, pf = 0) {
     // tilted tube:
     difference() {
       union() {
-      // trr([-4, 0, dz+ch/2]) cylinder(ch, crad, crad, true); // straight tube
+      trr([-4, 0, dz+ch/2]) cylinder(ch, crad, crad, true); // straight tube
       trr([0, 0, (ch/2+dz), [0, -stick_angle, 0, [0, 0, -ch/2]]]) 
       cylinder(ch+0*pp, crad, crad, true); // tilted tube
       }
