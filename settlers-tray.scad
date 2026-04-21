@@ -16,13 +16,13 @@ module slotbox(ch = ch, ss = false) {
   r1 = .1; r2 = 5;
   cz = 3; // cut a wide slot, reducing height of 'box' for 25mm slot
   // 2 + .5mm to meet the roundedBox corner:
-  slotifyY([2*(cbz-ibz), cw-2.5*t0, 2*t0, r1], [0, -(ch-t0+p)/2, cbz], undef, undef, false)
+  slotifyY([2*(cbz-ibz), cw-2.5*t0, 2*t0, r1], [0, -(ch-t0+p)/2, cbz], undef, 2, false)
   slotifyY2([ibz,        25,        2*t0, r2], [0, -(ch-t0+p)/2,   4], undef,     2, ss)
   children(0);
 }
 module sidebox(dx = 0, y1 = y1, ss = false) {
   dr = (dx == 0) ? 27/2 : 0;
-  cylr = (dx == 0) ? dr + 1.6: 0; // t0 + 1.2/2
+  cylr = (dx == 0) ? dr + 1.6 : -2; // t0 + 1.2/2
   cylz = 16;
   translate([dx, ch/2 - t0, 0]) 
   rc([ -cylr , 2*cylr-t0/2, cylz], 0, 3, 2, t0) // tr, rotid, q, rad, t, ss
@@ -78,17 +78,19 @@ module cardbox(name, cutaway = false) {
   translate([(-8-cw)/2, (-f-ch)/2, -p]) cube(cut); // cutaway view
   }
   // fulcrum:
-  rotate([-3, 0, 0]) 
-  translate([0, -5, .3]) {
-  translate([0, 0, 1]) cube([cw, 10, 2], true);
+  font = "Nunito:style=Bold";
+  // font = ".SF Compact Rounded";
+  // font = ".SF NS Rounded";
+  s = 8; // font size
+  rotate([-3.4, 0, 0]) 
+  translate([0, -8, .3]) {
+  translate([0, 0, 1]) cube([cw, s + 6, 2], true);
   difference() {
-    translate([0, 0, 1.8]) cube([cw, 7, 2.4], true);
-      translate([0, -2.1, 2.75]) 
-      linear_extrude(height = .5) 
-      text(name, halign = "center", size=5, font="Nunito:style=Bold");
-      // ".SF Compact Rounded"
-      // ".SF NS Rounded"
-  }
+    translate([0, 0, 1.8]) cube([cw, s + 3, 2.4], true);
+      translate([0, 0, 2.4]) 
+      linear_extrude(height = 1) 
+      text(name, valign = "center", halign = "center", size = s, font =font);
+    }
   }
 
   a2 = -3.0; // angle of cards on fulcrum
@@ -364,7 +366,7 @@ difference() {
   }
 }
 // cardsLid-4
-cardsLid();
+cardsLid(); // loc: { 0, u, u, u, 4, 5 }
 
 atrans(loc, [[cw+t0, ch+t0, t0], undef, undef, undef, undef, 0]) {
   dice([0, 0, 0]); dice([ds+f, 0, 0]);
