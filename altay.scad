@@ -68,7 +68,7 @@ module card(tr = [ t1 + (l00 - l0) / 2, t1 + (w00 - w0) / 2, t0 ], n, dxyz, rgb=
   n = def(n, 1);
   dxyz = def(dxyz, [l0, w0, t01]);
   rgb = def(rgb, "#00ffff");
-  trr(tr) astack(n, [ 0, 0, t01 ]) color(rgb, .5) roundedCube(dxyz, 3, true);
+  trr(tr) astack(n, [ 0, 0, t01 ], undef, rgb, 0) roundedCube(dxyz, 3, true);
 }
 
 // house turned on side in box:
@@ -191,8 +191,8 @@ module card_slot(h, sw, tr, ss = false) {
   sr = sw/2; // slot radius
   dx = def(tr[0], t1/2);
   dy = def(tr[1], 20);
-  slotifyX2([h, sw, t1*2], [dx, dy, -sr], undef, 1, ss)
-  slotifyX([tabh, sw, t1*2], [dx, dy, 1], 3, undef, ss)
+  slotifyX2([h, sw, t1*2], [dx, dy, -sr], undef, [1, 1], ss)
+  slotifyX([tabh, sw, t1*2], [dx, dy, 1], 3, [0, 1, 3, 2], ss)
   children();
 }
 module house_slot(h, sw, tr, ss = false) {
@@ -227,8 +227,8 @@ module player_tray(pi = 0, w = ptray_w, l = ptray_l, nh = 0) {
   // a grand union(), and engrave the name
   idw = max(1.4, t1);   // inner div width; t1=1.3 was delaminating!
   hgap = .1;            // gap between houses
-  differenceN(6) {
-    if (card_p) card([t1+w00+(w00-w0)/2, t1+(l00-l0)/2, t1+.7, [0, 0, 90]], 1, undef, "#d480ff");
+  differenceN(5) 
+  {
     trr([t1+card_w+idw+hgap,                      t1+.2, 0]) house(pi, nh/2);
     trr([t1+card_w+idw+hgap + house_dim.x + divw, t1+.2, 0]) house(pi, nh);
     color(house_color[pi])
@@ -242,6 +242,8 @@ module player_tray(pi = 0, w = ptray_w, l = ptray_l, nh = 0) {
     trr([pw0/2, l/2, t0-.6, [0, 0, 90]]) linear_extrude(height = 1.5) 
     rotate([0,0,180]) text(name, halign = "center", size=10, font="Nunito:style=Bold");
   }
+  // a card on top:
+  if (card_p) card([t1+w00+(w00-w0)/2, t1+(l00-l0)/2, t1+.7, [0, 0, 90]], 1, undef, "#d580ff88");
 }
 
 // player_tray in 2 X 2 array:
@@ -511,7 +513,7 @@ module four_space(w, l, h , q = 0) {
 // 4 = more_mkts, 5 = res_tray, 6 = res_lid, 
 // 7 = map_bezel, 8 = map_bezel(print),  9 = map_bezel (view)
 // 9: four_space(near), 10: four_space(far) 11: far_box()
-loc = 0; 
+loc = 3; 
 // player_tray: (player_id, nun_houses, card_p)
 pi = undef; nh = 0; card_p = false;
 mbp = (loc == 8);
