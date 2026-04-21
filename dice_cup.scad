@@ -13,7 +13,7 @@ module cup(t = t0) {
   module vcup(base_xyc, top_xyz, vt = 0) {
     bx = base_xyc[0] - 2*vt;
     by = base_xyc[1] - 2*vt;
-    rc = base_xyc[2];
+    rc = base_xyc[2] - vt;
     bxy = [bx, by];
     scal = [(top_xyz[0] - 2*vt)/bx, (top_xyz[1] - 2*vt)/by];
     trr([0, 0, vt])
@@ -27,7 +27,7 @@ module cup(t = t0) {
   dy0 = 47;
   dx1 = 30;
   dy1 = 47;
-  vt = 1.5;
+  vt = 1.3;
 
 intersection() 
 {
