@@ -152,12 +152,12 @@ module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = t0) 
 // colors: color for each iteration (undef), array or scalar constant.
 // i0: initial iteration (0), so can do segments.
 module astack(n, d, rot, colors, i0 = 0) {
+  function scolor(i) = is_list(colors) ? colors[(len(colors) % i)] : colors;
   dxyz = is_list(d) ? d : [ d, 0, 0 ];
   rxyz = is_list(rot) ? rot : is_undef(rot) ? [ 0, 0, 0 ] : rotOfId(rot);
   // echo("dxyz=", dxyz) 
-  for (i = [i0 : n - 1]) {
-    c = is_list(colors) ? colors[min(i, len(colors))] : colors;
-    color(c)
+  for (i = [i0 : max(i0, n - 1)]) {
+    color(scolor(i))
     rotate(rxyz) dup(amul(dxyz, i)) children();
   }
 }
@@ -494,10 +494,9 @@ module rc2(XYZ, h, w, t, r, tr, ss, riq) {
   riq = is_list(riq) ? riq : [riq]; // riq as simple radius
   rad = is_undef(riq[0]) ? 2 * t : riq[0]; // corner radius
   // rid,q1,q2: X(1,3,2) Y(0, 0, 3) Z(0, 0, 3)
-  ridds = [[1, 3, 2], [0, 0, 3], [0, 0, 3]][XYZ];
-  rid = is_undef(riq[1]) ? ridds[0] : riq[1];
-  q1 = is_undef(riq[2]) ? ridds[1] : riq[2];
-  q2 = is_undef(riq[3]) ? ridds[2] : riq[3];
+  rid = is_undef(riq[1]) ? [1, 0, 0][XYZ] : riq[1];
+  q1  = is_undef(riq[2]) ? [3, 0, 0][XYZ] : riq[2];
+  q2  = is_undef(riq[3]) ? [2, 3, 3][XYZ] : riq[3];
   rm = rad;
 
   // echo("[tr, w, h, riq, r, rm, rid, rad]", [ tr, w, h, riq, r, rm, rid, rad ]);
@@ -537,7 +536,7 @@ module slotifyX(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   rot0 = is_undef(rot) ? 1 : rot; // flip XY to YZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
   // echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
-  if (!is_undef(riq)) rc2(0, h, w, t, r, tr, ss, riq) 
+  if (!is_undef(riq)) rc2(0, h, w, t, r, tr, ss, riq)
   difference() 
   {
     children(0);
@@ -577,7 +576,7 @@ module slotifyX2(hwtr, tr, rid, riq, ss) {
 // hwtr: [h: dz (40), w: 5, t: (t0), r: slot_radius (w/2)]
 // tr: translate onto wall ([0,0,0])
 // rid: rotate (1 = [0, 90, 90]) flip to XZ plane
-// riq: [radius: (2*t), rid: (1) , q1: (3), q2: (2)]; for XZ plane
+// riq: [radius: (2*t), rid: (1) , q1: (0), q2: (3)]; for XZ plane
 //
 module slotifyY(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   tr = is_undef(tr) ? [0,0,0] : tr;
@@ -588,7 +587,7 @@ module slotifyY(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   rot0 = is_undef(rot) ? [0,90,90] : rot; // flip XY to XZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
   // echo("slotifyY: hwtr=", [ h, w, t, r ], "rott=", rott);
-  if (!is_undef(riq)) rc2(1, h, w, t, r, tr, ss, riq) 
+  if (!is_undef(riq)) rc2(1, h, w, t, r, tr, ss, riq)
   difference() 
   {
     children(0);
@@ -604,7 +603,7 @@ module slotifyY(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
 // - r: radius of slot (min(h,w)/2)
 // tr: translate to wall [+- l/2, offset from center, bz: z-from bottom]
 // rid: rotate ([0, 90, 90]) flip to XZ plane; Note: do not use rid
-// riq: [radius: (2*t), rid: (1) , q1: (3), q2: (2)]; for XZ plane
+// riq: [radius: (2*t), rid: (1) , q1: (0), q2: (3)]; for XZ plane
 // ss: show
 module slotifyY2(hwtr, tr, rot, riq, ss) {
   h = is_undef(hwtr[0]) ? 40 : hwtr[0];
@@ -626,11 +625,11 @@ module slotifyY2(hwtr, tr, rot, riq, ss) {
 // hwtr: [h: dx[axis of slot] (40), w: 5, t: (t0), r: slot_radius (w/2)]
 // tr: translate onto wall ([0, 0, 0])
 // rid: rotate (2 = [0, 0, -90]) the XY plane; Note: can use 3 = [0, 0, 0]
-// riq: [radius: (2*t), rid: (1) , q1: (3), q2: (2)]; for XY plane [TODO]
+// riq: [radius: (2*t), rid: (1) , q1: (0), q2: (3)]; for XY plane [TODO]
 //
 // rid = 2: slot length is in Y-dir; tr[2] is up from the x-dir
 // rid = 3: slot length is in x-dir; tr[2] is up from the y-dir
-// will pro'ly need to adjust riq & mayberc0 when rid = 2  !?
+// will pro'ly need to adjust riq & maybe rc0 when rid = 2  !?
 module slotifyZ(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   tr = is_undef(tr) ? [0,0,0] : tr;
   h = is_undef(hwtr[0]) ? 40 : hwtr[0]; // x-dir
@@ -640,7 +639,7 @@ module slotifyZ(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   rot0 = is_undef(rot) ? 2 : rot; // flip XY to XZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
   // echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
-  if (!is_undef(riq)) rc2(2, h, w, t, r, tr, ss, riq) 
+  if (!is_undef(riq)) rc2(2, h, w, t, r, tr, ss, riq)
   difference() 
   {
     children(0);
