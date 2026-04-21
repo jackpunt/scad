@@ -81,16 +81,18 @@ module cardbox(name, cutaway = false) {
   font = "Nunito:style=Bold";
   // font = ".SF Compact Rounded";
   // font = ".SF NS Rounded";
-  s = 8; // font size
+  fs = 10; // font size
+  {
+    translate([0, -25, t0-p]) 
+    linear_extrude(height = .6) 
+    text(name, valign = "center", halign = "center", size = fs, font =font);
+  }
+
+  s = 6;
   rotate([-3.4, 0, 0]) 
   translate([0, -8, .3]) {
-  translate([0, 0, 1]) cube([cw, s + 6, 2], true);
-  difference() {
+    translate([0, 0, 1]) cube([cw, s + 6, 2], true);
     translate([0, 0, 1.8]) cube([cw, s + 3, 2.4], true);
-      translate([0, 0, 2.4]) 
-      linear_extrude(height = 1) 
-      text(name, valign = "center", halign = "center", size = s, font =font);
-    }
   }
 
   a2 = -3.0; // angle of cards on fulcrum
