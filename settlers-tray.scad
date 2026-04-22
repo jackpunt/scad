@@ -145,10 +145,12 @@ module cards(name = "foo", tilt = 0, n = 24) {
   }
 }
 
+cardLocs = [[1, 0, "sheep"], [1, 1, "wheat"], [1, 2, "ore"],
+            [0, 0, "wood"], [0, 1, "brick"], [0, 2, "dev"], 
+            ];
+
 module cardboxes(i0, i1, cut = false) {
-  locs = [[1, 0, "sheep"], [1, 1, "wheat"], [1, 2, "ore"],
-          [0, 0, "wood"], [0, 1, "brick"], [0, 2, "dev"], 
-          ];
+  locs = cardLocs;
   i0 = def(i0, 0);
   i1 = def(i1, len(locs)-1);
   for (i = [i0: i1]) let (rc = locs[i]) 
@@ -156,8 +158,10 @@ module cardboxes(i0, i1, cut = false) {
   translate([c*(cw-t0), r*(ch-t0)+ry, 0])
   cardbox(name, cut);
 }
+
 function cutb(cw3 = cardw-11) = (cw - cw3)/2;
 // viewport to cut from big lid
+// t: z-depth of cut
 module cutTop(t = tb) {
   // cut a viewport:
   // difference() 
@@ -180,10 +184,9 @@ module addTop() {
   box([-2*ta, -2*ta, hw+tb], [tw, tw, -1.5], [2, 2, 4]);
 }
 
+// cut holes in cardLid
 module cardtops(i0, i1, cut = false) {
-  locs = [[1, 0, "sheep"], [1, 1, "wheat"], [1, 2, "ore"],
-          [0, 0, "wood"], [0, 1, "brick"], [0, 2, "dev"], 
-          ];
+  locs = cardLocs;
   i0 = def(i0, 0);
   i1 = def(i1, len(locs)-1);
   difference() 
@@ -195,12 +198,9 @@ module cardtops(i0, i1, cut = false) {
       translate([c*(cw-t0), r*(ch-t0)+ry, cbz+1])
         cutTop(2);
     // cutout grid above sideboxes:
-    nc = 3*6; cs = 6; 
-    x0 = cutb()-cs/2-1.5*t0;
-    xi = (3*(cw-1)+1 - 2*x0 - cs)/(nc-1); // xi?
-    xm = (3*(cw-1)+1) - x0;
-    translate([0, 0, cbz-t0]) // we could raise this lid up to boxz
-      gridify([x0+xi, xi, xm-xi], [ch, (y1-2*t0-cs)/3, ch+y1-cs], 2 ) cube([cs, cs, cs]);
+    gh = 30; cs = 7;
+    trr([0, (clh - gh) / 2, clz]) 
+      cubesGrid(clw, gh, [cs, 5, 4], 1);
   }
   tw = 1; hw = cbz-cbz+1; hw0 = cbz - ibz-hw+1;
   // add retainer walls at end of  cardbox:
@@ -212,7 +212,6 @@ module cardtops(i0, i1, cut = false) {
       roundedBox([cw - 3*t0, ch-3*t0, hw+pp], 2, [tw, tw, -1.5], [2, 2, 4]);
       translate([cw/2, t0/2, -hw0/2-p])  cube([10, 1, hw0], true); // tab in slot
     }
-    
 
   // retainer bar for disks
   dr = (true) ? 27/2 : 0; // disk radius
@@ -405,7 +404,7 @@ r180 = [0, 180, 0, [clw/2, clh/2, cbz/2]];
 // 0: all, 1: cardboxes, 2: bluebox & partsLid, 3: partTrays, 4: cardsLid,
 // 5: packed, 6: bluebox & partsLid (fit); 7: bluebox & partTrays (fit)
 // 8: bluebox, 9..12: partsBox
-loc = 1;
+loc = 4;
 
 // CardTray-1:
 difference() {
