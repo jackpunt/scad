@@ -93,14 +93,18 @@ module disk(r, h) {
 }
 
 // Stack of 24 Cards
-module card(tr = [ (4) / 2, (4) / 2, 0 ], name = "foo", n = 24)
-{
-    translate(tr) 
-    astack(n, [ -.03, 0, .325 ]) {
-    color("#aabbcc2f") roundedCube([ cardw, cardh, .4 ], 3, true);
+// name: print a name
+// tile: rotation around x-axis
+// n: number in stack
+module cards(name = "foo", tilt = 0, n = 24) {
+  dz = .325;  // z-thickness per card
+  dy = tan(tilt) * dz;
+  trr([-cardw/2, -cardh/2, 0, [tilt, 0, 0, [0, cardh, 0]]]) 
+  astack(n, [ 0, dy, dz ]) {
+    color("#aabbcc2f") roundedCube([ cardw, cardh, dz-.05 ], 3, true);
     translate([cardw/2, cardh/2, 0]) 
     color("black") text(name, halign = "center", font = font);
-    }
+  }
 }
 // for cards and tray names:
 font = "Nunito:style=Bold";
@@ -119,24 +123,25 @@ module cardbox(name, cutaway = false) {
   }
   // fulcrum:
   a2 = -4.0; // angle of cards on fulcrum
-  s = 4;     // size of fulcrum (was also fontsize)
-  rotate([a2, 0, 0]) 
-  translate([0, -8, .3]) {
-    translate([0, 0, 1]) cube([cw, s + 6, 2], true);    // wide base
-    translate([0, 0, 1.8]) cube([cw, s + 5, 3.4], true); // top bar
+  s = 10;     // y-size of fulcrum (was also fontsize)
+  translate([-1.0, -8, 1.0]) {
+    color("red")
+    trr([0, 0, 1]) cube([cw, s, 4], true);    // wide base
+    color("blue")
+    trr([0, 0, 2.1, [a2, 0, 0]]) cube([cw, s-1, 3], true); // top bar
   }
 
   fs = 10; // font size
   {
     translate([0, -25, t0-p]) 
-    linear_extrude(height = .6) 
+    linear_extrude(height = .8) 
     text(name, valign = "center", halign = "center", size = fs, font =font);
   }
 
-  trt = [0, 0, 0, [ a2, 0, 0, [0, cardh/2, 1 ]]];
-  // Stack of cards:
+  // Stack of cards, tilted:
+  trt = [-4, 0, 1.1];
   atrans(loc, [trt, trt, undef, undef, undef, 0])
-  card([1-cardw/2, 0-cardh/2, 1.2], name);
+  cards(name, a2, 10);
 }
 
 module cardboxes(i0, i1, cut = false) {
@@ -398,8 +403,8 @@ r180 = [0, 180, 0, [clw/2, clh/2, cbz/2]];
 
 // 0: all, 1: cardboxes, 2: bluebox & partsLid, 3: partTrays, 4: cardsLid,
 // 5: packed, 6: bluebox & partsLid (fit); 7: bluebox & partTrays (fit)
-// 8: bluebox, 9: partsBox
-loc = 5;
+// 8: bluebox, 9..12: partsBox
+loc = 1;
 
 // CardTray-1:
 difference() {
