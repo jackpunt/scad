@@ -92,20 +92,6 @@ module disk(r, h) {
   circle(r);
 }
 
-// Stack of 24 Cards
-// name: print a name
-// tile: rotation around x-axis
-// n: number in stack
-module cards(name = "foo", tilt = 0, n = 24) {
-  dz = .325;  // z-thickness per card
-  dy = tan(tilt) * dz;
-  trr([-cardw/2, -cardh/2, 0, [tilt, 0, 0, [0, cardh, 0]]]) 
-  astack(n, [ 0, dy, dz ]) {
-    color("#aabbcc2f") roundedCube([ cardw, cardh, dz-.05 ], 3, true);
-    translate([cardw/2, cardh/2, 0]) 
-    color("black") text(name, halign = "center", font = font);
-  }
-}
 // for cards and tray names:
 font = "Nunito:style=Bold";
 // font = ".SF Compact Rounded";
@@ -117,14 +103,14 @@ module cardbox(name, cutaway = false) {
   cut = cutaway ? [10, ch+f, cbz+f] : [0, 0, 0] ;
   difference() 
   {
-  slotbox()
-  roundedBox([cw, ch, cbz], 1, t0, undef, true);   // round the outer corners
-  translate([(-8-cw)/2, (-f-ch)/2, -p]) cube(cut); // cutaway view
+    slotbox()
+    roundedBox([cw, ch, cbz], 1, t0, undef, true);   // round the outer corners
+    translate([(-8-cw)/2, (-f-ch)/2, -p]) cube(cut); // cutaway view
   }
-  // fulcrum:
-  a2 = -4.0; // angle of cards on fulcrum
+  // fulcrum:    cutaway = true to see alignment
+  a2 = -4.0;  // angle of cards on fulcrum
   s = 10;     // y-size of fulcrum (was also fontsize)
-  translate([-1.0, -8, 1.0]) {
+  translate([0.0, -8, 1.0]) {
     color("red")
     trr([0, 0, 1]) cube([cw, s, 4], true);    // wide base
     color("blue")
@@ -139,9 +125,24 @@ module cardbox(name, cutaway = false) {
   }
 
   // Stack of cards, tilted:
-  trt = [-4, 0, 1.1];
-  atrans(loc, [trt, trt, undef, undef, undef, 0])
-  cards(name, a2, 10);
+  trt = [-0, 1.8, 1.1];
+  atrans(loc, [trt, undef, undef, undef, undef, 0])
+  cards(name, a2);
+}
+
+// Stack of 24 Cards
+// name: print a name
+// tile: rotation around x-axis
+// n: number in stack
+module cards(name = "foo", tilt = 0, n = 24) {
+  dz = .325;  // z-thickness per card
+  dy = tan(tilt) * dz;
+  astack(n, [ 0, 0, dz ]) 
+    trr([-cardw/2, -cardh/2, 0, [tilt, 0, 0, [0, cardh, 0]]]) {
+    color("#aabbcc2f") roundedCube([ cardw, cardh, dz-.05 ], 3, true);
+    translate([cardw/2, cardh/2, 0]) 
+    color("black") text(name, halign = "center", font = font);
+  }
 }
 
 module cardboxes(i0, i1, cut = false) {
