@@ -23,9 +23,9 @@ module cup(t = t0) {
 
   rc = 3;
   dz = 47;
-  dx0 = 30;
+  dx0 = 47;
   dy0 = 47;
-  dx1 = 30;
+  dx1 = 47;
   dy1 = 47;
   vt = 1.3;
 

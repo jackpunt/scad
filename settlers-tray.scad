@@ -6,6 +6,41 @@ module dice(tr=[0,0,0], ds = ds) {
   color("#DDDDDD")
   translate(tr) roundedCube([ds,ds,ds], 2, false);
 }
+module cup(xyz=[47,47,47], t = t0) {
+  // roundedRect fustrum:
+  // vt: offset of base & walls (thickness)
+  module vcup(base_xyc, top_xyz, vt = 0) {
+    bx = base_xyc[0] - 2*vt;
+    by = base_xyc[1] - 2*vt;
+    rc = base_xyc[2] - vt;
+    bxy = [bx, by];
+    scal = [(top_xyz[0] - 2*vt)/bx, (top_xyz[1] - 2*vt)/by];
+    trr([0, 0, vt])
+    linear_extrude(height = top_xyz[2], scale = scal) 
+    trr([-bx/2, -by/2, 0]) roundedRect(bxy, rc);
+  }
+  x0 = xyz[0];
+  y0 = xyz[1];
+  z0 = xyz[2];
+  rc = 3;
+  dz = z0;
+  dx0 = x0;
+  dy0 = y0;
+  dx1 = x0;
+  dy1 = y0;
+  vt = 1.3;
+
+  trr([dx1/2, dy1/2, 0]) intersection() 
+  {
+    // cup:
+    difference() {
+      vcup([dx0, dy0, rc], [dx1, dy1, dz], 0);
+      vcup([dx0, dy0, rc], [dx1, dy1, dz], vt);
+    }
+    cube(size=[dx1+2*vt, dy1+2*vt, 169], center = true);
+  }
+}
+
 module robber(tr = [0,0,0]) {
   color("black") 
   translate(v = tr) rotate([0,90,0]) cylinder(r1 = rs/2, r2 = 3, h = 32);
@@ -57,19 +92,24 @@ module disk(r, h) {
   circle(r);
 }
 
-// Stack of Cards
-module card(tr = [ (4) / 2, (4) / 2, 0 ], name = "foo")
+// Stack of 24 Cards
+module card(tr = [ (4) / 2, (4) / 2, 0 ], name = "foo", n = 24)
 {
     translate(tr) 
-    astack(24, [ -.03, 0, .325 ]) {
-    color("pink") roundedCube([ cardw, cardh, .4 ], 3, true);
+    astack(n, [ -.03, 0, .325 ]) {
+    color("#aabbcc2f") roundedCube([ cardw, cardh, .4 ], 3, true);
     translate([cardw/2, cardh/2, 0]) 
-    color("black") text(name, halign = "center");
+    color("black") text(name, halign = "center", font = font);
     }
 }
+// for cards and tray names:
+font = "Nunito:style=Bold";
+// font = ".SF Compact Rounded";
+// font = ".SF NS Rounded";
 
+// Each of 6 boxes:
 module cardbox(name, cutaway = false) {
-  echo("cardbox: name=", name);
+  // echo("cardbox: name=", name);
   cut = cutaway ? [10, ch+f, cbz+f] : [0, 0, 0] ;
   difference() 
   {
@@ -78,9 +118,14 @@ module cardbox(name, cutaway = false) {
   translate([(-8-cw)/2, (-f-ch)/2, -p]) cube(cut); // cutaway view
   }
   // fulcrum:
-  font = "Nunito:style=Bold";
-  // font = ".SF Compact Rounded";
-  // font = ".SF NS Rounded";
+  a2 = -4.0; // angle of cards on fulcrum
+  s = 4;     // size of fulcrum (was also fontsize)
+  rotate([a2, 0, 0]) 
+  translate([0, -8, .3]) {
+    translate([0, 0, 1]) cube([cw, s + 6, 2], true);    // wide base
+    translate([0, 0, 1.8]) cube([cw, s + 5, 3.4], true); // top bar
+  }
+
   fs = 10; // font size
   {
     translate([0, -25, t0-p]) 
@@ -88,17 +133,9 @@ module cardbox(name, cutaway = false) {
     text(name, valign = "center", halign = "center", size = fs, font =font);
   }
 
-  s = 6;
-  rotate([-3.4, 0, 0]) 
-  translate([0, -8, .3]) {
-    translate([0, 0, 1]) cube([cw, s + 6, 2], true);
-    translate([0, 0, 1.8]) cube([cw, s + 3, 2.4], true);
-  }
-
-  a2 = -3.0; // angle of cards on fulcrum
   trt = [0, 0, 0, [ a2, 0, 0, [0, cardh/2, 1 ]]];
   // Stack of cards:
-  atrans(loc, [trt, undef, undef, undef, undef, 0])
+  atrans(loc, [trt, trt, undef, undef, undef, 0])
   card([1-cardw/2, 0-cardh/2, 1.2], name);
 }
 
@@ -129,6 +166,7 @@ module cutTop(t = tb) {
      cube([cw3, ch3, t]);
   }
 }
+
 module addTop() {
   ta = 1; hw = 10;
   // short walls to keep cards from sliding out
@@ -179,19 +217,15 @@ module cardtops(i0, i1, cut = false) {
   cube([cw-cylr, 1.5* t0, cylz2]);
 }
 
+// lid for cardsTray
+// ambient:
+// clw
+// clh
+// clz
+// r180 (rotation & center) 
 module cardsLid() {
-  clw = 3 * (cw) + 4*f;
-  clh = 2 * (ch) + 0 + y1 + t0 + 4*f; // bh + 2*t0 + 2*f
-  clz = lz + (cbz-cbz);
-  // rotate in place:
-  r180 = [0, 180, 0, [clw/2, clh/2, cbz/2]];
   // align lid with box:
   p0 = -(t0+2*f);
-  atrans(loc, [[-clw-6, 0, t0, r180], // 0: placement to view
-               2, undef, undef,
-               [0, 0, t0, r180],    // 4: placement to print
-               [0, 0, 0],           // 5: align with box
-               ])
   {
   // add clips:
   cx = 1+2*f; d0 = (t0 + cx/2); 
@@ -226,7 +260,9 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
 // nx: columns of partTrays
 // ny: rows of partTrays
 nx = 1; ny = 4; 
-module partTrays(mr = ny-1, mc = nx-1) {
+module partTrays(mr, mc) {
+  mr = def(mr, (loc >= 8) ? loc-8 : ny);
+  mc = def(mc, nx);
   mx = t0 / nx; my = t0 / ny;
   tw2 = bw - 2 * t0 - mx;
   th2 = bh - 2 * t0 - my;
@@ -234,7 +270,8 @@ module partTrays(mr = ny-1, mc = nx-1) {
   th = th2/ny;
   px0 = (bw - nx * tw) / 2;
   py0 = (bh - ny * th) / 2;
-  echo("partsTray: ls=", (1+3/8) * 25.4, "rs=", th-my-3*t0);
+  roadx = (1+2/16) * 25.4;  // note road is (1 x 3/16 x 3/16)
+  echo("partsTray: roadx=", roadx, "interior width=", th-my-3*t0);
   module partstray(tr=[0,0,0]) {
     // old tray: 85,500 mm^3, now: 85,868.5 mm^3 (less for radius)
     // echo("partstray: tw, th, boxz-1=", tw, th, boxz-2.1, tw*th*(boxz-2.1) );
@@ -242,12 +279,11 @@ module partTrays(mr = ny-1, mc = nx-1) {
     trayz = boxz - t0;
     translate(tr) {
       tray([tw - mx, th - my,  trayz + rt], rt, 2, -10 );
-      div([trayz + rt, th-my, (1+1/8) * 25.4 + t0], rt, -rt);
+      div([trayz + rt, th-my, roadx + t0], rt, -rt);
     } 
   }
-  for (ptr = [0 : mr], ptc = [0 : mc]) 
-    let(x = px0 + ptc * tw, y = py0 + ptr * th)
-      partstray([x, y, +p]); // above the blue box
+  astack(mc, [tw, 0, 0]) astack(mr, [0, th, 0])
+      partstray([px0, py0, 1]); // above the blue box
 }
 
 // cs: child size; begin grid @ (cs, cs+1)
@@ -305,6 +341,8 @@ module partsLid(lw = lw, lh = lh, lz = lz, sd = sd) {
   }
 }
 
+// bluebox: holds the partTrays (with partsLid)
+// parts vol = ~79,000 cu-mm
 module bluebox() {
   hm = .8;
   difference() {
@@ -319,40 +357,49 @@ module bluebox() {
   }
 }
 
-f = .18;
+f = .18;  // snug fudge factor
 
 // trays for cards, player-bits, dice, robber, disks
 tb = 3; // thickness of base
 
 // depth of boxes: city=19; 8-10-cards, 3-lever, 2-holding (+2 for bottom!)
-boxz = 22; // bluebox for parts
+boxz = 26; // bluebox for parts
 cbz = 18;  // cardbox height: independent of bluebox: boxz
 cardw = 54; cw = cardw + 2 + 2 + 2*t0; // cw = cardw + sleeve + gap + box wall
-cardh = 81; ch = cardh + 2 + 6 + 2*t0; // ch = cardh + sleeve + GAP + box wall
+cardh = 81; ch = cardh + 2 + 2 + 2*t0; // ch = cardh + sleeve + GAP + box wall
 // dice size
 ds = 16;
 // robber size
 rs = 15;
 
+// tray height = 206
+th = 206;
 // size of gap between two rows of boxes:
-y1 = 218 - 2*(ch)-t0;
+y1 = th - 2*(ch)-t0;
 // tw = total width - t0;
 tw = 3 * (cw - t0);
 // bluebox width:
-bw = (282-20) - tw - 2; // inset by 2mm
-// bluebox height:
+bw = (282-30) - tw - 2; // inset by 2mm
+// bluebox 'height': (max 220 due to plate size of FlashForge!)
 bh = 2 * ch + y1 - t0;  // 220 - 2*t0
 // partsLid:
 lw = bw + 2*t0 + 2*f;
 lh = bh + 2*t0 + 2*f;
 
-echo("y1=", y1, "bh=", bh, "tw=", tw);
-echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-4)*(boxz-2)/4);
+echo("y1=", y1, "bw=", bw, "bh=", bh, "tw=", tw, "th=", th );
+echo("parts vol: bw*bh*(boxz-2*t0)", (bw-4)*(bh-8)*(boxz-2)/4);
 
+// cardsLid metrics:
+clw = 3 * (cw) + 4*f;
+clh = 2 * (ch) + 0 + y1 + t0 + 4*f; // bh + 2*t0 + 2*f
+clz = lz + (cbz-cbz); // lidz
+// rotate in place:
+r180 = [0, 180, 0, [clw/2, clh/2, cbz/2]];
 
 // 0: all, 1: cardboxes, 2: bluebox & partsLid, 3: partTrays, 4: cardsLid,
 // 5: packed, 6: bluebox & partsLid (fit); 7: bluebox & partTrays (fit)
-loc = 1;
+// 8: bluebox, 9: partsBox
+loc = 5;
 
 // CardTray-1:
 difference() {
@@ -368,29 +415,35 @@ difference() {
   }
 }
 // cardsLid-4
-cardsLid(); // loc: { 0, u, u, u, 4, 5 }
+atrans(loc, [[-clw-2*t0, 0, t0, r180], // 0: placement to view
+              2, undef, undef,
+              [0, 0, t0, r180],    // 4: placement to print
+              [0, 0, 0],           // 5: align with box
+              ]) {
+  cardsLid(); // loc: { 0, u, u, u, 4, 5 }
+}
 
 atrans(loc, [[cw+t0, ch+t0, t0], undef, undef, undef, undef, 0]) {
-  dice([0, 0, 0]); dice([ds+f, 0, 0]);
-  robber([0, ds + t0 + rs/2, rs/2]);
+  astack(2, [ds+f, 0, 0]) dice([0, 0, 0]);
+  robber([cw, t0 + rs/2, rs/2]);
 }
 
 // partsBox-2 w/Lid
-bbx0 = tw + 6; bby0 = 0;
-atrans(loc, [[bbx0, bby0, 0], undef, [0, 0, 0], undef, undef, 0, 0, 0, 0]) 
+bbx0 = bh; bby0 = th+t0;
+atrans(loc, [[bbx0, bby0, 0, [0, 0, 90]], undef, [0, 0, 0], undef, undef, 0, 0, 0, 0]) 
   bluebox();
 
-atrans(loc, [[bbx0 + (bw + 2), -t0, 0], undef, [bw + 2, -t0, 0], undef, undef, 
-             [bbx0-t0, -t0, -t0, [0, 180, 0, [lw/2, lh/2, (boxz+2*t0)/2]]], 5,
+atrans(loc, [[bbx0-bh-t0, bby0-t0, 0, [0, 0, 90]], undef, [bw + 2, -t0, 0], undef, undef, 
+             [bbx0+t0, bby0+lw-t0, boxz+t0, [0, 180, 90]], 5,
              ])
-  partsLid(); // partslid
+  partsLid(); // blueBox lid
 
 // partTrays-3x4
-atrans(loc, [[bbx0 + (bw + 2) * 2, bby0, -t0], 
+atrans(loc, [[bbx0, bby0+bw, -t0, [0, 0, 90]], 
              undef, undef, 
-             [ (bw + 2) * 0, bby0, -t0],
+             [0, 0, -t0],
              undef, 
-             [bbx0, bby0, t0], undef,  5])
+             [bbx0, bby0, t0, [0, 0, 90]], undef,  5, undef, 3, 3, 3, 3])
   partTrays();  // (0,0);            // partTrays
 // Roads: 1 X 3/16 X 3/16
 // City: 3/4 X 3/4 X 10mm
@@ -398,11 +451,12 @@ atrans(loc, [[bbx0 + (bw + 2) * 2, bby0, -t0],
 // rl = 25.4; rw = rl * 3/16; rh = rw;
 // translate([cw-1, 7, t0]) rotate([0,0,90]) partTrays(0,0);
 
+atrans(loc, [[clw,0,0], undef, undef, undef, undef, 0]) cup();
 
 // show printer plate:
 *atrans(loc, [undef, undef, undef, undef, undef, [-1, -1, -2]]) 
  color("tan") cube([220, 220, 1]);
 // show packing box:
-*atrans(loc, [undef, undef, undef, undef, undef, [-10, -4, -1]]) 
- color("brown") cube([282, 228, 1]);
+atrans(loc, [[-230, -2, -1.1], undef, undef, undef, undef, [-.5, -1.5, -1]]) 
+ color("brown") cube([230, 285, 1]);
 
