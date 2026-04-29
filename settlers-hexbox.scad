@@ -112,8 +112,8 @@ module hexBox(h=10, r=5, t=t0, trr) {
   rr = r + 1.5*t0; 
   hh = h + 2*t0; 
   h2 = rr * sqrt3;
-  k1 = .7;
-  k2 = rr/3; // inset from end of box
+  k1 = 1.3;
+  k2 = .4 * rr; // inset from end of box
   trr(trr)
   differenceN(1) 
   {
@@ -141,7 +141,7 @@ atrans(loc, [[0, 0, 1*t0], undef, undef, 0])
 
 atrans(loc, [[1.5*t0, 0, 0], [0, 0, 0, [0, 90, 0, [r/2, 0, 0]]], [0,0,0], [0, 0, -.5]])
   // color("skyblue")
-  {astack(2, [0, 0, -30]) hexBox(hz, r+2, 1);}
+  { astack(2, [0, 0, -30]) hexBox(hz, r+2, 1); }
 
 
 // splitwall hexbox does not work, the wings just break off

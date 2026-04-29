@@ -266,7 +266,7 @@ module tray(size = 10, rt = 2, rc = 2, k0, t = t0) {
 // ny: rows of partTrays
 nx = 1; ny = 4; 
 module partTrays(mr, mc) {
-  mr = def(mr, (loc >= 8) ? loc-8 : ny);
+  mr = def(mr, (loc >= ptloc && loc <= ptloc+3) ? loc-ptloc+1 : ny);
   mc = def(mc, nx);
   mx = t0 / nx; my = t0 / ny;
   tw2 = bw - 2 * t0 - mx;
@@ -400,11 +400,12 @@ clh = 2 * (ch) + 0 + y1 + t0 + 4*f; // bh + 2*t0 + 2*f
 clz = lz + (cbz-cbz); // lidz
 // rotate in place:
 r180 = [0, 180, 0, [clw/2, clh/2, cbz/2]];
+ptloc = 13;
 
 // 0: all, 1: cardboxes, 2: bluebox & partsLid, 3: partTrays, 4: cardsLid,
 // 5: packed, 6: bluebox & partsLid (fit); 7: bluebox & partTrays (fit)
-// 8: bluebox, 9..12: partsBox
-loc = 4;
+// 8: bluebox, 9: cup, 10..13: partsBox
+loc = 9;
 
 // CardTray-1:
 difference() {
@@ -448,7 +449,7 @@ atrans(loc, [[bbx0, bby0+bw, -t0, [0, 0, 90]],
              undef, undef, 
              [0, 0, -t0],
              undef, 
-             [bbx0, bby0, t0, [0, 0, 90]], undef,  5, undef, 3, 3, 3, 3])
+             [bbx0, bby0, t0, [0, 0, 90]], undef,  5, undef, undef, 3, 3, 3, 3])
   partTrays();  // (0,0);            // partTrays
 // Roads: 1 X 3/16 X 3/16
 // City: 3/4 X 3/4 X 10mm
@@ -456,7 +457,8 @@ atrans(loc, [[bbx0, bby0+bw, -t0, [0, 0, 90]],
 // rl = 25.4; rw = rl * 3/16; rh = rw;
 // translate([cw-1, 7, t0]) rotate([0,0,90]) partTrays(0,0);
 
-atrans(loc, [[clw,0,0], undef, undef, undef, undef, 0]) cup();
+atrans(loc, [[clw,0,0], undef, undef, undef, undef, 0, undef, undef, undef, 
+             [0, 0, 0]]) cup();
 
 // show printer plate:
 *atrans(loc, [undef, undef, undef, undef, undef, [-1, -1, -2]]) 
