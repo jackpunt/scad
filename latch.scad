@@ -66,4 +66,4 @@ cl = 20; // clip length
 
 trr([cr, 0, 0]) cube([t0, cl, ch]);
 trr([cr-t0, -t0, 0]) cube([2*t0, 2*t0, ch]);
-trr([cr-1.8*t0, -2.38*t0, 0, [0, 0, -45]]) cube([t0, 3*t0, ch]);
+trr([cr-1.85*t0, -2.375*t0, 0, [0, 0, -45.8]]) cube([t0, 3*t0, ch]);
