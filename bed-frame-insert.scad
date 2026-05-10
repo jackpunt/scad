@@ -9,10 +9,10 @@ inch = 25.4;
 n=1;  // how many in stack
 r1 = .55 * inch; // flat base radius
 h0 = .5 * inch - t0;  // height of center peg
-r0 = .25 * inch; // radius of center peg
+r0 = 9/32 * inch; // radius of center peg
 w0 = 2 * (r0+f);  // width of wings
 echo("n, h0, r1, r0 2*r0, w0", [n, h0, r1, r0, 2*r0, w0]);
-pr = 2.2/2;  // pinhole radius
+pr = 1.6/2;  // pinhole radius
 
 // NOTE: print with Strength: bottom shell layers = 6;
 // 
