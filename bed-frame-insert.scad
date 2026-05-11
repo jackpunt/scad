@@ -9,7 +9,7 @@ inch = 25.4;
 n=3;  // how many in stack
 r1 = .55 * inch; // flat base radius
 h0 = .5 * inch - t0;  // height of center peg
-r0 = 9/32 * inch-.06; // radius of center peg
+r0 = 9/32 * inch-.08; // radius of center peg
 w0 = 2 * (r0)+1.5*f;  // width of wings
 m0 = (9/32*inch+.03)*2;
 echo("n, h0, r1, r0 2*r0, m0, w0", [n, h0, r1, r0, 2*r0, m0, w0]);
