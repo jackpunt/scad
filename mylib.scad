@@ -147,8 +147,8 @@ module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = t0) 
 
 // stack of children() offset by i * dxyz (and maybe rotated)
 // n: iterate from [i0 : n - 1]
-// dxyz: each iteration ([dx, 0, 0])
-// rxyz: ([0, 0, 0]) or rotOfId(rot)
+// dxyz: delta each iteration ([dx, 0, 0])
+// rxyz: rotation each iteration ([0, 0, 0]) or rotOfId(rot)
 // colors: color for each iteration (undef), array or scalar constant.
 // i0: initial iteration (0), so can do segments.
 module astack(n, d, rot, colors, i0 = 0) {
