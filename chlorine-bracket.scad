@@ -17,12 +17,15 @@ module ring(r1=20, r2 = 18, $fa=$fa, $fn=$fn) {
   }
 }
 module basket() {
+  rh = 5;     // ring height
+  bz = rh;
   ri = rr - rw;
+  rod = 1.28;  // rod radius
   color ("white") 
-  trr([0, 0, -p]) linear_extrude(height = t0) 
-  trr([0, rr, 0]) ring(rr, ri, $fn=60);
-  trr([0, 0, 0, [-90, 0, 0]])
-  cylinder(h = ri*2, r = 1.5);
+  trr([0, 0, -rh-p]) linear_extrude(height = rh) 
+  trr([0, rr, -rh]) ring(rr, ri, $fn=60);
+  trr([0, 0, -rod-1, [-90, 0, 0]])
+  cylinder(h = ri*2, r = rod); // support rod
 }
 
 bw = 8;         // bracket segment width
@@ -31,10 +34,11 @@ bm = sqrt(3)/2; // translate to close angle at corners
 module bracket() {
   lx = 1.5*bs;
   ly = bw * 3;
+  lz = -1.6;
   differenceN(2) {
-    trr([-lx/2, ly, 0]) cube([lx, bw, bh]);
+    trr([-lx/2, ly, lz]) cube([lx, bw, bh]);
     // approx      vv    but wrong for other bs
-    trr([0, bw/(2*sqrt(3))+9, 0, [0, 0, -30]])
+    trr([0, bw/(2*sqrt(3))+9, lz, [0, 0, -30]])
     linear_extrude(height = bh) 
       astack(3, [0, 0, 0, [0, 0, -60]]) {
         trr([-(bs-bw/sqrt(3))*bm, 0, 0])
