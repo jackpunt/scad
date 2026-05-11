@@ -6,10 +6,10 @@ pp = 2 * p;
 t0 = 2;
 inch = 25.4;
 
-n=1;  // how many in stack
+n=3;  // how many in stack
 r1 = .55 * inch; // flat base radius
 h0 = .5 * inch - t0;  // height of center peg
-r0 = 9/32 * inch-.05; // radius of center peg
+r0 = 9/32 * inch-.06; // radius of center peg
 w0 = 2 * (r0)+1.5*f;  // width of wings
 m0 = (9/32*inch+.03)*2;
 echo("n, h0, r1, r0 2*r0, m0, w0", [n, h0, r1, r0, 2*r0, m0, w0]);
@@ -18,6 +18,7 @@ ns = 24;  // number of slots
 nw = 4;   // number of wings
 
 // NOTE: print with Strength: bottom shell layers = 6;
+// infill: 15%, 30-degrees
 // 
 astack(n, [2*r1+.4, 0, 0])
 differenceN(2) {
