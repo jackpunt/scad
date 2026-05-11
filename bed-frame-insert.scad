@@ -38,7 +38,7 @@ differenceN(2) {
     }
   }
   astack(ns, [0, 0, 0, [0, 0, 360/ns]])
-    trr([r0, 0, t0 + t0]) cube([1.5, .55, 2*t0], center=true);
+    trr([r0, 0, t0 + t0, [0, 0, 45]]) cube([1.1, 1.1, 2*t0], center=true);
 
 
   // m0: calculated radius from previous print
