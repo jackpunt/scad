@@ -278,7 +278,7 @@ module frame(nsnc, wf = h2*.45, oz = 1, ring = undef, solid = false) {
   // make 2 fullFrames (straight & tilted), cut, hook, weld...
   module frameCutAndRepeat(hs) {
       cutit(hs)
-      dup([0, 0, -pp], [0, 0, 60])
+      dup([0, 0, -pp, [0, 0, 60]])
         fullFrame();
   }
 
@@ -298,7 +298,7 @@ module frame(nsnc, wf = h2*.45, oz = 1, ring = undef, solid = false) {
 
   module ringit(n = 5) {
     for (i = [0 : n]) {
-      dup([0,0,0], [0, 0, 60 * i]) children(0);
+      dup([0, 0, 0, [0, 0, 60 * i]]) children(0);
     }
   }
   // given a single piece, dup & mirror it
@@ -307,7 +307,7 @@ module frame(nsnc, wf = h2*.45, oz = 1, ring = undef, solid = false) {
     children(0);
   }
   module layout(i) {
-    dup([2*kx+h0-7, h0/2+36, 0], [0, 0, -180]) 
+    dup([2*kx+h0-7, h0/2+36, 0, [0, 0, -180]]) 
     children(0);
   }
 
@@ -330,8 +330,8 @@ module frame(nsnc, wf = h2*.45, oz = 1, ring = undef, solid = false) {
     for (i = [0 : max(ns, nc)-1]) {
       trr([i * (18 - 3*wf), 30, 0, [0, 0, -5.6]])
       // trr([i * (21 - 3*wf), 30, 0, [0, 0, -5.6]])
-      // dup([i * (21 - 3*wf), h0/2+36, 0], [0, 0, -i*180]) 
-      // dup([i * (-2.18 * wf - (i%2)*40), (i%2)*19, 0], [0, 0, i * -180, [csp+wf, h0/4, 0]]) 
+      // dup([i * (21 - 3*wf), h0/2+36, 0, [0, 0, -i*180]]) 
+      // dup([i * (-2.18 * wf - (i%2)*40), (i%2)*19, 0, [0, 0, i * -180, [csp+wf, h0/4, 0]]]) 
       layout(i)
       union() 
       {
