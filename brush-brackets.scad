@@ -70,7 +70,7 @@ module bracket1(bt = bt) {
     trr([0,0,0, [1, 0, 0, [bw/2, 0, br-z3]]])
       hull() {
         caxis();
-        dup([0, 0, 3]) caxis(sr*.6);
+        trr([0, 0, 3]) caxis(sr*.6);
      }
   }
 }
@@ -138,20 +138,29 @@ module wedge(dw = pp, dz = 0) {
   linear_extrude(height = cw + pp) 
   polygon(points = [[dz, 0], [x1, 0], [dz, y2]]);
 }
-// wedge();
-// outer block of clip, without hole or slots
+
+// outer block of clip, with wedges, without hole or slots
 // actual blue clip2 will shrink for easier insertion
 // 
 // dw: grow/shrink width of wedge
 // dz: adjust z-height of bottom edge of wedge
 // dh: shrink y-height of clip2i
-module clip2i(dw = pp, dz = 0, dh=0) {
-  cw = cw2 + dw;
+// rc: corner radii for roundedRect [rc, rc, 0, 0] (rc = 0)
+module clip2i(dw = pp, dz = 0, dh = 0, rc = 0) {
+  module mainblock1(cw, ch, cz) {
+    trr([0, 0, cz/2-p]) cube([cw, ch, cz], center = true);
+  }
+  module mainblock2(cw, ch, cz) {
+    trr([-cw/2, -ch/2, -p, [0, -90, 0, [cw/2, 0, cw/2]]])
+      linear_extrude(height = cw) 
+      roundedRect([cz, ch], [rc, rc, 0, 0]);
+  }
+  cw = cw2 + dw;      // x-wide
+  ch = ch2 + dh;      // y-height
   cz = bz2 + sr + 2;  // 2 = thickness above axel
   difference() {
-    trr([0, 0, cz/2-p]) cube([cw, ch2+dh, cz], center = true);
-    wedge(dw, dz);
-    trr([0, 0, 0, [0,  0, 180]]) wedge(dw, dz);
+    mainblock2(cw, ch, cz);
+    astack(2, [0, 0, 0, [0,  0, 180]]) wedge(dw, dz);
   }
 }
 
@@ -160,7 +169,7 @@ module clip2() {
   cy = sr*2;
   color("blue")
   difference() {
-    clip2i(-cs2, -f, -.1);  // lower bottom of wedge
+    clip2i(-cs2, -f, -.1, .6);  // lower bottom of wedge
     trr([0, 0, -p]) axel(0, cw2/2 + pp);
     trr([0, 0, br/2-pp]) cube([cw2, cy, br], center = true);
   }
