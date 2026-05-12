@@ -202,13 +202,13 @@ module hook(dx, tr = [0,0,0], dy = 20, t = 2, yaxis = false, sh = 3, ctr = [0,0,
 
   hd = t0 * (1 + 1.5 * f);  // hook depth, size of gap
 
-  module maybe_dup(tr, rott, sh = sh) {
+  module maybe_dup(tr, sh = sh) {
     if (sh == 3) {
-      dup(tr, rott) children(0);
+      dup(tr) children(0);
     } else if (sh == 1) {
       children(0);
     } else if (sh == 2) {
-      translate(tr) rotatet(rott) children(0);
+      trr(tr) children(0);
     }
   }
   if (t == 0) {
@@ -216,7 +216,7 @@ module hook(dx, tr = [0,0,0], dy = 20, t = 2, yaxis = false, sh = 3, ctr = [0,0,
   } else {
     color("blue")
     // add 0-2 hooks:
-    maybe_dup([0, 0, 0], rotrc) {
+    maybe_dup([0, 0, 0, rotrc]) {
       translate(tr)
       rotatet(roty)
       translate([-hd-t, -dy - w/2, 0-p]) // fine positioning
@@ -229,14 +229,15 @@ module hook(dx, tr = [0,0,0], dy = 20, t = 2, yaxis = false, sh = 3, ctr = [0,0,
     difference() 
     {
     children(0);
-    maybe_dup([0, 0, 0], rotrc) // 0, 1 or 2 objects to cut
+    maybe_dup([0, 0, 0, rotrc]) // 0, 1 or 2 objects to cut
+    // old style, before trr([tr.x, tr.y, tr.z, [roty.x, roty.y, roty.z, [c.x, c.y, c.z]]):
     translate(tr) 
     rotatet(roty)
     translate([-2 * t0, (dy - w/2 - f) , -p])      //
       cube([4*t0, w + 2*f, t + f]);         //
     }
     // support post:
-    maybe_dup([0, 0, 0], rotrc)
+    maybe_dup([0, 0, 0, rotrc])
     translate(tr)
     rotatet(roty)
     posts(t+f+pp, [.0 * t0, (dy - t0/2) , -p]);
