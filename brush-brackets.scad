@@ -55,7 +55,7 @@ module bracket1(bt = bt) {
   difference() {
     trr([0, 0, z3/2]) cube([bw, bh, z3], center = true); // base cube
     trr([0, 0, zh-head]) screw(zh);   // remove hole for screw
-     clip((rd+f)/2, .3);
+     clip1((rd+f)/2, .3);
 
   }
   trr([0, 0, z3]) 
@@ -79,7 +79,7 @@ rh = 2;
 module clip_rod(r = rd/2, h = rh ){
   trr([0, p, 0, [90, 0, 0]]) cylinder(h = h+pp, r = r);
 }
-module clip(r = rd/2, dh = 0) {
+module clip1(r = rd/2, dh = 0) {
   dx = bw/2 - rd/2 - 1;
   dz = z3/2;
   color("blue") {
@@ -111,7 +111,6 @@ module screwblock2(dx = 2*shr+1) {
     trr([0, 0, 1]) screw();
   }
 }
-screwblock2(bw2);
 
 // bracket with down plunging locking clip
 module bracket2() {
@@ -122,6 +121,7 @@ module bracket2() {
     axel(0);
     clip2i(pp, pp);
   }
+  screwblock2(bw2);
 }
 
 // wedge added to bracket2, removed from clip2
@@ -154,15 +154,23 @@ module clip2() {
   }
 }
 
-bracket2();
-clip2();
+// 0: design1, 1: print
+// 2: design2, 3: print
+loc = 2;
+// 0: no brush, 1: brush
+bsh = 0;
 
-loc = 4;
 atrans(loc, [[0, 0, 0], 0])
 bracket1();
 
 atrans(loc, [[0, 0, 0], [0, 0, 0, [-90, 0, 0, [0, bh/2+2, 0]]]])
-clip();
+clip1();
 
-atrans(loc, [[0, 0, 0], undef, undef, undef, ]) 
+atrans(loc, [undef, 0, [0, 0, 0], 2])
+bracket2();
+atrans(loc, [undef, 0, [0, 0, 0], [bw/2, 0, cw2/2, [0, 90, 0]]])
+clip2();
+
+
+atrans(bsh, [undef, [0, 0, 0]]) 
 brush();
