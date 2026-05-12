@@ -140,13 +140,16 @@ module wedge(dw = pp, dz = 0) {
 }
 // wedge();
 // outer block of clip, without hole or slots
+// actual blue clip2 will shrink for easier insertion
+// 
 // dw: grow/shrink width of wedge
-// dz: adjust height of bottom edge of wedge
-module clip2i(dw = pp, dz = 0) {
+// dz: adjust z-height of bottom edge of wedge
+// dh: shrink y-height of clip2i
+module clip2i(dw = pp, dz = 0, dh=0) {
   cw = cw2 + dw;
   cz = bz2 + sr + 2;  // 2 = thickness above axel
   difference() {
-    trr([0, 0, cz/2-p]) cube([cw, ch2, cz], center = true);
+    trr([0, 0, cz/2-p]) cube([cw, ch2+dh, cz], center = true);
     wedge(dw, dz);
     trr([0, 0, 0, [0,  0, 180]]) wedge(dw, dz);
   }
@@ -157,7 +160,7 @@ module clip2() {
   cy = sr*2;
   color("blue")
   difference() {
-    clip2i(-cs2, -f);  // lower bottom of wedge
+    clip2i(-cs2, -f, -.1);  // lower bottom of wedge
     trr([0, 0, -p]) axel(0, cw2/2 + pp);
     trr([0, 0, br/2-pp]) cube([cw2, cy, br], center = true);
   }
