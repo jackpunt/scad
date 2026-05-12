@@ -20,7 +20,7 @@ z4 = br;  // height to brush axis
 stub = bw;
 sr = 1.5; // rod radius
 head = 1; // z depth reserved for screw head
-scr = 1.1; // screw radius 
+scr = 2.1; // screw radius 
 shr = 2.3; // screw head radius
 
 axl = 10;
