@@ -118,10 +118,11 @@ module stick(yl = yl) {
 
 hw = 4.2;
 hl = 5.1;
+// aligned holes in holder-plate & bracket
 module holes(nx, ny, dx, dy, dz) {
-  trr([dx/2 * (-nx), dy/2* (-ny), 0])
-  astack(5, [0, 20, 0], undef, undef, 1)
-  astack(4, 20)
+  trr([-nx * dx/2, -ny * dy/2, 0])
+  astack(4, [0, 20, 0], undef, undef, 1)
+  astack(4, [20, 0, 0])
   cube([hw, hl, 20], true);
 }
 
@@ -129,8 +130,8 @@ module holes(nx, ny, dx, dy, dz) {
 module plate(nx, ny, dx, dy, dz) {
   cube([nx*dx, ny* dy, dz], true);
   trr([dx/2 * (1-nx), dy/2* (1-ny), dz*.5])
-    astack(n = ny, d = [0, dy, 0])
-    astack(n = nx, d = [dx, 0, 0], rot = []) 
+    astack(ny, [0, dy, 0])
+    astack(nx, [dx, 0, 0]) 
     cylinder(4, 2, 0);  
 }
 
