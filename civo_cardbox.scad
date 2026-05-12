@@ -126,7 +126,7 @@ module topTray(dx = l/4, dz = 2)
         in = -.05;   // negative: apply pressure to sidewall
         dw = 3*t0 + f; // width of clip: sidewalls=2*t0 + slot=(t0+ic)
         iw = t0+in; // indent the tray
-        dup([ 0, w, 0], [0,0,180, [dx/2, 0, 0]])
+        dup([ 0, w, 0, [0, 0, 180, [dx/2, 0, 0]]])
           color("cyan") translate([0, 2*t0-(dw), f/2-pz]) // up=f/2 for visual clarity
           box([dx, dw+in, rz+pz+2], [0-pp, t0, -t0], [2, 2, 0]);
       translate([0, iw, 0]) box([ dx, w-2*iw, rz+1 ], [-t0,t0,t0], [2,2,0]);
@@ -338,7 +338,7 @@ use<testRC.scad>;
 
 // mainBox (w/cutaway), cards, vbox, topTray (cards 'lid')
 // 0: all, 1: box/cutaway, 2: box & cards & lid, 3: box, 4: trayTop, 5: vbox[2]
-loc = 5;
+loc = 4;
 ///
 /// MAIN BUILD HERE:
 ///
