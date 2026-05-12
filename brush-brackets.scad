@@ -36,6 +36,7 @@ module brush(l = axl, sl = stub) {
 }
 
 // space for the screw, subtracted in difference below
+// positioned with join between head & screw @ z=0
 module screw(len = z3, head = head ) {
   trr([0, 0, -len]) cylinder(h=len+head, r = scr); // screw part
   trr([0, 0, 0]) cylinder(h = head, r = shr);
@@ -96,19 +97,20 @@ module clip1(r = rd/2, dh = 0) {
 }
 
 
-cw2 = 1.5;   // x-width of clip slot
-ch2 = 2*(sr+1.5); // y-height of clip
+cw2 = 1.9;   // x-width of clip slot
+ch2 = 2*(sr+1.9); // y-height of clip
 
-bw2 = 6;  // x-width of bracket2
-bh2 = ch2+2;  // add screw block later
+bw2 = 8;  // x-width of bracket2
+bh2 = ch2+4;  // add screw block later
 bz2 = br;
 
 module screwblock2(dx = 2*shr+1) {
   dy = dx;
-  trr([0, bh2/2+dy/2, z3/2]) 
+  dz = z3;
+  trr([0, bh2/2+dy/2, dz/2]) 
   difference() {
-    cube([dx, dy, z3],center = true);
-    trr([0, 0, 1]) screw();
+    cube([dx, dy, dz],center = true);
+    trr([0, 0, dz/2+p]) screw(z3+pp);
   }
 }
 
@@ -125,17 +127,22 @@ module bracket2() {
 }
 
 // wedge added to bracket2, removed from clip2
+// dw: grow/shrink width of wedge
+// dz: adjust the bottom of wedge
 module wedge(dw = pp, dz = 0) {
   cw = cw2 + dw;
-  x1 = 4;
-  y2 = x1 * tan(atan2(.5, x1+dz));
+  bz = 1;      // thickness of bottom 'foot'
+  x1 = z2 - bz;
+  y2 = x1 * tan(atan2(.7, x1+dz));
   trr([cw/2+p, -ch2/2-p, 1, [0, -90, 0]])
   linear_extrude(height = cw + pp) 
   polygon(points = [[dz, 0], [x1, 0], [dz, y2]]);
 }
 // wedge();
 // outer block of clip, without hole or slots
-module clip2i(dw = 0, dz = 0) {
+// dw: grow/shrink width of wedge
+// dz: adjust height of bottom edge of wedge
+module clip2i(dw = pp, dz = 0) {
   cw = cw2 + dw;
   cz = bz2 + sr + 2;  // 2 = thickness above axel
   difference() {
@@ -144,11 +151,13 @@ module clip2i(dw = 0, dz = 0) {
     trr([0, 0, 0, [0,  0, 180]]) wedge(dw, dz);
   }
 }
+
+cs2 = .15; // clip2 shrinkage
 module clip2() {
   cy = sr*2;
   color("blue")
   difference() {
-    clip2i(-.15, -f);
+    clip2i(-cs2, -f);  // lower bottom of wedge
     trr([0, 0, -p]) axel(0, cw2/2 + pp);
     trr([0, 0, br/2-pp]) cube([cw2, cy, br], center = true);
   }
@@ -156,7 +165,7 @@ module clip2() {
 
 // 0: design1, 1: print
 // 2: design2, 3: print
-loc = 2;
+loc = 3;
 // 0: no brush, 1: brush
 bsh = 0;
 
@@ -168,7 +177,7 @@ clip1();
 
 atrans(loc, [undef, 0, [0, 0, 0], 2])
 bracket2();
-atrans(loc, [undef, 0, [0, 0, 0], [bw/2, 0, cw2/2, [0, 90, 0]]])
+atrans(loc, [undef, 0, [0, 0, f/2], [bw/2, 0, (cw2-cs2)/2, [0, 90, 0]]])
 clip2();
 
 
