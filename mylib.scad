@@ -147,18 +147,20 @@ module posts(zh = 10, xyz = [ 0, 0, 10 ], dxyz = [ 0, 10, 0 ], n = 1, dia = t0) 
 
 // stack of children() offset by i * dxyz (and maybe rotated)
 // n: iterate from [i0 : n - 1]
-// dxyz: delta each iteration ([dx, 0, 0])
-// rxyz: rotation each iteration ([0, 0, 0]) or rotOfId(rot)
-// colors: color for each iteration (undef), array or scalar constant.
+// dxyz: offset each ith iteration by dxyz * i ([dx, 0, 0]) can include all trr
+// rxyz: rotation after each iteration ([0, 0, 0]) or rotOfId(rot)
+// colors: color for each iteration (undef), single color or colors[i % len]
 // i0: initial iteration (0), so can do segments.
 module astack(n, d, rot, colors, i0 = 0) {
-  function scolor(i) = is_list(colors) ? colors[(len(colors) % i)] : colors;
+  function scolor(i) = is_list(colors) ? colors[(i % len(colors))] : colors;
   dxyz = is_list(d) ? d : [ d, 0, 0 ];
   rxyz = is_list(rot) ? rot : is_undef(rot) ? [ 0, 0, 0 ] : rotOfId(rot);
   // echo("dxyz=", dxyz) 
-  for (i = [i0 : max(i0, n - 1)]) {
+  imax = i0 + n - 1;
+  if (i0 <= imax) 
+  for (i = [i0 : imax]) {
     color(scolor(i))
-    rotate(rxyz) dup(amul(dxyz, i)) children();
+    rotate(rxyz) trr(amul(dxyz, i)) children();
   }
 }
 
@@ -198,15 +200,15 @@ module trr(rtr) {
 }
 
 // duplicate: insert multiple references to children();
-// each instance rotated then translated 
+// offset & rotate each ith instance by tr * i;
 // suitable inside hull() { ... }
-// tr: trr (translate & rotate around center) ([0, 0, 0])
+// see also: astack(nc, dxyz, rxyz, colors, i0) 
+// 
+// tr: trr per instance (translate & rotate around center) ([0, 0, 0])
 // nc: number of copies (1)
-// c1: color copies
-// c0: color original [obsolete]
-module dup(tr, nc = 1, c1, c0) {
+// c1: color the copy(s)
+module dup(tr, nc = 1, c1) {
   tr = def(tr, [0, 0, 0 ]);
-  if(!is_undef(c0)) color(c0) children(); // debug settler-frame
   color(c1) 
   for(i = [1:nc])
     trr(amul(tr, i))
