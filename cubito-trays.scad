@@ -62,11 +62,9 @@ module partsTray(len, wid, h , rad = rad) {
 
   echo("partsTray: [len, wid, h, csize]", [len, wid, h, csize]);
   trr([(xs-len)/2, 2*twf+gap/2, tz]) { // tw * 2 + gap/2
-    // trr([0, wid, 0]) box([len, wid, h]);
-    // dup([0, wid + gap/2, 0], undef, "orange", "green") 
     {
       tray([len, wid, h+2*rad], rad, rad, -2*rad, [tz, tw, tw] );
-      dup([ csize, 0, 0], 2)
+      astack(2, [csize, 0, 0], undef, ["orange", "green"])
       div([h+2*rad, wid, len/2-csize], rad, -2*rad, td);
     }
     // --- put a die in it:
@@ -103,14 +101,14 @@ module baseTray(len, wid, h = high) {
     echo ("baseTray: len=", len, "rem=", xs-len -tw/2);
     if (loc == 0) trr([twf,wid-twf-f,0, [-90, 0, -90]]) cbox();
 
-    dup([0,0,0,[0, 0, 180, [len/2, dy, 0]]]) 
+    astack(2, [0,0,0,[0, 0, 180, [len/2, dy, 0]]]) 
     {
       trr([.0, dy-aty/2, dz-.4, [0, ang, 0, [0, 0, h]]]) cube([tw, aty, h-dz]);
       trr([0, dy-tw/2-f, 0]) cube([cl/2, tw, h]);
     }
     // pull tab:
     ptw = 20;
-    dup([0,0,0, [0, 0, 180, [len/2, wid/2+ptw/2, 0]]], 1, "red", "green")
+    astack(2, [0,0,0, [0, 0, 180, [len/2, wid/2+ptw/2, 0]]], undef, ["red", "green"])
       trr([-2, wid/2, 0]) cube([3, ptw, tz]);
   }
 }
