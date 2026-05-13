@@ -8,7 +8,7 @@ inch = 25.4;
 
 
 // brackets to hold (cylinder) brushes under pool vacuum
-br = .2 * inch; // brush radius
+br = 7; // .2 * inch; // brush radius
 
 bw = 10; // x-width of main block
 bh = 8;  // y-height of main block
@@ -97,7 +97,7 @@ module clip1(r = rd/2, dh = 0) {
 }
 
 
-cw2 = 1.9;   // x-width of clip slot
+cw2 = 2;   // x-width of clip slot
 ch2 = 2*(sr+1.9); // y-height of clip
 
 bw2 = 8;  // x-width of bracket2
@@ -132,8 +132,8 @@ module bracket2() {
 module wedge(dw = pp, dz = 0) {
   cw = cw2 + dw;
   bz = 1;      // thickness of bottom 'foot'
-  x1 = z2 - bz;
-  y2 = x1 * tan(atan2(.7, x1+dz));
+  x1 = z4 - bz;
+  y2 = x1 * tan(atan2(.99, x1+dz));
   trr([cw/2+p, -ch2/2-p, 1, [0, -90, 0]])
   linear_extrude(height = cw + pp) 
   polygon(points = [[dz, 0], [x1, 0], [dz, y2]]);
