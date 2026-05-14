@@ -22,6 +22,8 @@ sr = 1.5; // rod radius
 head = 1; // z depth reserved for screw head
 scr = 2.1; // screw radius 
 shr = 2.3; // screw head radius
+s2r = 3.25; // height & radius of screw2 head
+
 
 axl = 10;
 module axel(l = axl, sl = stub) {
@@ -40,6 +42,13 @@ module brush(l = axl, sl = stub) {
 module screw(len = z3, head = head ) {
   trr([0, 0, -len]) cylinder(h=len+head, r = scr); // screw part
   trr([0, 0, 0]) cylinder(h = head, r = shr);
+}
+
+// space for the screw, subtracted in difference below
+// positioned with top of head & screw @ z=0
+module screw2(mr = 1, len = 15+s2r/2, rad = s2r ) {
+  trr([0, 0, -len]) cylinder(h = len, r = scr*mr); // screw part
+  trr([0, 0, -rad]) cylinder(h = rad, r1 = 0, r2 = rad);
 }
 
 bt = 2;  // x-thickness of slotted brackets
@@ -97,29 +106,38 @@ module clip1(r = rd/2, dh = 0) {
 }
 
 
-cw2 = 2;   // x-width of clip slot
+cw2 = 2;   // x-width of clip slot & wedge
 ch2 = 2*(sr+1.9); // y-height of clip
 
-bw2 = 8;  // x-width of bracket2
+bw2 = 9;  // x-width of base of bracket2
+bw2a = cw2 + 2.5; // x-width at top of bracket2
 bh2 = ch2+4;  // add screw block later
 bz2 = br;
 
-module screwblock2(dx = 2*shr+1) {
-  dy = dx;
-  dz = z3;
+module screwblock2(dx = 2*s2r + 1) {
+  dy = 2*s2r + 1;
+  dz = z2;  // bz2 = 7, z2 = 5
+  // triangle similarity:
+  d = bw2a + (bz2-dz)*(bw2-bw2a)/bz2;
+  s2 =  d / bw2;
   trr([0, bh2/2+dy/2, dz/2]) 
   difference() {
-    cube([dx, dy, dz],center = true);
-    trr([0, 0, dz/2+p]) screw(z3+pp);
+    trr([0, 0, -dz/2]) linear_extrude(height = dz, scale = [s2, 1]) 
+      square([dx, dy], center = true);
+    trr([0, 0, dz/2+p]) screw2(.9);  // tighter screw hole
   }
 }
 
 // bracket with down plunging locking clip
 module bracket2() {
+  module block() {
+    linear_extrude(height = bz2, scale = [bw2a/bw2, 1]) 
+      square([bw2, bh2], center = true);
+  }
   wedge();
   trr([0, 0, 0, [0, 0, 180]]) wedge();
   differenceN(1) {
-    trr([0, 0, bz2/2]) cube([bw2, bh2, bz2], center = true);
+    block();
     axel(0);
     clip2i(pp, pp);
   }
@@ -130,7 +148,7 @@ module bracket2() {
 // dw: grow/shrink width of wedge
 // dz: adjust the bottom of wedge
 module wedge(dw = pp, dz = 0) {
-  cw = cw2 + dw;
+  cw = cw2 + dw;  // height of extrusion before y-axis rotation
   bz = 1;      // thickness of bottom 'foot'
   x1 = z4 - bz;
   y2 = x1 * tan(atan2(.99, x1+dz));
@@ -142,7 +160,7 @@ module wedge(dw = pp, dz = 0) {
 // outer block of clip, with wedges, without hole or slots
 // actual blue clip2 will shrink for easier insertion
 // 
-// dw: grow/shrink width of wedge
+// dw: grow/shrink width of wedge (from cw2, the x-wdith)
 // dz: adjust z-height of bottom edge of wedge
 // dh: shrink y-height of clip2i
 // rc: corner radii for roundedRect [rc, rc, 0, 0] (rc = 0)
