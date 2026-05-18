@@ -9,7 +9,7 @@ inch = 25.4;
 n=3;  // how many in stack
 r1 = .55 * inch; // flat base radius
 h0 = .5 * inch - t0;  // height of center peg
-r0 = 9/32 * inch-.08; // radius of center peg
+r0 = 9/32 * inch-.0; // radius of center peg
 w0 = 2 * (r0)+1.5*f;  // width of wings
 m0 = (9/32*inch+.03)*2;
 echo("n, h0, r1, r0 2*r0, m0, w0", [n, h0, r1, r0, 2*r0, m0, w0]);
@@ -44,7 +44,7 @@ differenceN(2) {
 
   // m0: calculated radius from previous print
   // #astack(5, [0, 0, t0, [0, 0, 1]]) cube([m0, .5, .5], center=true);
-  cylinder(r1=2.0, r2=pr, h=t0+t0, $fn=24); // guide hole
-  cylinder(r1=pr, r2=pr*.94, h=h0+t0+pp, $fn=24); // pinhole
-  astack(6, [0, 0, 0, [0, 0, 60]]) cube([pr+f, .5, h0+t0]);
+  *cylinder(r1=2.0, r2=pr, h=t0+t0, $fn=24); // guide hole
+  *cylinder(r1=pr, r2=pr*.94, h=h0+t0+pp, $fn=24); // pinhole
+  *astack(6, [0, 0, 0, [0, 0, 60]]) cube([pr+f, .5, h0+t0]);
 }
