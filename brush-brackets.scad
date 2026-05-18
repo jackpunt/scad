@@ -19,7 +19,7 @@ z3 = 3.5;  // depth of material for screw (screw len = z2 + z3)
 z4 = br;  // height to brush axis
 stub = bw;
 sr = 1.5; // rod radius
-head = 1; // z depth reserved for screw head
+head = 1.2; // z depth reserved for screw head
 scr = 2.1; // screw radius 
 shr = 2.3; // screw head radius
 s2r = 3.25; // height & radius of screw2 head
@@ -37,11 +37,11 @@ module brush(l = axl, sl = stub) {
   color("white") axel(l);
 }
 
-// space for the screw, subtracted in difference below
+// space for panhead screw, subtracted in difference below
 // positioned with join between head & screw @ z=0
-module screw(len = z3, head = head ) {
-  trr([0, 0, -len]) cylinder(h=len+head, r = scr); // screw part
-  trr([0, 0, 0]) cylinder(h = head, r = shr);
+module screw1(mr = 1, len = 15+s2r/2, head = head ) {
+  trr([0, 0, -len]) cylinder(h = len+head, r = scr*mr); // screw part
+  trr([0, 0, 0]) cylinder(h = head, r = s2r);
 }
 
 // space for the screw, subtracted in difference below
@@ -55,57 +55,6 @@ bt = 2;  // x-thickness of slotted brackets
 tz = 1.5;  // top z (& clip top thickness)
 bz = br + sr + tz; // bracket z-top
 
-// bracket with side-sliding locking clip
-module bracket1(bt = bt) {
-  module caxis(r = sr) {
-    trr([bw/2, 0, br-z3, [0, -90, 0]]) cylinder(h = bw+pp, r = r);
-  }
-  sxy = [1, .5]; // scale to shrink
-  zh = z4-sr;    // depth of hole for screw head
-  difference() {
-    trr([0, 0, z3/2]) cube([bw, bh, z3], center = true); // base cube
-    trr([0, 0, zh-head]) screw(zh);   // remove hole for screw
-     clip1((rd+f)/2, .3);
-
-  }
-  trr([0, 0, z3]) 
-  differenceN() 
-  {
-    linear_extrude(height = bz-z3, scale = sxy) 
-      difference() {
-        square(size = [bw-pp, bh], center = true);
-        square(size = [bw-2*bt-pp, bh], center = true);
-    }
-    trr([0,0,0, [1, 0, 0, [bw/2, 0, br-z3]]])
-      hull() {
-        caxis();
-        trr([0, 0, 3]) caxis(sr*.6);
-     }
-  }
-}
-
-rd = 1.8;
-rh = 2;
-module clip_rod(r = rd/2, h = rh ){
-  trr([0, p, 0, [90, 0, 0]]) cylinder(h = h+pp, r = r);
-}
-module clip1(r = rd/2, dh = 0) {
-  dx = bw/2 - rd/2 - 1;
-  dz = z3/2;
-  color("blue") {
-    trr([dx, bh/2, dz]) clip_rod(r, rh+dh);
-    trr([-dx, bh/2, dz]) clip_rod(r, rh+dh);
-  }
-
-  clipx = bw - 2*bt;
-  clipy = 2;
-  clipz = bz;
-
-  trr([0, (bh+clipy)/2, clipz/2]) cube([bw, clipy, clipz], center = true);
-  trr([0, (bh/2-sr)/2, bz-tz/2]) cube([clipx, bh/2+2*sr, tz], center = true);
-}
-
-
 cw2 = 2;   // x-width of clip slot & wedge
 ch2 = 2*(sr+1.9); // y-height of clip
 
@@ -114,8 +63,12 @@ bw2a = cw2 + 2.5; // x-width at top of bracket2
 bh2 = ch2+4;  // add screw block later
 bz2 = br;
 
-module screwblock2(dx = 2*s2r + 1) {
-  dy = 2*s2r + 1;
+sbx = bw2;       // x-wdith of base of screwblock;  2*s2r + 1;
+sby = 2*s2r + 1; // y-height of screwblock
+
+// called with sbx = bw2 to match clip2i width at base
+module screwblock2(dx = sbx) {
+  dy = sby;
   dz = z2;  // bz2 = 7, z2 = 5
   // triangle similarity:
   d = bw2a + (bz2-dz)*(bw2-bw2a)/bz2;
@@ -141,7 +94,7 @@ module bracket2() {
     axel(0);
     clip2i(pp, pp);
   }
-  screwblock2(bw2);
+  screwblock2();
 }
 
 // wedge added to bracket2, removed from clip2
@@ -175,7 +128,7 @@ module clip2i(dw = pp, dz = 0, dh = 0, rc = 0) {
   }
   cw = cw2 + dw;      // x-wide
   ch = ch2 + dh;      // y-height
-  cz = bz2 + sr + 2;  // 2 = thickness above axel
+  cz = bz2 + sr + 3;  // 3 = thickness above axel
   difference() {
     mainblock2(cw, ch, cz);
     astack(2, [0, 0, 0, [0,  0, 180]]) wedge(dw, dz);
@@ -199,17 +152,13 @@ loc = 3;
 // 0: no brush, 1: brush
 bsh = 0;
 
-atrans(loc, [[0, 0, 0], 0])
-bracket1();
-
-atrans(loc, [[0, 0, 0], [0, 0, 0, [-90, 0, 0, [0, bh/2+2, 0]]]])
-clip1();
-
+astack(4,[0, sby + bh2 + 1, 0] ) astack(2, [22, 0, 0])
+{
 atrans(loc, [undef, 0, [0, 0, 0], 2])
 bracket2();
 atrans(loc, [undef, 0, [0, 0, f/2], [bw/2, 0, (cw2-cs2)/2, [0, 90, 0]]])
 clip2();
-
+}
 
 atrans(bsh, [undef, [0, 0, 0]]) 
 brush();
