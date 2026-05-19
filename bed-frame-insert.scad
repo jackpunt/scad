@@ -69,29 +69,45 @@ function tableize(des, pitch = 2) = let (
   table = [table_entry(th_int, pitch), table_entry(th_ext, pitch, undef)]
   ) table;
 
+function thread_pitch(des) = let (
+  spec = thread_specs(des),
+  p = def(pitch, spec[0])
+) p;
 
-des = "M11x1";
+des = "M6";
 desi = str(des, "-int");
 desx = str(des, "-ext");
 pitch = 2;
-turns = 4;
+turns = 8.5;
 
 
-TABLE =  tableize(des, pitch); //THREAD_TABLE;//
+TABLE = THREAD_TABLE;// tableize(des, pitch); //
 spec = TABLE[1][1]; // [des-ext, [pitch, rot, dxy, [shape]]
 echo("TABLE=", TABLE);
 echo("spec = ", spec);
 
-dxy = spec[2]+3;
+dxy = spec[2]+.8;
 tl = 9; //turns * spec[0]; // turns * pitch
+dz = thread_pitch(str(des, "-int"))*.249; // align tap to bottom of cylinder
+// might be the lower extent of the thread 'shape'
 
 differenceN(2) {
   cylinder(h = 2, r = 10);
   cylinder(h = tl-pp, r = dxy/2);
-  tap(designator = des, turns = turns+.2, table=TABLE);
+  trr([0, 0, dz])
+  tap(designator = des, turns = turns-.49, table=TABLE);
 }
+module abolt(des = "M10", turns = 4, table = THREAD_TABLE) {
 
-// trr([0, 0, turns * spec[0]])
-//  bolt(des, turns, table = TABLE);
+  specs = thread_specs(str(des, "-ext"), table);
+  P = specs[0]; Rrotation = specs[1]; section_profile = specs[3];
+  dz = thread_pitch(des)/2;
+  trr([0, 0, dz])
+    bolt(des, turns);
+
+}
+*trr([-8, 0, pp])
+abolt("M6", turns*3);
+// abolt("M6", turns*2);
 //  thread(desx, turns, table = TABLE);
 
