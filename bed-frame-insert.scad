@@ -63,6 +63,8 @@ function table_entry(des, pitch, rot, dxy)  = let (
   spec1 = [p, r, dxy, spec[3]])
   [des, spec1];
 
+// when want to force pitch to 2 mm/revolution
+// create M11 @ 2mm/rev (double pitch)
 function tableize(des, pitch = 2) = let (
   th_int = str(des, "-int"),
   th_ext = str(des, "-ext"),
@@ -83,7 +85,7 @@ turns = 8.5;
 
 TABLE = THREAD_TABLE;// tableize(des, pitch); //
 spec = TABLE[1][1]; // [des-ext, [pitch, rot, dxy, [shape]]
-echo("TABLE=", TABLE);
+// echo("TABLE=", TABLE);
 echo("spec = ", spec);
 
 dxy = spec[2]+.8;
@@ -91,9 +93,12 @@ tl = 9; //turns * spec[0]; // turns * pitch
 dz = thread_pitch(str(des, "-int"))*.249; // align tap to bottom of cylinder
 // might be the lower extent of the thread 'shape'
 
+// oversize the tap?
+scal = 1.05;
 differenceN(2) {
   cylinder(h = 2, r = 10);
   cylinder(h = tl-pp, r = dxy/2);
+  scale([scal, scal, 1]) // bolt to tap is tight, stretch the tap a bit
   trr([0, 0, dz])
   tap(designator = des, turns = turns-.49, table=TABLE);
 }
