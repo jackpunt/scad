@@ -37,7 +37,11 @@ tz = 1;
 trayx = 140;
 trayy = 140;
 trayz = ncards * t00 + bz + ty;
+
+cardx = (trayx - tx)/2 + tx;
 cardy = (trayy - ty)/3 + ty; // extrnal width of card box
+cardz = trayz;
+
 
 // base size of tray for cubes
 cboxx = 140;
@@ -72,24 +76,34 @@ px = 2; py = 2; pz = 2;
 
 /** single box for 1 stack of cards */
 module cardBox(nc = ncards) {
-  x = trayx/2; y = cardy; z = trayz;
+
   dx = px; dy = py; tpz = trayz + pz;
   ss = false;
 
-  slotifyX2([trayz, y/2, 3], [0, y/2, 4], undef, 3, ss)
-  slotifyX2([trayz, y/2, 3], [x, y/2, bz], undef, 3, ss)
-  slotifyY2([trayz, x/2, 3], [x/2, 0, 6], undef, 3, ss)
-  slotifyY2([trayz, x/2, 3], [x/2, y, 6], undef, 3, ss)
-  box([x, y, z]);
-  trr([x * .75, 0, tz*.3, [0, ang, 0]]) color("red")  cube([9, y, bz]);
-  astack(2, [ x-dx, 0, 0]) astack(2, [0, y-dy, 0]) color("green") cube([dx, dy, tpz]);
+  slotifyX2([trayz, cardy/2, 3], [0, cardy/2, 4], undef, 3, ss)
+  slotifyX2([trayz, cardy/2, 3], [cardx, cardy/2, bz], undef, 3, ss)
+  slotifyY2([trayz, cardx/2, 3], [cardx/2, 0, 6], undef, 3, ss)
+  slotifyY2([trayz, cardx/2, 3], [cardx/2, cardy, 6], undef, 3, ss)
+  box([cardx, cardy, cardz]);
+  trr([cardx * .75, 0, tz*.3, [0, ang, 0]]) color("red")  cube([9, cardy, bz]);
+  astack(2, [ cardx-dx, 0, 0]) astack(2, [0, cardy-dy, 0]) color("green") cube([dx, dy, tpz]);
+  atrans(loc, [[0, 0, 0], undef, 1]) card(undef, nc);
+}
 
-  atrans(loc, [[0, 0, 0], undef, 0]) card(undef, nc);
+module cardTray() {
+  astack(3, [0, cardy - ty, 0])  cardBox();
+  trr([tx, trayy, 0, [0, 0, 180]])
+  astack(3, [0, cardy - ty, 0])  cardBox();
+}
 
+module containerTray() {
+  astack(3, [0, cardy - ty, 0])  containerBox();
+  trr([tx, trayy, 0, [0, 0, 180]])
+  astack(3, [0, cardy - ty, 0])  containerBox();
 }
 
 module containerBox() {
-  x = cboxx/2; y = cboxy/3; z = cboxz;
+  x = cardx; y = cardy; z = cboxz; //cboxx/2; y = cboxy/3; z = cboxz;
   dx = px+f; dy = py+f; dz = pz + .8;
   f = 1;
   difference() 
@@ -112,5 +126,7 @@ loc = 2;
 atrans(loc, [[0, 0, -trayz], undef, [0, 0, 0]]) cardBox();
 atrans(loc, [[0, 0, 0], 0]) containerBox();
 
+atrans(loc, [undef, undef, undef, [0, 0, -trayz]])
+cardTray();
 atrans(loc, [undef, undef, undef, [0, 0, 0]])
-astack(3, [0, cardy-ty, 0]) cardBox();
+containerTray();
