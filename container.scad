@@ -44,8 +44,8 @@ cardz = trayz;
 
 
 // base size of tray for cubes
-cboxx = 140;
-cboxy = 140;
+cboxx = trayx;
+cboxy = trayy;
 cboxz = 17.5;   // height of walls on containerBox
 
 
@@ -72,7 +72,7 @@ module container(c = "blue") {
 }
 
 // size of posts:
-px = 2; py = 2; pz = 2;
+px = 8; py = 1.6; pz = 2;
 
 /** single box for 1 stack of cards */
 module cardBox(nc = ncards) {
@@ -85,44 +85,50 @@ module cardBox(nc = ncards) {
   slotifyY2([trayz, cardx/2, 3], [cardx/2, 0, 6], undef, 3, ss)
   slotifyY2([trayz, cardx/2, 3], [cardx/2, cardy, 6], undef, 3, ss)
   box([cardx, cardy, cardz]);
-  trr([cardx * .75, 0, tz*.3, [0, ang, 0]]) color("red")  cube([9, cardy, bz]);
+  // crossbar:
+  trr([cardx * .75, 0, tz*.3, [0, ang, 0]]) color("red")  cube([10, cardy, bz]);
+  // pillars:
   astack(2, [ cardx-dx, 0, 0]) astack(2, [0, cardy-dy, 0]) color("green") cube([dx, dy, tpz]);
+  // cards:
   atrans(loc, [[0, 0, 0], undef, 0]) card(undef, nc);
 }
 
 /** holds the 3 cylinders & 10/17mm of disks */
 module sideTray(z = 22) {
-  x = box_x - trayx;
+  x = box_x - trayx; x2 = x/2;
   y = trayy; r = 10;
   dh = 17/10;
   echo("box_x - cboxx", box_x - cboxx - tx - tx);
-  slotifyY2([z, x-8, 4], [x/2, 0, z * .4], undef, 3)
+  slotifyY2([z, x-8, 4], [x2, 0, z * .4], undef, 3)
   box([x, y, z], [tx, ty, tz]);
   astack(4, [0, 35, 0]) 
-  slotifyY2([z-2, x-8, 4], [x/2, 20, z * .4], undef, 3) divXZ([z-2, x, 20], 0, 0, ty);
+  slotifyY2([z-2, x-8, 4], [x2, 20, z * .4], undef, 3) divXZ([z-2, x, 20], 0, 0, ty);
 
   atrans(0, [[0, 0, 0]]) 
-  astack(10, [0, dh, 0]) color("blue") trr([r + tx, 3, r + tz, [90, 0, 0]])   
+  astack(10, [0, dh, 0]) color("blue") trr([x2, 3, r + tz, [90, 0, 0]])   
   cylinder(h = dh*.9, r = r, center = false);
-  astack(3, [0, 35, 0]) color("orange") trr([r + tx, 38, r + tz, [90, 0, 0]]) cylinder(h = 30, r = r, center = true);
+  astack(3, [0, 35, 0]) color("orange") trr([x2, 38, r + tz, [90, 0, 0]]) cylinder(h = 30, r = r, center = true);
   // trr([tx, r + ty, r + tz, [0, 90, 0]]) cylinder(h = 20, r= 5, center = false);
 }
 
-// loc = 5
+// loc = 5; stack of 6 cardBox()
 module cardTray() {
   astack(3, [0, cardy - ty, 0])  cardBox();
   trr([tx, trayy, 0, [0, 0, 180]])
   astack(3, [0, cardy - ty, 0])  cardBox();
-  trr([cardx + tx, 0, 0])   
+  trr([cardx + f, 0, 0])   
   sideTray();
 }
 
+
+// loc = 4; stack of 6 containerBox()
 module containerTray() {
   astack(3, [0, cardy - ty, 0])  containerBox();
   trr([tx, trayy, 0, [0, 0, 180]])
   astack(3, [0, cardy - ty, 0])  containerBox();
 }
 
+// loc 1: single box
 module containerBox() {
   x = cardx; y = cardy; z = cboxz; //cboxx/2; y = cboxy/3; z = cboxz;
   dx = px+f; dy = py+f; dz = pz + .8;
@@ -153,12 +159,19 @@ module containerLid() {
 
 }
 
+/** big box, top/useful half */
+module bbox() {
+  tt = 1.5;
+  trr([-tt, -tt, -tt]) box([box_x+2*tt, box_y+2*tt, box_z+2*tt], [tt, tt, tt]);
+}
+%bbox();
+
 loc = 3;
 
 atrans(loc, [[0, 0, -trayz], undef, [0, 0, 0]]) cardBox();
 atrans(loc, [[0, 0, 0], 0]) containerBox();
 
-atrans(loc, [undef, 0, 0, [0, 0, -trayz], 0, 3]) cardTray();
-atrans(loc, [undef, 0, 0, [0, 0, 0], 3, 0]) containerTray();
+atrans(loc, [undef, 0, 0, [cardx-tx, 0, 0], 0, 3]) cardTray();
+atrans(loc, [undef, 0, 0, [cardx-tx, 0, trayz], 3, 0]) containerTray();
 
 atrans(loc, [undef, undef, 1, 1, 1, 1, [-tx, -ty, 0]]) containerLid();
