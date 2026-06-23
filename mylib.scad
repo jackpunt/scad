@@ -425,18 +425,16 @@ module div(zyx = 10, r = 2, k, tx = t0) {
 // on the XZ plane, displaced by y
 // zxy -> z-height, x-width, y-translation
 // t: thickness of extrusion
-// zyx: [dz, dy, dx] (10) z,y size; dx translate
+// zxy: [dz, dx, dy] (10) z,x size; dy translate
 // r: [r,r,r,r] (2)
 // k: kut
-// t: z-axis extrusion
+// t: z-axis extrusion (t0)
 module divXZ(zxy = 10, r = 2, k, ty = t0) {
   dy = is_undef(zxy[2]) ? 0 : zxy[2];
-  translate([ zxy[1], dy + ty, 0 ])    //
-      translate([zxy[2], 0, 0])
+  translate([0, dy + ty, 0])
       rotate([ 90, 0, 0 ])       //
-      rotate([ 0, 0, 90 ])       //
       linear_extrude(height = ty) //
-      roundedRect([ zxy[0], zxy[1] ], r, k);
+      roundedRect([ zxy[1], zxy[0] ], r, k);
 }
 
 // a slot shaped hull [roundedCube]; (in XY plane -> rot(-Y) -> ZY)
