@@ -33,8 +33,9 @@ bt = 2;
 tx = 1;
 ty = 1;
 tz = 1;
-tl = 1.2;   // lid thickness: XY
-dl = tl;    // offset for lid XY
+lt = 1.4;   // lid thickness: XY
+lz = 1.5;   // lid thickness: Z
+dl = lt+f;    // offset for lid XY
 
 // base size of tray for cards
 trayx = 140;
@@ -96,30 +97,39 @@ module cardBox(nc = ncards) {
   atrans(loc, [[0, 0, 0], undef, 0]) card(undef, nc);
 }
 
+/** auction reservation disk */
+module disk(r = 10) {
+  dh = 17/10;
+  astack(10, [0, 0, dh]) color("blue") 
+    cylinder(h = dh*.9, r = r);
+}
+
 /** holds the 3 cylinders & 10/17mm of disks */
 module sideTray(z = 22) {
-  x = box_x - trayx -dl; x2 = x/2;
-  y = trayy; r = 10;
-  dh = 17/10;
+  // x = box_x - trayx -dl; 
+  x = 20;
+  x2 = x/2;
+  y = trayy; r = 10; pz = 18;
   echo("box_x - cboxx", box_x - cboxx - tx - tx);
-  slotifyY2([z, x-8, 4], [x2, 0, z * .4], undef, 3)
-  box([x, y, z], [tx, ty, tz]);
-  astack(4, [0, 35, 0]) 
-  slotifyY2([z-2, x-8, 4], [x2, 20, z * .4], undef, 3) divXZ([z-2, x, 20], 0, 0, ty);
+  cube([x, y, 1]);    // base board
+  astack(4, [0, 2 * (r + ty), 0]) trr([x2, r+2, 0]) 
+  difference()
+  {
+    pipe([r+tx+f, r+tx+f, pz], 1);
+    trr([0, 0, pz/2]) cube([x+4, x*.5, pz+pp], true);
+  }
 
-  atrans(0, [[0, 0, 0]]) 
-  astack(10, [0, dh, 0]) color("blue") trr([x2, 3, r + tz, [90, 0, 0]])   
-  cylinder(h = dh*.9, r = r, center = false);
-  astack(3, [0, 35, 0]) color("orange") trr([x2, 38, r + tz, [90, 0, 0]]) cylinder(h = 30, r = r, center = true);
-  // trr([tx, r + ty, r + tz, [0, 90, 0]]) cylinder(h = 20, r= 5, center = false);
+
+  atrans(0, [[x2, r+2, tz]]) {
+    astack(3, [0, 2 * (r + ty), 0]) color("orange") cylinder(h = 30, r = r);
+    // trr([0, 6 * (r + ty), 0]) disk();
+  }
 }
 
 // loc = 5; stack of 6 cardBox()
 module cardTray() {
   astack(3, [cardx - tx-p, 0, 0]) trr([0, 0, 0, [0, 0, -180, [cardx/2, cardy/2, 0]]]) cardBox();
   astack(3, [cardx - tx-p, 0, 0]) trr([0, cardy-ty, 0]) cardBox();
-  * trr([3 * cardx - 2*tx + f, 0, 0])
-  sideTray();
 }
 
 
@@ -158,28 +168,49 @@ zd = 4;
 * zd: reserve for docs
 */
 module containerLid(zh = zh, zd = zd) {
+  f = .125;
   zz = zh - zd - cboxz - cardz; 
-  echo("lid: zz =", zz, zz+cardz-ty-tz, cboxz+cardz+zz) ;
-  x = trayx+2*tx; y = trayy + 2*ty; z = cboxz;
-  color("red")
-  box([x, y, zz], [tl + tx, tl + ty, -p], [2, 2, 2] );
+  echo("lid: zz =", zz, zz+cardz-ty-lz, cboxz+cardz+zz) ;
+  x = trayx + 2*dl; y = trayy + 2*dl; z = zh -zd - cardz -3; cs = 7.6; st = 10;
+  trr([-f, -f, 0]) {
+    color("red")
+    box([x, y, zz], [lt + tx+f*2, lt + ty + f*2, -p], [2, 2, 2] );
 
-  difference() {
-    box([x, y, z], [tl, tl, tz]);
-    cubesGrid(bw = trayx, bh = trayy, stt = [8, 2.5, 2.5], t = 3);
+    difference() {
+      box([x, y, z], [lt, lt, lz]);
+      cubesGrid(bw = x, bh = y, stt = [cs, st-cs, st-cs], t = 3);
+    }
   }
+}
+
+module wareBox() {
+  x = 125; y = 60; z = 20;    // 125, 60, 15-20
+  box([x, y, z], [tx, ty, tz]);
+  echo("wareBox:", x*y*z, "~", 15*20*20*20);
+}
+module factorBox() {
+  x = 35; y = 119; z = 17; dz = 17;
+  trr([16, .5, 0, [0, 0, -90]])
+  slotifyY2([dz, 12, 3], [11, 0, 5], undef, 1 )
+  slotifyY2([dz, 12, 3], [11, 19, 5], undef, 1) {
+  box([22, 19, dz]);
+  }
+  box([x, y, z]);
+  trr([17, -10.5, 11, [0, 90, 0]]) disk();
+  echo("factorBox:", x*(y - 20)*z, "~", 5*4*8*20*15);
 }
 
 /** big box, top/useful half */
 module bbox() {
   // box_x, _y are interior dimensions. bt: thickness of cardboard
-  trr([-dl-bt-f, -dl-bt-f, -bt-f]) box([box_x+2*bt, box_y+2*bt, box_z+f+bt], [bt, bt, bt]);
+  // color("tan")
+  trr([-dl-bt-f, -dl-bt-f, -bt-f]) box([box_x+2*bt, box_y+2*bt, box_z+bt+f], [bt, bt, bt]);
 }
-%bbox();
+bbox();
 
 // 0: both, 1: contBox, 2: cardBox, 3: both Trays, 4: contTray, 5: cardTray
 // 6: both+lid, 7: lid-print
-loc = 6;
+loc = 9;
 
 atrans(loc, [[0, 0, -trayz], undef, [0, 0, 0]]) cardBox();
 atrans(loc, [[0, 0, 0], 0]) containerBox();
@@ -187,4 +218,12 @@ atrans(loc, [[0, 0, 0], 0]) containerBox();
 atrans(loc, [undef, 0, 0, [0, 0, 0],     0, 3, 3]) cardTray();
 atrans(loc, [undef, 0, 0, [0, 0, trayz], 3, 0, 3]) containerTray();
 
-atrans(loc, [undef, 0, 0, 0, 0, 0, [-tl, -tl, zh-zd, [0, 180, 0, [(trayx+2*tx)/2, (trayy+2*ty)/2, 0]]], [-tx, -ty, 0]]) containerLid();
+// 6, 7: containerLid
+atrans(loc, [undef, 0, 0, 0, 0, 0, [-lt, -lt, zh-zd, [0, 180, 0, [(trayx+2*lt)/2, (trayy+2*lt)/2, 0]]], [-lt, -lt, 0]]) containerLid();
+// 8: sideTray
+*atrans(loc, [undef, 0, 0, 0, 0, 0, 8, 0, [trayx,0,0]]) sideTray();
+// 9: wareBox
+atrans(loc, [undef, 0, 0, 0, 0, 0, 9, 0, 0, [0, trayy+35, 9]]) wareBox();
+atrans(loc, [undef, 0, 0, 0, 0, 0, 9, 0, 0, [125+f, trayy+dl, 0]]) factorBox();
+
+echo(125*60*20, 35*120*40, 15*20*8*20);
