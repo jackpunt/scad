@@ -161,20 +161,24 @@ module containerBox() {
    trr([1, 1, 0])  astack(3, [0, contY+2*f, 0]) astack(4, [contX+f, 0, 0]) trr([tx, ty, tz]) container();
 }
 
-zh = 47;
-zd = 4;
+zh = 47; // available z-height
+zd = 5.8;  // docs space
 /** 
 * zh: total z-height
 * zd: reserve for docs
 */
 module containerLid(zh = zh, zd = zd) {
   f = .125;
-  zz = zh - zd - cboxz - cardz; 
-  echo("lid: zz =", zz, zz+cardz-ty-lz, cboxz+cardz+zz) ;
-  x = trayx + 2*dl; y = trayy + 2*dl; z = zh -zd - cardz -3; cs = 7.6; st = 10;
+  zz = zh - zd - cboxz - cardz - lz; 
+  echo("lid: zz =", zz, zz+cardz-ty-lz, cboxz+cardz+zz, cboxz -tz + zz) ;
+  x = trayx + 2*dl; y = trayy + 2*dl; z = zh - zd - cardz -3; cs = 7.6; st = 10;
   trr([-f, -f, 0]) {
     color("red")
-    box([x, y, zz], [lt + tx+f*2, lt + ty + f*2, -p], [2, 2, 2] );
+    trr([0, 0, lz]) box([x, y, zz], [lt + tx+f*2, lt + ty + f*2, -p], [2, 2, 2] );
+    color("blue")
+    astack(2, [0, trayy+ty, 0])
+    astack(4, [(x-10)/4, 0, 0]) trr([15, ty, z - 5, [0, 90, 0]])
+     cylinder(h = 10, r = .5+f);
 
     difference() {
       box([x, y, z], [lt, lt, lz]);
@@ -216,7 +220,7 @@ module bbox() {
 
 // 0: both, 1: contBox, 2: cardBox, 3: both Trays, 4: contTray, 5: cardTray
 // 6: both+lid, 7: lid-print
-loc = 9;
+loc = 7;
 
 atrans(loc, [[0, 0, -trayz], undef, [0, 0, 0]]) cardBox();
 atrans(loc, [[0, 0, 0], 0]) containerBox();
@@ -225,7 +229,7 @@ atrans(loc, [undef, 0, 0, [0, 0, 0],     0, 3, 3]) cardTray();
 atrans(loc, [undef, 0, 0, [0, 0, trayz], 3, 0, 3]) containerTray();
 
 // 6, 7: containerLid
-atrans(loc, [undef, 0, 0, 0, 0, 0, [-lt, -lt, zh-zd, [0, 180, 0, [(trayx+2*lt)/2, (trayy+2*lt)/2, 0]]], [-lt, -lt, 0]]) containerLid();
+atrans(loc, [undef, 0, 0, 0, 0, 0, [-lt, -lt, zh - zd, [0, 180, 0, [(trayx+2*lt)/2, (trayy+2*lt)/2, 0]]], [-lt, -lt, 0]]) containerLid();
 // 8: sideTray
 *atrans(loc, [undef, 0, 0, 0, 0, 0, 8, 0, [trayx,0,0]]) sideTray();
 // 9: wareBox
