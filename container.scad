@@ -189,14 +189,20 @@ module wareBox() {
   echo("wareBox:", x*y*z, "~", 15*20*20*20);
 }
 module factorBox() {
-  x = 35; y = 119; z = 17; dz = 17;
-  trr([16, .5, 0, [0, 0, -90]])
-  slotifyY2([dz, 12, 3], [11, 0, 5], undef, 1 )
-  slotifyY2([dz, 12, 3], [11, 19, 5], undef, 1) {
-  box([22, 19, dz]);
+  dh = 17/10;
+  x = 35; y = 119; z = 17; dz = 17; wx = dh*10+2;  // wx = 10*dh - f
+  by = 2 * (10 + tx); sw = by*.6;     // box y-height (disc radius = 10)
+  fx = .25;
+
+  trr([x-wx, .5-by, 0])
+  slotifyX2([dz, sw, 3], [wx-1, by/2, 5], undef, 1) 
+  slotifyX2([dz, sw, 3], [0, by/2, 5], undef, 1) {
+    box([wx, by, dz]);
+    astack(2, [wx-1-2*fx,0,0], undef, ["red", "blue"])
+    trr([.5+fx, 0, z/2, [-90,0,0]]) cylinder(h = by, r = .5);
   }
   box([x, y, z]);
-  trr([17, -10.5, 11, [0, 90, 0]]) disk();
+ * trr([x-wx+tx, -10.5, 11, [0, 90, 0]]) disk();
   echo("factorBox:", x*(y - 20)*z, "~", 5*4*8*20*15);
 }
 
@@ -206,7 +212,7 @@ module bbox() {
   // color("tan")
   trr([-dl-bt-f, -dl-bt-f, -bt-f]) box([box_x+2*bt, box_y+2*bt, box_z+bt+f], [bt, bt, bt]);
 }
-bbox();
+*bbox();
 
 // 0: both, 1: contBox, 2: cardBox, 3: both Trays, 4: contTray, 5: cardTray
 // 6: both+lid, 7: lid-print
@@ -223,7 +229,7 @@ atrans(loc, [undef, 0, 0, 0, 0, 0, [-lt, -lt, zh-zd, [0, 180, 0, [(trayx+2*lt)/2
 // 8: sideTray
 *atrans(loc, [undef, 0, 0, 0, 0, 0, 8, 0, [trayx,0,0]]) sideTray();
 // 9: wareBox
-atrans(loc, [undef, 0, 0, 0, 0, 0, 9, 0, 0, [0, trayy+35, 9]]) wareBox();
+*atrans(loc, [undef, 0, 0, 0, 0, 0, 9, 0, 0, [0, trayy+35, 9]]) wareBox();
 atrans(loc, [undef, 0, 0, 0, 0, 0, 9, 0, 0, [125+f, trayy+dl, 0]]) factorBox();
 
 echo(125*60*20, 35*120*40, 15*20*8*20);
