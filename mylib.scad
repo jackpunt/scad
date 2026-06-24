@@ -357,6 +357,7 @@ module roundedRect(sxy = 10, rc = 2, k = 0) {
 
 // a vertical pipe, centered @ (0,0)
 // rrh: [dx, dy, dz]; dx, dy = radius, dz = height;
+// Internal: radius - t; External: radius;
 // t = t0;
 module pipe(rrh = 10, t = t0) {
   dx = is_list(rrh) && !is_undef(rrh[0]) ? rrh[0] : rrh;
