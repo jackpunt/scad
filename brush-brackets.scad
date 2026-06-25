@@ -64,37 +64,49 @@ bh2 = ch2+4;  // add screw block later
 bz2 = br;
 
 sbx = bw2;       // x-wdith of base of screwblock;  2*s2r + 1;
-sby = 2*s2r + 1; // y-height of screwblock
+sby = 20; // y-length of screwblock
+ty = 20;   // y-length of block
+ly = 5;    // left of axel;
+
+btop = br + sr + 2;
 
 // called with sbx = bw2 to match clip2i width at base
-module screwblock2(dx = sbx) {
-  dy = sby;
-  dz = z2;  // bz2 = 7, z2 = 5
-  // triangle similarity:
-  d = bw2a + (bz2-dz)*(bw2-bw2a)/bz2;
-  s2 =  d / bw2;
-  trr([0, bh2/2+dy/2, dz/2]) 
+module screwblock2(dz = bz, bz2 = bz2) {
+  trr([0, p, p])
   difference() {
-    trr([0, 0, -dz/2]) linear_extrude(height = dz, scale = [s2, 1]) 
-      square([dx, dy], center = true);
-    trr([0, 0, dz/2+p]) screw2(.9);  // tighter screw hole
+  intersection() {
+    block();
+    cutblock();
+  }
+  axel(0);
   }
 }
 
-// bracket with down plunging locking clip
-module bracket2() {
-  module block() {
-    linear_extrude(height = bz2, scale = [bw2a/bw2, 1]) 
-      square([bw2, bh2], center = true);
+// bx0, bxz, by, bz
+module block() {
+  bx0 = bw2; bxz = bw2a; by = ty; dy = ly; // dy: left of axel
+  difference() {
+  trr([0, by/2-dy, 0])
+  linear_extrude(height = bz, scale = [bxz/bx0, 1])
+    square([bx0, by], true);
+    trr([0, 10, bz+p]) screw2(.9);  // tighter screw hole
   }
-  wedge();
-  trr([0, 0, 0, [0, 0, 180]]) wedge();
-  differenceN(1) {
+}
+cutz = br - (sr + .5);
+module cutblock(f = pp) {
+  x = bw2;
+  y = (ty - ly) + f;
+  echo("cutblock:", y, bh2 );
+  trr([-x/2, 0-(f)/2, cutz-f/2]) cube([x, y, bz - cutz + f]);
+}
+// bracket with down plunging locking clip
+module bracket2(bz2 = bz2) {
+  color("green")
+  difference() {
     block();
     axel(0);
-    clip2i(pp, pp);
+    cutblock();
   }
-  screwblock2();
 }
 
 // wedge added to bracket2, removed from clip2
@@ -118,19 +130,19 @@ module wedge(dw = pp, dz = 0) {
 // dh: shrink y-height of clip2i
 // rc: corner radii for roundedRect [rc, rc, 0, 0] (rc = 0)
 module clip2i(dw = pp, dz = 0, dh = 0, rc = 0) {
-  module mainblock1(cw, ch, cz) {
-    trr([0, 0, cz/2-p]) cube([cw, ch, cz], center = true);
+  module mainblock1(cx, cy, cz) {
+    trr([0, 0, cz/2-p]) cube([cx, cy, cz], center = true);
   }
-  module mainblock2(cw, ch, cz) {
-    trr([-cw/2, -ch/2, -p, [0, -90, 0, [cw/2, 0, cw/2]]])
-      linear_extrude(height = cw) 
-      roundedRect([cz, ch], [rc, rc, 0, 0]);
+  module mainblock2(cx, cy, cz) {
+    trr([-cx/2, -cy/2, -p, [0, -90, 0, [cx/2, 0, cx/2]]])
+      linear_extrude(height = cx) 
+      roundedRect([cz, cy], [rc, rc, 0, 0]);
   }
-  cw = cw2 + dw;      // x-wide
-  ch = ch2 + dh;      // y-height
+  cx = cw2 + dw;      // x-wide
+  cy = ch2 + dh;      // y-height
   cz = bz2 + sr + 3;  // 3 = thickness above axel
   difference() {
-    mainblock2(cw, ch, cz);
+    mainblock2(cx, cy, cz);
     astack(2, [0, 0, 0, [0,  0, 180]]) wedge(dw, dz);
   }
 }
@@ -152,12 +164,12 @@ loc = 3;
 // 0: no brush, 1: brush
 bsh = 0;
 
-astack(4,[0, sby + bh2 + 1, 0] ) astack(2, [22, 0, 0])
+astack(8,[10, 0, 0] )
 {
 atrans(loc, [undef, 0, [0, 0, 0], 2])
 bracket2();
-atrans(loc, [undef, 0, [0, 0, f/2], [bw/2, 0, (cw2-cs2)/2, [0, 90, 0]]])
-clip2();
+atrans(loc, [undef, 0, [0, 0, 0], [0, -ty-1, -cutz, [0, 0, 0]]])
+screwblock2();
 }
 
 atrans(bsh, [undef, [0, 0, 0]]) 
