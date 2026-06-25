@@ -16,12 +16,12 @@ z0 = 3;  // depth of vac inset
 z1 = 2;  // base plate thickness
 z2 = 5;  // thick parts of base (screw into here)
 z3 = 3.5;  // depth of material for screw (screw len = z2 + z3)
-z4 = br-2;  // height to brush axis
+z4 = br;  // height to brush axis
 stub = bw;
 sr = 1.5; // rod radius
 head = 1.2; // z depth reserved for screw1 head
 scr = 2.1; // screw radius 
-s2r = 3.45; // height & radius of screw2 head
+s2r = 3.5; // height & radius of screw2 head
 
 
 axl = 10;
@@ -46,6 +46,7 @@ module screw1(scr = scr, len = 15+s2r/2, head = head ) {
 
 // space for the screw, subtracted in difference below
 // positioned with top of head & screw @ z=0
+// len z-depth of screw
 // rad: radius of head
 module screw2(scr = scr, len = 15+s2r/2, rad = s2r ) {
   sink = .3;
@@ -86,11 +87,13 @@ module screwblock2(dz = bz, bz2 = z4) {
 // bx0, bxz, by, bz = top of bracket
 module block() {
   bx0 = bw2; bxz = bw2a; by = ty; dy = ly; // dy: left of axel
+  cx = bx0; cy = ty/2; cz = 2; // cz: z-depth of screw cutout
   difference() {
-  trr([0, by/2-dy, 0])
-  linear_extrude(height = bz, scale = [bxz/bx0, 1])
-    square([bx0, by], true);
-    trr([0, 10, bz+p]) screw2();
+    trr([0, by/2-dy, 0])
+    linear_extrude(height = bz, scale = [bxz/bx0, 1])
+      square([bx0, by], true);
+    trr([-cx/2, cy/2, bz-cz+p]) cube([cx, cy, cz]);
+    trr([0, ty/2, bz-cz+p]) screw2();
   }
 }
 cutz = z4 - (sr + .5);
@@ -102,7 +105,6 @@ module cutblock(f = pp) {
   echo("cutblock:", y, bh2 );
   trr([-x/2, 0-(f)/2, cutz-f/2]) cube([x, y, bz - cutz + f]);
   trr([0, -or-(f)/2, z4+sr-f/2, [-35, 0, 0, [0, or, 0]]]) cube([x/2, or, bz - sr - cutz + f]);
- * trr([-x*.28, .66 -or-(f)/2, z4-f/2, [-35, 0, -35, [x/2, or, 0]]]) cube([x/2, or, bz - sr - cutz + f]);
 }
 // bracket with down plunging locking clip
 module bracket2() {
