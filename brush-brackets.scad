@@ -10,7 +10,7 @@ inch = 25.4;
 // brackets to hold (cylinder) brushes under pool vacuum
 br = 7; // .2 * inch; // brush radius
 
-bw = 10; // x-width of main block
+bw = 9.8; // x-width of main block
 bh = 8;  // y-height of main block
 z0 = 3;  // depth of vac inset
 z1 = 2;  // base plate thickness
@@ -63,7 +63,7 @@ bz = z4 + sr + tz; // bracket z-top
 cw2 = 2;   // x-width of clip slot & wedge
 ch2 = 2*(sr+1.9); // y-height of clip
 
-bw2 = 9;  // x-width of base of bracket2
+bw2 = bw-1;  // x-width of base of bracket2
 bw2a = cw2 + 2.5; // x-width at top of bracket2
 bh2 = ch2+4;  // add screw block later
 bz2 = z4;  // z4 = z-height to axel
@@ -88,23 +88,26 @@ module screwblock2(dz = bz, bz2 = z4) {
 module block() {
   bx0 = bw2; bxz = bw2a; by = ty; dy = ly; // dy: left of axel
   cx = bx0; cy = ty/2; cz = 2; // cz: z-depth of screw cutout
-  difference() {
+  differenceN(2) {
+    trr([-(cx-p)/2, cy/2, 0]) cube([cx-p, cy, bz]);
     trr([0, by/2-dy, 0])
     linear_extrude(height = bz, scale = [bxz/bx0, 1])
-      square([bx0, by], true);
-    trr([-cx/2, cy/2, bz-cz+p]) cube([cx, cy, cz]);
+      square([bx0, by-p], true);
+    trr([-cx/2-p, cy/2-p, bz-cz+p]) cube([cx+pp, cy+pp, cz]); // cut down
+    trr([-bx0/2, -sr, z4-sr-f/2]) cube([bx0, 2*sr, sr + f]);  // arch
     trr([0, ty/2, bz-cz+p]) screw2();
   }
 }
-cutz = z4 - (sr + .5);
+cutz = z4 - (sr + 1.5);
 // the block that is differenced & intersected with the main block:
 module cutblock(f = pp) {
   x = bw2;
   y = (ty - ly) + f;
-  or = sr * 3;
-  echo("cutblock:", y, bh2 );
-  trr([-x/2, 0-(f)/2, cutz-f/2]) cube([x, y, bz - cutz + f]);
-  trr([0, -or-(f)/2, z4+sr-f/2, [-35, 0, 0, [0, or, 0]]]) cube([x/2, or, bz - sr - cutz + f]);
+  difference() {
+    trr([-x/2, -p-f/2, cutz-f/2]) cube([x, y+pp, bz - cutz + f]);  // main cut
+    trr([-x/2, -pp-f/2, z4-sr-sr-f/2-p]) cube([x/2, sr+2*pp, sr + f]);  // stop
+  }
+  trr([0, p-sr-(f)/2, z4-sr-sr-f/2]) cube([x/2, sr, sr + f]);  // stop
 }
 // bracket with down plunging locking clip
 module bracket2() {
@@ -171,11 +174,11 @@ loc = 3;
 // 0: no brush, 1: brush
 bsh = 0;
 
-astack(8,[10, 0, 0] )
+astack(8, [2*bw, 0, 0] )
 {
 atrans(loc, [undef, 0, [0, 0, 0], 2])
 bracket2();
-atrans(loc, [undef, 0, [0, 0, 0], [0, -ty-1, -cutz, [0, 0, 0]]])
+atrans(loc, [undef, 0, [0, 0, 0], [bw, 0, -cutz, [0, 0, 0]]])
 screwblock2();
 }
 
