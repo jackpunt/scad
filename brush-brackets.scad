@@ -16,7 +16,7 @@ z0 = 3;  // depth of vac inset
 z1 = 2;  // base plate thickness
 z2 = 5;  // thick parts of base (screw into here)
 z3 = 3.5;  // depth of material for screw (screw len = z2 + z3)
-z4 = br;  // height to brush axis
+z4 = br-1.5;  // height to brush axis
 stub = bw;
 sr = 1.5; // rod radius
 head = 1.2; // z depth reserved for screw1 head
@@ -98,16 +98,17 @@ module block() {
     trr([0, ty/2, bz-cz+p]) screw2();
   }
 }
-cutz = z4 - (sr + 1.5);
+cutz = z4 - (sr + 1.3);
 // the block that is differenced & intersected with the main block:
 module cutblock(f = pp) {
   x = bw2;
   y = (ty - ly) + f;
+  z = z4 - cutz;
   difference() {
     trr([-x/2, -p-f/2, cutz-f/2]) cube([x, y+pp, bz - cutz + f]);  // main cut
-    trr([-x/2, -pp-f/2, z4-sr-sr-f/2-p]) cube([x/2, sr+2*pp, sr + f]);  // stop
+    trr([-x/2, -2*pp, cutz-f/2-p]) cube([x/2, sr+pp, z + f]);  // green stop
   }
-  trr([0, p-sr-(f)/2, z4-sr-sr-f/2]) cube([x/2, sr, sr + f]);  // stop
+  trr([0, pp-sr-(f)/2, cutz-f/2]) cube([x/2, sr, z + f]);  // yellow stop
 }
 // bracket with down plunging locking clip
 module bracket2() {
