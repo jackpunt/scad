@@ -22,7 +22,7 @@ r = h2 * sqrt3_2;
 
 
 // hexagon in NS topo:
-module hexagon(tr=[0,0,0], r = r, t = t0, center = true) {
+module hexagon3D(tr=[0,0,0], r = r, t = t0, center = true) {
   translate(tr) cylinder(h = t, r=r, $fn=6, center = center);
 }
 module hexagon2D(tr=[0,0,0], r = r, t = t0, center = true) {
@@ -37,7 +37,7 @@ module aHexagon(tr=[0,0,0], r = r, t = t0, center = true) {
   if (is2D) {
     hexagon2D(tr, r, t, center);
   } else {
-    hexagon(tr, r, t, center);
+    hexagon3D(tr, r, t, center);
   }
 }
 
