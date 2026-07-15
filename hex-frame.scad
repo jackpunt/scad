@@ -19,6 +19,7 @@ nCol = 11;          // determines metaSize of map & frame
 // the hexRad for this file
 // radius of each hex; h2 is the measured ortho size (+ ~f)
 r = 19.4; // mm on sticky mat
+h = r*sqrt3;
 
 module hexagon3D(tr=[0,0,0], r = r, t = t0) {
   translate(tr) cylinder(h = t, r=r, $fn=6, center = false);
@@ -86,15 +87,21 @@ module hexCol(n, p = 0) {
 // n: number of hexes inside (order-11 board: edge is n=10, plus 2 corner caps)
 // d: frame depth (.5 * r)
 module fullEdge(n, d = .7 * r) {
-  l0 = n * r * sqrt3; // length of stack of n hexes
+  l0 = n * h; // length of stack of n hexes
   l1 = l0 + 0 * d;    // will stand up the y-axis, at x=0
   cp = is2D ? 0 : pp; // add pp for scad rendering
   // cut the adjacent hexes:
   difference() {
-    aCube([d+r/2, l1, tf], false);
+    trr([-d-r, 0, 0]) aCube([d+r/2, l1, tf], false);
     // the adjacent hexes:
-    translate([(d+r), l1/2, -pp/2])  hexCol(n+1, cp); // col=3 --> 4 hexes
+  #  translate([0, l1/2, -pp/2])  hexCol(n+1, cp); // col=3 --> 4 hexes
   }
 }
-// aTriangle(tr0, r, t0);
-fullEdge(n = 6);
+
+module corner() {
+
+}
+
+n = 6;
+fullEdge(n);
+trr([0, n * h, 0, [0, 0, -60]]) fullEdge(n);
