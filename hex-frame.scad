@@ -187,27 +187,28 @@ module bigRing(n = n) {
 colors = ["lightgreen","yellow","darkgreen","firebrick", "silver"];
 
 // ceil(n/2) + floor(n/2) hexes high, in i-th column
-module oneCol(i, nh, yn, c1, c2) {
+module oneCol(nh, xn, yn, colr) {
   n1 = ceil(nh/2);
   n2 = floor(nh/2); //n - n1;
-  echo("oneCol", i, nh);
-  // yn = n - dy*i - 6 + 5*dy - (n1-n2);
-  xn = i;
-  // yn = nh - dy*i - 6 + 5*dy - (n1-n2);
-  trr([(xn)*h*sqrt3_2, (yn+1)*h/2, 0]) color(c1) astack(n1, [0, h, 0]) aHexagon(tr0);
-  trr([(xn)*h*sqrt3_2, (yn-1)*h/2, 0]) color(c2) astack(n2, [0, -h, 0]) aHexagon(tr0);
+  trr([(xn)*h*sqrt3_2, (yn+1)*h/2, 0]) color(colr[0]) astack(n1, [0, h, 0]) aHexagon(tr0);
+  trr([(xn)*h*sqrt3_2, (yn-1)*h/2, 0]) color(colr[1]) astack(n2, [0, -h, 0]) aHexagon(tr0);
 }
 
 // hexes that fill the interior of frame of order n
 module fullMap(n) {
-  function yn1 (i, nh) = nh - i -1 - (nh%2);
-  function yn2 (i, nh) =      n -1 - (nh%2);
-  n1 = n-1;
-  for (i = [0 : n1] ) let(nh = i + n) oneCol(i, nh, yn1(i, nh), "blue", "red");
-  for (i = [n : 2*n1] ) let(nh=3*n1+1-i) oneCol(i, nh, yn2(n, nh), "yellow", "green");
+  for (i = [0 : 2 * n] ) 
+    let(
+      lh = (i <= n),       // left-half?
+      nh = lh ? n + i +1 : 3*n - i +1, // number of hexes in column
+      kk = lh ? (nh-i) : n+1, 
+      yn = kk - 1 - (nh%2), // y-offset to astack
+      xn = i,               // x-offset (column)
+      colr = lh ? ["red", "blue"] : ["yellow", "green"]
+      ) 
+    oneCol(nh, xn, yn, colr);
 }
 
-fullMap(10);
+fullMap(n);
 
 
 // two edges in close layout for printing:
@@ -218,7 +219,7 @@ module dualEdge(cr2) {
 
 d = r * .7;
 rd = r + d;
-n = 4;
+n = 10;
 crr = [n*h*sqrt3_2, n*h/2, 0]; // rotation around hex center
 cr2a = [.85-h*sqrt3_2, h*.57, 0, [0, 180, 0, [0, n*h/2, 0]]]; // reflective for laser/wood
 cr2b = [2.5-h*sqrt3_2, h*.47, 0, [0, 0, 180, [0, n*h/2, 0]]];// 220mm second instance
@@ -239,5 +240,5 @@ atrans(loc, [undef, 0, [0,0,0]]) astack(3, [r*.6+2*d, 0, 0]) dualEdge(cr2a);
 atrans(loc, [undef, 0, 0, [0,0,0]]) astack(3, [r*.65+2*d, 0, 0]) dualEdge(cr2c);
 atrans(loc, [undef, 0, [0, 0, 0], 2]) astack(6, [0, h, 0]) trr([-r, r, 0, [0, 0, -30]]) corner();
 // astack2 is: aRing, with repeated rotation
-atrans(loc, [undef, 0, 0, 0, [0,0,-pp]]) bigRing(9);
+atrans(loc, [undef, 0, 0, 0, [0,0,-pp]]) bigRing(n);
 
