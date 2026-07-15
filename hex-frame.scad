@@ -1,7 +1,7 @@
 use <mylib.scad>;
 
 is2D = true;
-p = is2D ? 0 : .001;
+p = is2D ? .001 : .001;
 pp = 2 * p;
 f = .18;
 sqrt3 = sqrt(3);    // 1.732
@@ -94,14 +94,77 @@ module fullEdge(n, d = .7 * r) {
   difference() {
     trr([-d-r, 0, 0]) aCube([d+r/2, l1, tf], false);
     // the adjacent hexes:
-  #  translate([0, l1/2, -pp/2])  hexCol(n+1, cp); // col=3 --> 4 hexes
+    translate([0, l1/2, -cp/2])  hexCol(n+1, cp); // col=3 --> 4 hexes
   }
 }
 
-module corner() {
-
+module corner0(r=r, d=d) {
+  rd = r+d;
+  polygon(points = [[-r, 0], [-rd, 0], [-rd/2, -rd*sqrt3/2], [-r/2, -r*sqrt3/2]]);
 }
 
-n = 6;
-fullEdge(n);
-trr([0, n * h, 0, [0, 0, -60]]) fullEdge(n);
+
+// Add a hook (triangle) at one end; cut a hook (triangle) on the other end.
+//
+// child(0): fullFrame
+// child(1): hook
+// rtr0: place hook to add
+// rtr1: place hook to subtract
+// sf: scale hook to subtract
+// (child(0) + rtr0() child(1)) - (rtr1() scalet(sf) child(1))
+module addAndCut(rtr0, rtr1, sf) {
+  sf = def(sf, [1, 1, 1]); // scale factors [sx, sy, sz]
+  difference() 
+  {
+    union() {
+      children(0); // aCube() ?
+      trr(rtr0) children(1); // aTriangle(), the hook
+    }
+    // move to cut location, to subtract child(1)
+    trr(rtr1) scalet(sf) children(1);
+  }
+}
+
+hr = r*.2; // radius of hook triangle
+hrot = -30; // rotation of hook triangle (-25)
+
+// Place a hook (triangle) at rtr.
+// hr: radius of hook triangle
+// rtr: [dx, dy, tf {, rotr}] ([0, 0, 0])
+//  - rotr: [rx, ry, rz {, cxyz}] ([0, 0, 0])
+//  - cxyz: [cx, cy, cz] ([0, 0, 0])
+module hook(rtr, hr = hr) {
+  rtr = def(rtr, [0, -hr*.1, 0, [0, 0, hrot]]); // -25
+  aTriangle(rtr, hr, tf+pp, true);
+}
+
+module edge(nr = 0) {
+  trr([0, 0, 0, [0, 0, nr * 60, crr]])
+  addAndCut([hx, 0, 0], [hx, n*h, 0]) {
+    fullEdge(n); 
+    hook();
+  };
+}
+module corner(colr) {
+  color(colr) 
+  addAndCut([hx, 0, 0, [0, 0, 60, [-hx, 0, 0]]], [hx, 0, 0], [hsf, hsf, 1]) {
+    corner0();
+    hook();
+  };
+}
+
+d = r * .7;
+rd = r + d;
+n = 5;
+crr = [n*h*sqrt3_2, n*h/2, 0]; // rotation around hex center
+
+hf = f/2;    // fudge on hook size (shrink/grow)
+hsf = (hr+hf)/hr; 
+hx = -(r+d*.45);
+
+// loc: 0: design,
+loc = 0;
+atrans(loc, [[0, 0, 0], [0, 0, 0]]) edge();
+atrans(loc, [[0, 0, 0], undef, [0, 0, 0]]) edge(1);
+atrans(loc, [[0, 0, p], [0, -3, 0]]) corner("red");
+
