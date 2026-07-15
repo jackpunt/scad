@@ -151,7 +151,7 @@ module hook2(hh) {
   trr([dx-hw+ ho, +hh/2, 0]) aCube([hw, hy, t0]);
 }
 
-module edge(nr = 0, n = n) {
+module edge(n = n, nr = 0) {
   trr([0, 0, 0, [0, 0, nr * 60, crr]])
   addAndCut([hx, 0, 0], [hx, n*h, 0]) {
     fullEdge(n); 
@@ -167,13 +167,15 @@ module corner(colr) {
 }
 
 module both(n = n) {
-  edge(0, n);
+  edge(n);
   corner();
 }
+
+// used in bigRing()
 module twoedge(n1, n2) {
   trr([0, n2*h, 0]) 
-  color("brown") edge(0, n1);
-  color("grey") edge(0, n2);
+  color("brown") edge(n1);
+  color("grey") edge(n2);
   corner();
 }
 module bigRing(n = n) {
@@ -208,21 +210,28 @@ module fullMap(n) {
     oneCol(nh, xn, yn, colr);
 }
 
-fullMap(n);
+// fullMap(n);
 
 
 // two edges in close layout for printing:
-module dualEdge(cr2) {
-  trr([0, 2.35, 0]) edge();
-  trr(cr2) edge();
+module dualEdge(cr2, yy = 0) {
+  n1 = (yy==0) ? n : floor(n/2);
+  n2 = (yy==0) ? n : ceil(n/2);
+  trr([0, 2.35, 0]) edge(n2);
+  dy = cr2.y - yy * (round(n/2)*2)* h/2;
+  trr([cr2.x, dy, cr2.z, cr2[3]]) edge(n1);
 }
 
-d = r * .7;
-rd = r + d;
-n = 10;
+
+// Param block:
+
+d = r * .7;  // width of frame outside of hexes
+rd = r + d;  // total width
+n = 10;       // number of hexes to frame, order of meta-hex
+
 crr = [n*h*sqrt3_2, n*h/2, 0]; // rotation around hex center
-cr2a = [.85-h*sqrt3_2, h*.57, 0, [0, 180, 0, [0, n*h/2, 0]]]; // reflective for laser/wood
-cr2b = [2.5-h*sqrt3_2, h*.47, 0, [0, 0, 180, [0, n*h/2, 0]]];// 220mm second instance
+// cr2a = [.85-h*sqrt3_2, h*.57, 0, [0, 180, 0, [0, n*h/2, 0]]]; // reflective for laser/wood
+// cr2b = [2.5-h*sqrt3_2, h*.47, 0, [0, 0, 180, [0, n*h/2, 0]]];// 220mm second instance
 cr2c = [1.2-h*sqrt3_2, h*.57, 0, [0, 0, 180, [0, n*h/2, 0]]];// 220mm second instance
 
 
@@ -230,14 +239,15 @@ hf = f/2;             // fudge on hook size (shrink/grow)
 hsf = (hr + hf)/hr;   // hook scale factor (allow for hf)
 hx = -(r + d * .45);  // hook offset on butting joint
 
-// loc: 0: design, 1: edge&corner, 2: 6-packed, 3: ?
-loc = 4;
+// loc: 0: design, 1: edge&corner, 2: 6-full, 3: 12-split, 4: bigRing(n)
+loc = 3;
 atrans(loc, [[0, 0, 0], [0, 2.35, 0], undef, 2]) edge();
 atrans(loc, [[0, 0, 0]]) edge(1); // extra edge demo
 atrans(loc, [[0, 0, p], [0, 0, 0]]) corner("red");
 
-atrans(loc, [undef, 0, [0,0,0]]) astack(3, [r*.6+2*d, 0, 0]) dualEdge(cr2a);
-atrans(loc, [undef, 0, 0, [0,0,0]]) astack(3, [r*.65+2*d, 0, 0]) dualEdge(cr2c);
+// atrans(loc, [undef, 0, [0,0,0]]) astack(3, [r*.6+2*d, 0, 0]) dualEdge(cr2a); // meh...
+atrans(loc, [undef, 0, [0,0,0]]) astack(3, [r*.65+2*d, 0, 0]) dualEdge(cr2c, 0);
+atrans(loc, [undef, 0, 0, [0,0,0]]) astack(6, [r*.65+2*d, 0, 0]) dualEdge(cr2c, 1);
 atrans(loc, [undef, 0, [0, 0, 0], 2]) astack(6, [0, h, 0]) trr([-r, r, 0, [0, 0, -30]]) corner();
 // astack2 is: aRing, with repeated rotation
 atrans(loc, [undef, 0, 0, 0, [0,0,-pp]]) bigRing(n);
