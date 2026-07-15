@@ -78,9 +78,9 @@ module aCube(xyz, center) {
   }
 }
 
-module hexCol(n, p = 0) {
+module hexCol(n, p = 0, colors) {
   h = r * sqrt3;
-  trr([0, - ((n-1) * h/2), 0]) astack(n, [0, h, 0]) aHexagon(tr0, r+p);
+  trr([0, - ((n-1) * h/2), 0]) astack(n, [0, h, 0], undef, colors) aHexagon(tr0, r+p);
 }
 
 // edge frame hooking n hexes 
@@ -176,22 +176,37 @@ module twoedge(n1, n2) {
   color("grey") edge(0, n2);
   corner();
 }
-module bigRing2(n = n) {
+module bigRing(n = n) {
   n1 = floor(n/2);
   n2 = n - n1;
   crr = [n*h*sqrt3_2, n*h/2, 0];
   aRing(6, [0, 0, 60, crr]) twoedge(n1, n2);
-  trr([n*h*sqrt3_2, n*h/2, 0]) color("blue") astack(n+1, [0, h, 0]) aHexagon(tr0);;
-  trr([n*h*sqrt3_2, n*h/2, 0]) color("red") astack(n+1, [0, -h, 0]) aHexagon(tr0);;
 }
 
 
-module bigRing(n = n) {
-  crr = [n*h*sqrt3_2, n*h/2, 0];
-  aRing(6, [0, 0, 60, crr]) both(n);
-  trr([n*h*sqrt3_2, n*h/2, 0]) color("blue") astack(n+1, [0, h, 0]) aHexagon(tr0);;
-  trr([n*h*sqrt3_2, n*h/2, 0]) color("red") astack(n+1, [0, -h, 0]) aHexagon(tr0);;
+colors = ["lightgreen","yellow","darkgreen","firebrick", "silver"];
+
+// ceil(n/2) + floor(n/2) hexes high, in i-th column
+module oneCol(i, n, dy=1) {
+  n1 = ceil(n/2);
+  n2 = floor(n/2); //n - n1;
+
+  xn = i;
+  yn = n - i - 1 - (n1-n2);
+  trr([(xn)*h*sqrt3_2, (yn+1)*h/2, 0]) color("blue") astack(n1, [0, h, 0]) aHexagon(tr0);
+  trr([(xn)*h*sqrt3_2, (yn-1)*h/2, 0]) color("red") astack(n2, [0, -h, 0]) aHexagon(tr0);
 }
+
+// hexes that fill the interior of frame of order n
+module fullMap(n) {
+  for (i = [0 : n-1] ) oneCol(i, i + n);
+  // for (i = [n : 2*n-1] ) oneCol(i, (2*n-i+1), -1);
+}
+
+fullMap(10);
+
+
+// two edges in close layout for printing:
 module dualEdge(cr2) {
   trr([0, 2.35, 0]) edge();
   trr(cr2) edge();
@@ -220,5 +235,5 @@ atrans(loc, [undef, 0, [0,0,0]]) astack(3, [r*.6+2*d, 0, 0]) dualEdge(cr2a);
 atrans(loc, [undef, 0, 0, [0,0,0]]) astack(3, [r*.65+2*d, 0, 0]) dualEdge(cr2c);
 atrans(loc, [undef, 0, [0, 0, 0], 2]) astack(6, [0, h, 0]) trr([-r, r, 0, [0, 0, -30]]) corner();
 // astack2 is: aRing, with repeated rotation
-atrans(loc, [undef, 0, 0, 0, [0,0,0]]) bigRing2(9);
+atrans(loc, [undef, 0, 0, 0, [0,0,-pp]]) bigRing(9);
 
