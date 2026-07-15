@@ -187,20 +187,24 @@ module bigRing(n = n) {
 colors = ["lightgreen","yellow","darkgreen","firebrick", "silver"];
 
 // ceil(n/2) + floor(n/2) hexes high, in i-th column
-module oneCol(i, n, dy=1) {
-  n1 = ceil(n/2);
-  n2 = floor(n/2); //n - n1;
-
+module oneCol(i, nh, yn, c1, c2) {
+  n1 = ceil(nh/2);
+  n2 = floor(nh/2); //n - n1;
+  echo("oneCol", i, nh);
+  // yn = n - dy*i - 6 + 5*dy - (n1-n2);
   xn = i;
-  yn = n - i - 1 - (n1-n2);
-  trr([(xn)*h*sqrt3_2, (yn+1)*h/2, 0]) color("blue") astack(n1, [0, h, 0]) aHexagon(tr0);
-  trr([(xn)*h*sqrt3_2, (yn-1)*h/2, 0]) color("red") astack(n2, [0, -h, 0]) aHexagon(tr0);
+  // yn = nh - dy*i - 6 + 5*dy - (n1-n2);
+  trr([(xn)*h*sqrt3_2, (yn+1)*h/2, 0]) color(c1) astack(n1, [0, h, 0]) aHexagon(tr0);
+  trr([(xn)*h*sqrt3_2, (yn-1)*h/2, 0]) color(c2) astack(n2, [0, -h, 0]) aHexagon(tr0);
 }
 
 // hexes that fill the interior of frame of order n
 module fullMap(n) {
-  for (i = [0 : n-1] ) oneCol(i, i + n);
-  // for (i = [n : 2*n-1] ) oneCol(i, (2*n-i+1), -1);
+  function yn1 (i, nh) = nh - i -1 - (nh%2);
+  function yn2 (i, nh) =      n -1 - (nh%2);
+  n1 = n-1;
+  for (i = [0 : n1] ) let(nh = i + n) oneCol(i, nh, yn1(i, nh), "blue", "red");
+  for (i = [n : 2*n1] ) let(nh=3*n1+1-i) oneCol(i, nh, yn2(n, nh), "yellow", "green");
 }
 
 fullMap(10);
