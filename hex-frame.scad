@@ -133,12 +133,25 @@ hrot = -30; // rotation of hook triangle (-25)
 // rtr: [dx, dy, tf {, rotr}] ([0, 0, 0])
 //  - rotr: [rx, ry, rz {, cxyz}] ([0, 0, 0])
 //  - cxyz: [cx, cy, cz] ([0, 0, 0])
-module hook(rtr, hr = hr) {
+module hook(hr = hr, rtr) {
   rtr = def(rtr, [0, -hr*.1, 0, [0, 0, hrot]]); // -25
   aTriangle(rtr, hr, tf+pp, true);
 }
 
-module edge(nr = 0) {
+// hh: height of hook (hr * 1.1)
+module hook2(hh) {
+  hh = def(hh, hr * 1.1);
+  ht = .7 * hh;   // x-width of pillar
+  hy = .5 * hh;   // y-thick of crossbar
+  hw = 1.6 * hh;  // x-width of crossbar
+  ho = .5 * hw;   // x-offset of crossbar
+  dx = .15 * hh;  // offsdet from rtr.x
+  trr([dx - ht/2, -(hh+pp)/2, 0]) aCube([ht, hh+pp, t0]);
+  trr([dx - ho, -hh, 0]) aCube([hw, hy, t0]);
+  trr([dx-hw+ ho, +hh/2, 0]) aCube([hw, hy, t0]);
+}
+
+module edge(nr = 0, n = n) {
   trr([0, 0, 0, [0, 0, nr * 60, crr]])
   addAndCut([hx, 0, 0], [hx, n*h, 0]) {
     fullEdge(n); 
@@ -153,18 +166,59 @@ module corner(colr) {
   };
 }
 
+module both(n = n) {
+  edge(0, n);
+  corner();
+}
+module twoedge(n1, n2) {
+  trr([0, n2*h, 0]) 
+  color("brown") edge(0, n1);
+  color("grey") edge(0, n2);
+  corner();
+}
+module bigRing2(n = n) {
+  n1 = floor(n/2);
+  n2 = n - n1;
+  crr = [n*h*sqrt3_2, n*h/2, 0];
+  aRing(6, [0, 0, 60, crr]) twoedge(n1, n2);
+  trr([n*h*sqrt3_2, n*h/2, 0]) color("blue") astack(n+1, [0, h, 0]) aHexagon(tr0);;
+  trr([n*h*sqrt3_2, n*h/2, 0]) color("red") astack(n+1, [0, -h, 0]) aHexagon(tr0);;
+}
+
+
+module bigRing(n = n) {
+  crr = [n*h*sqrt3_2, n*h/2, 0];
+  aRing(6, [0, 0, 60, crr]) both(n);
+  trr([n*h*sqrt3_2, n*h/2, 0]) color("blue") astack(n+1, [0, h, 0]) aHexagon(tr0);;
+  trr([n*h*sqrt3_2, n*h/2, 0]) color("red") astack(n+1, [0, -h, 0]) aHexagon(tr0);;
+}
+module dualEdge(cr2) {
+  trr([0, 2.35, 0]) edge();
+  trr(cr2) edge();
+}
+
 d = r * .7;
 rd = r + d;
-n = 5;
+n = 4;
 crr = [n*h*sqrt3_2, n*h/2, 0]; // rotation around hex center
+cr2a = [.85-h*sqrt3_2, h*.57, 0, [0, 180, 0, [0, n*h/2, 0]]]; // reflective for laser/wood
+cr2b = [2.5-h*sqrt3_2, h*.47, 0, [0, 0, 180, [0, n*h/2, 0]]];// 220mm second instance
+cr2c = [1.2-h*sqrt3_2, h*.57, 0, [0, 0, 180, [0, n*h/2, 0]]];// 220mm second instance
 
-hf = f/2;    // fudge on hook size (shrink/grow)
-hsf = (hr+hf)/hr; 
-hx = -(r+d*.45);
 
-// loc: 0: design,
-loc = 0;
-atrans(loc, [[0, 0, 0], [0, 0, 0]]) edge();
-atrans(loc, [[0, 0, 0], undef, [0, 0, 0]]) edge(1);
-atrans(loc, [[0, 0, p], [0, -3, 0]]) corner("red");
+hf = f/2;             // fudge on hook size (shrink/grow)
+hsf = (hr + hf)/hr;   // hook scale factor (allow for hf)
+hx = -(r + d * .45);  // hook offset on butting joint
+
+// loc: 0: design, 1: edge&corner, 2: 6-packed, 3: ?
+loc = 4;
+atrans(loc, [[0, 0, 0], [0, 2.35, 0], undef, 2]) edge();
+atrans(loc, [[0, 0, 0]]) edge(1); // extra edge demo
+atrans(loc, [[0, 0, p], [0, 0, 0]]) corner("red");
+
+atrans(loc, [undef, 0, [0,0,0]]) astack(3, [r*.6+2*d, 0, 0]) dualEdge(cr2a);
+atrans(loc, [undef, 0, 0, [0,0,0]]) astack(3, [r*.65+2*d, 0, 0]) dualEdge(cr2c);
+atrans(loc, [undef, 0, [0, 0, 0], 2]) astack(6, [0, h, 0]) trr([-r, r, 0, [0, 0, -30]]) corner();
+// astack2 is: aRing, with repeated rotation
+atrans(loc, [undef, 0, 0, 0, [0,0,0]]) bigRing2(9);
 
