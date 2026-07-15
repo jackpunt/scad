@@ -163,6 +163,20 @@ module astack(n, d, rot, colors, i0 = 0) {
     rotate(rxyz) trr(amul(dxyz, i)) children();
   }
 }
+// like astack, but rotates each interation
+module aRing(n, rot, colors, i0 = 0) {
+  function scolor(i) = is_list(colors) ? colors[(i % len(colors))] : colors;
+  // dxyz = is_list(d) ? d : [ d, 0, 0 ];
+  rxyz = is_list(rot) ? rot : is_undef(rot) ? [ 0, 0, 0 ] : rotOfId(rot);
+  rc = rxyz[3];
+  // echo("dxyz=", dxyz) 
+  imax = i0 + n - 1;
+  if (i0 <= imax) 
+  for (i = [i0 : imax]) {
+    color(scolor(i))
+    trr([0, 0, 0, [rxyz.x*i, rxyz.y*i, rxyz.z*i, rc]])  children();
+  }
+}
 
 function as2D(ary, a1) = [ ary[0], def(ary[1], a1)];
 function as3D(ary, a2) = [ ary[0], ary[1], def(ary[2], a2) ];
