@@ -26,7 +26,7 @@ tc = .4;            // thicknes of card (> actual: .33 mm)
 rc = 3;             // radius of card corner
 
 tf = 2.5;           // thicknes of frame
-side = .3*inch;     // side rails
+side = .3*inch;     // side rails (7.62 mm)
 thf = cardh + 2 * side; // total height of frame
 
 module card(w = cardw, h = cardh, tc = tc, rc = rc) {
@@ -63,13 +63,13 @@ module tape(w, h, t = .25) {
 }
 
 xw = -.2;   // extra width (so end-corner will hold card)
-ecx = 14;   // endcap-x. cardw + ecx (total width) = 114mm (4.5")
-ech = 12;   // y-height beyond card
-ecz = 2;    // z-height above track
+ecx = 14;   // endcap x-width: cardw + ecx (total width) = 114mm (4.5")
+ech = 12;   // endcap y-height beyond card (< side * 2) ~2*side - 2+t0
+ecz = 2;    // endcap z-height above track
+tt = .35;   // thickness of tape, approx?
 
 module track(w = cardw, h = cardh, endcap = 0) {
   tw = 1*inch; th = 2.15*inch; // cutout for tape: x-width, y-height
-  tt = .35; // thickness of tape, approx?
   cx = 5;   // cutout x-dim for tape/hinge
   differenceN(1, endcap == 0 ? 0 : 2) 
   {
@@ -86,17 +86,22 @@ module track(w = cardw, h = cardh, endcap = 0) {
     ecx = endcap;
     ecy = (thf-cardh)/2;
     difference() {
-    trr([-ecx, -ecy, 0]) roundedCube([ecx+w/18, thf, tf+ecz], 2, true);
-    trr([-ecx+1, 0-ech/2, tf+p]) card(w, h+ech, ecz, .5);
-    trr([0, 0, tf-tc+pp]) card();
+      trr([-ecx, -ecy, 0]) roundedCube([ecx+w/18, thf, tf+ecz], 2, true);
+      trr([-ecx+1, 0-ech/2, tf+p]) card(w, h+ech, ecz, .5);
+      trr([0, 0, tf-tc+pp]) card();
     }
   }
 }
 
+// track thickness, including bottom tape & folding fudge:
+tzt = tf + tt + f;
+tsz = 4 * (tzt) + 2 * (tzt + ecz); // total z-height of folded stack
+
+// note: endcap extends to -ecx
 module trackStack() {
   trr([0, 0, 0, [180, 0, 0, [0, cardh/2, (ecz+tf)/2]]])  track(cardw, cardh, ecx); // TODO: rotate 180-x 
-  trr([0, 0, ecz + tf+f]) astack(4, [0, 0, tf+f], tr0) track();
-  trr([0, 0, ecz + (tf+f)*5]) track(cardw, cardh, ecx);
+  trr([0, 0, ecz + tzt]) astack(4, [0, 0, tzt], tr0) track();
+  trr([0, 0, ecz + tzt*5 + tt]) track(cardw, cardh, ecx);
 }
 
 trp = [cardw + xw + 1.0, 0, 0]; // space for print
