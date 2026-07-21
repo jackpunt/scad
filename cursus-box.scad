@@ -28,7 +28,7 @@ bx = mcardw + 2 + 2*t0; // mcardw + slack
 dz = 2;                  // extend boxes above cards
 bz = 1.75*inch + t0 + dz;// extend boxes above cards
 byc = t0 + nd2 * tc1 + t0;  // thin section for cards (.4; >> .33) 4+1 = 5mm
-bym = 13.5;                 // taller than the meeples
+bym = t0 + 12.5;            // taller than the meeples
 by = bym + byc;        // total-y of playerBox; meeples (8x12x12 ~1152 mm3) * 8 = 9200
 byt = by + f;           // total width + fudge in multiPlayer
 boxw = 2*t0 + (cardw + ecx) + 2*t0; // exterior size of main box
@@ -38,7 +38,7 @@ boxz = bz;
 
 echo("bx * bym * bz = ", bx * bym * bz, bx/12, bym, bz, "by=", by, "bym=", bym); // 53000 > 8000
 echo("boxw, boxy", boxw, boxy);
-module playerBox(cx = 1) {
+module playerBox(cx = 1, meep = false) {
   trr([by, 0, 0, [0, 0, 90]]) {
   color("#e0e0e0d9")
   slotifyY2([bz-dz, .6*bx, 2*t0, 4], [bx*.5, byc + .2*t0, bz*.7], undef, 3, false)
@@ -50,11 +50,11 @@ module playerBox(cx = 1) {
     trr([cx, byc, t0, [90, 0, 0]]) astack(nd2, [0, 0, tc1]) mcard();
   }
   }
-  trr([(bym-t0)/2, cardw/2, 2]) meeple();
+  if (meep) trr([(bym-t0)/4, cardw/2, 0, [0, 90, 0, [4, 0, 4]]]) meeple();
 }
-module multiPlayer(n = 6) {
+module multiPlayer(n = 6, cx = 2, meep = false) {
   astack(n, [byt, 0, 0])
-  playerBox();
+  playerBox(cx, meep);
 }
 
 module miniDeck(n = ndeck) {
