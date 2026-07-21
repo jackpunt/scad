@@ -34,7 +34,7 @@ module card(w = cardw, h = cardh, tc = tc, rc = rc) {
 }
 
 // card with colored slots
-module card2(w = cardw, h = cardh, rc = rc, rc = rc) {
+module card2(w = cardw, h = cardh, tc = tc, rc = rc) {
   color0 = ["red", "#fff205", "#0066CC", "#c941ff"];
   color1 = ["#c941ff", "#0066CC", "#fff205", "red"];
   wl = .5;   // width of black line down the center
@@ -45,7 +45,7 @@ module card2(w = cardw, h = cardh, rc = rc, rc = rc) {
   }
   trr([xw/2, 0, tf-tc])
   intersection() {
-    card();    // cut to shape of card
+    card(w, h, tc, rc);    // cut to shape of card
     trr([0, h/2, 0])
     union() {
       trr([sw/4, 0, 0]) color("black") slot(sw/2, h);
@@ -63,7 +63,10 @@ module tape(w, h, t = .25) {
 }
 
 xw = -.2;   // extra width (so end-corner will hold card)
-ecx = 14;   // endcap-x: total length = 114mm (4.5")
+ecx = 14;   // endcap-x. cardw + ecx (total width) = 114mm (4.5")
+ech = 12;   // y-height beyond card
+ecz = 2;    // z-height above track
+
 module track(w = cardw, h = cardh, endcap = 0) {
   tw = 1*inch; th = 2.15*inch; // cutout for tape: x-width, y-height
   tt = .35; // thickness of tape, approx?
@@ -81,8 +84,6 @@ module track(w = cardw, h = cardh, endcap = 0) {
   }
   if (endcap > 0) {
     ecx = endcap;
-    ech = 12;       // y-height beyond card
-    ecz = 2;        // z-height above track
     ecy = (thf-cardh)/2;
     difference() {
     trr([-ecx, -ecy, 0]) roundedCube([ecx+w/18, thf, tf+ecz], 2, true);
@@ -90,6 +91,12 @@ module track(w = cardw, h = cardh, endcap = 0) {
     trr([0, 0, tf-tc+pp]) card();
     }
   }
+}
+
+module trackStack() {
+  trr([0, 0, 0, [180, 0, 0, [0, cardh/2, (ecz+tf)/2]]])  track(cardw, cardh, ecx); // TODO: rotate 180-x 
+  trr([0, 0, ecz + tf+f]) astack(4, [0, 0, tf+f], tr0) track();
+  trr([0, 0, ecz + (tf+f)*5]) track(cardw, cardh, ecx);
 }
 
 trp = [cardw + xw + 1.0, 0, 0]; // space for print
