@@ -24,23 +24,24 @@ ndeck = 64 + nd2;
 ntc = ndeck * tc; // width of cards in miniBox
 
 bx0 = 2.5*inch + 4;
-bz = 1.75*inch+t0 + 2;
-by1 = 10 * tc + t0;
+dz = 2;                  // extend boxes above cards
+bz = 1.75*inch + t0 + dz;// extend boxes above cards
+by1 = 10 * tc + t0;      // thin section for cards
 by2 = 16;                // taller than the meeples (8x12x12 ~1152 mm3) * 8 = 9200
 byt = by1 + by2 -t0 + .5;
 boxw = t0 + t0 + cardw + t0 + t0 + ecx + t0 + ntc + t0; // exterior size of main box
 boxy = thf+ 3 * (byt + t0);
 boxz = bz;
 
-bx = (boxw-3*t0)/2;       // fit playerBoxes to size of outer box
+bx = (boxw-4*t0)/2;       // fit playerBoxes to size of outer box
 echo("bx * by2 * bz = ", bx * by2 * bz, bx/12, by2, bz); // 53000 > 8000
 echo("boxw, boxy", boxw, boxy);
-module playerBox(cx = .3) {
+module playerBox(cx = 3) {
   color("#e0e0e0d9")
-  slotifyY2([bz, .5*bx, 2*t0, 4], [bx*.5, by1 + .2*t0, bz*.7], undef, 3, false)
-  slotifyY2([bz, .6*bx, 2*t0, 4], [bx*.5, 1.2*t0, bz*.5], undef, 3, false) {
-    trr([0, t0, 0]) box([bx, by1, bz]);
-    trr([0, by1, 0]) box([bx, by2, bz]);
+  slotifyY2([bz-dz, .5*bx, 2*t0, 4], [bx*.5, by1 + .2*t0, bz*.7], undef, 3, false)
+  slotifyY2([bz- 0, .6*bx, 2*t0, 4], [bx*.5,      1.2*t0, bz*.5], undef, 3, false) {
+    trr([0,  t0, 0]) box([bx, by2+by1-t0, bz- 0]);     // cardsBox (& meepleBox)
+    trr([0, by1, 0]) box([bx, by2,        bz-dz]);     // meepleBox
   }
   if (cx > 0) {
     trr([cx, 4*t0, t0, [90, 0, 0]]) mcard();
@@ -82,4 +83,4 @@ trr([trackx, t0/2+side, 0]) trackStack();
 trr([trackx-ecx, t0/2+side, tsz]) cardStack();
 
 trr([p-t0, p-t0, 0]) miniBox(bz, t0);
-*trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/3]);
+trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/3]);
