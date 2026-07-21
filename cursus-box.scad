@@ -35,14 +35,16 @@ boxz = bz;
 bx = (boxw-3*t0)/2;       // fit playerBoxes to size of outer box
 echo("bx * by2 * bz = ", bx * by2 * bz, bx/12, by2, bz); // 53000 > 8000
 echo("boxw, boxy", boxw, boxy);
-module playerBox() {
+module playerBox(cx = .3) {
   color("#e0e0e0d9")
-  slotifyY2([bz, .7*bx, 2*t0, 4], [bx*.5, by1 + .2*t0, bz*.7], undef, 3, false)
-  slotifyY2([bz, .8*bx, 2*t0, 4], [bx*.5, 1.2*t0, bz*.5], undef, 3, false) {
+  slotifyY2([bz, .5*bx, 2*t0, 4], [bx*.5, by1 + .2*t0, bz*.7], undef, 3, false)
+  slotifyY2([bz, .6*bx, 2*t0, 4], [bx*.5, 1.2*t0, bz*.5], undef, 3, false) {
     trr([0, t0, 0]) box([bx, by1, bz]);
     trr([0, by1, 0]) box([bx, by2, bz]);
   }
-  trr([2*t0, 4*t0, t0, [90, 0, 0]]) mcard();
+  if (cx > 0) {
+    trr([cx, 4*t0, t0, [90, 0, 0]]) mcard();
+  }
 }
 module multiPlayer() {
   astack(2, [bx+.5, 0, 0], tr0)
@@ -54,15 +56,17 @@ module miniDeck(n = ndeck) {
   astack(n, [0, 0, tc], tr0) mcard();
 }
 
-module miniBox(bz, cards = true) {
+module miniBox(bz, cy = 0) {
   ntb = nd2 * tc; // for white, black/grey cards
+  mbx = t0 + ntc + t0;
   mbh = thf - 2*f + t0 * .5;
   mbz = bz - t0;
-  trr([t0+f, t0+f, t0]) {
-   // slotifyX2([mbz, mbh * .7, 2*t0, 4], [0, 0, 0], 1, undef, true)
-    box([t0 + ntc + t0, mbh, mbz]);
-    if (cards) {
-      trr([t0, 3*t0+f, 0, [90, 0, 90]]) miniDeck();
+  trr([t0+f, t0+f, 0]) {
+    slotifyX2([mbz, mbh * .5, 2*t0, 4], [0 + t0/2, mbh/2, mbz/2], undef, 4, false)
+    slotifyX2([mbz, mbh * .5, 2*t0, 4], [mbx-t0/2, mbh/2, mbz/2], undef, 4, false)
+    box([mbx, mbh, mbz]);
+    if (cy > 0) {
+      trr([t0, cy, t0, [90, 0, 90]]) miniDeck();
     }
   }
 } 
@@ -77,5 +81,5 @@ trr([0, thf, 0]) multiPlayer();
 trr([trackx, t0/2+side, 0]) trackStack();
 trr([trackx-ecx, t0/2+side, tsz]) cardStack();
 
-trr([p-t0, p-t0, 0]) miniBox(6*tf+2*ecz + 10);
+trr([p-t0, p-t0, 0]) miniBox(bz, t0);
 *trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/3]);
