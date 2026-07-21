@@ -108,6 +108,14 @@ module trackStack() {
 
 trp = [cardw + xw + 1.0, 0, 0]; // space for print
 tr2 = [cardw + 0.05, 0, 0]; // space for view
+module show(loc = 0) {
+atrans(loc, [tr0, 0, 0, 0, undef]) track(cardw, cardh, loc<3 ? ecx : 0);    // single
+atrans(loc, [tr0, 0, undef, undef]) astack(loc + 1, tr2) { track(); card2(); };
+
+atrans(loc, [undef, 0, 0, 0, tr0]) astack(2, [0, thf+2, 0]) astack(2, trp) track(); // four tracks for print
+cs = 8;
+atrans(loc, [[1-cs/2, .1, tf], 0, undef, undef]) astack(2, [-9, 0, 0], tr0) astack(4, [0, cs+.21, 0], tr0, ["green", "pink", "grey"]) cube([cs,cs,cs]);
+}
 
 // loc:
 // 0: single card & endcap,
@@ -116,10 +124,4 @@ tr2 = [cardw + 0.05, 0, 0]; // space for view
 // 3: single-print
 // 4: quad-print
 // 5: none - as library
-loc = 5;
-atrans(loc, [tr0, 0, 0, 0, undef]) track(cardw, cardh, loc<3 ? ecx : 0);    // single
-atrans(loc, [tr0, 0, undef, undef]) astack(loc + 1, tr2) { track(); card2(); };
-
-atrans(loc, [undef, 0, 0, 0, tr0]) astack(2, [0, thf+2, 0]) astack(2, trp) track(); // four tracks for print
-cs = 8;
-atrans(loc, [[1-cs/2, .1, tf], 0, undef, undef]) astack(2, [-9, 0, 0], tr0) astack(4, [0, cs+.21, 0], tr0, ["green", "pink", "grey"]) cube([cs,cs,cs]);
+show(5);
