@@ -9,28 +9,29 @@ include <cursus-track.scad>;
 mcardw = 63.5;  //  750 / dpm;
 mcardh = 44.5;  //  525 / dpm;
 echo ("mcardw = ", mcardw, "mcardh =", mcardh);
-// tc = 0.4;            // thicknes of card (> actual: .33 mm)
+// tc0 = 0.33;         // thicknes of card, tc1 = tc0 + .02 (stack-z)
 // rc = 3.0;           // radius of card corner 35.433 px
 
+module meeple() {
+  color("orange") cylinder(8, 6, 6);
+}
 
-
-module mcard(w = mcardw, h = mcardh, tc = tc, rc = rc) {
+module mcard(w = mcardw, h = mcardh, tc = tc0, rc = rc) {
   trr([0, 0, pp]) color("lightblue") roundedCube([w, h, tc], rc, true); // QQQ: what is actual radius?
 }
-// mcard();
 
-nd2 = 16 + 10 + 6;// 10+6;   // number in deck2: white, black/grey
-ndeck = 48;//64 + nd2;
-ntc = ndeck * tc; // width of cards in miniBox
+// 80 Cards
+nd2 = 10;           // cards in playerBox: 4-bidValue, 6-bidCol
+ndeck = 48;         // half the 80 cards
 
 bx = mcardw + 2 + 2*t0; // mcardw + slack
 dz = 2;                  // extend boxes above cards
 bz = 1.75*inch + t0 + dz;// extend boxes above cards
-by = 21;                // total-y of playerBox
-byc = 10 * tc + t0;      // thin section for cards (.4; >> .33) 4+1 = 5mm
-bym = by -byc;           // taller than the meeples (8x12x12 ~1152 mm3) * 8 = 9200
-byt = by -t0 + f;       // total width + fudge in multiPlayer
-boxw = 2*t0 + (cardw + ecx) + (t0 + ntc + t0) + 2*t0; // exterior size of main box
+byc = t0 + nd2 * tc1 + t0;  // thin section for cards (.4; >> .33) 4+1 = 5mm
+bym = 13.5;                 // taller than the meeples
+by = bym + byc;        // total-y of playerBox; meeples (8x12x12 ~1152 mm3) * 8 = 9200
+byt = by + f;           // total width + fudge in multiPlayer
+boxw = 2*t0 + (cardw + ecx) + 2*t0; // exterior size of main box
 boxy = t0 + (thf+ t0 + bx) + t0;
 boxz = bz;
 
@@ -42,26 +43,26 @@ module playerBox(cx = 1) {
   color("#e0e0e0d9")
   slotifyY2([bz-dz, .6*bx, 2*t0, 4], [bx*.5, byc + .2*t0, bz*.7], undef, 3, false)
   slotifyY2([bz- 0, .5*bx, 2*t0, 4], [bx*.5,      1.2*t0, bz*.5], undef, 3, false) {
-    trr([0,  t0, 0]) box([bx, by- t0, bz- 0]);     // cardsBox (& meepleBox)
-    trr([0, byc, 0]) box([bx, by-byc, bz-dz]);     // meepleBox
+    trr([0,  t0, 0]) box([bx, by,     bz- 0]);     // cardsBox (& meepleBox)
+    trr([0, byc, 0]) box([bx, bym+t0, bz-dz]);     // meepleBox
   }
   if (cx > 0) {
-    trr([cx, 4*t0, t0, [90, 0, 0]]) mcard();
+    trr([cx, byc, t0, [90, 0, 0]]) astack(nd2, [0, 0, tc1]) mcard();
   }
   }
+  trr([(bym-t0)/2, cardw/2, 2]) meeple();
 }
 module multiPlayer(n = 6) {
-  astack(n, [byt, 0, 0], tr0)
-  // astack(3, [0, byt, 0], tr0) 
+  astack(n, [byt, 0, 0])
   playerBox();
 }
 
 module miniDeck(n = ndeck) {
-  astack(n, [0, 0, tc], tr0) mcard();
+  astack(n, [0, 0, tc1]) mcard();
 }
 
 module miniBox(n = ndeck, mbh = thf, cy = 0) {
-  mbx = t0 + (n * tc) + t0;
+  mbx = t0 + (n * tc1) + t0;
   mbh = def(mbh, bx);
   mbz = bz - 0;
   trr([0, 0, 0]) {
@@ -74,17 +75,18 @@ module miniBox(n = ndeck, mbh = thf, cy = 0) {
   }
 } 
 
-trackx = t0  + ecx;
+mboxz = ndeck*tc1+2*t0; // miniBox-z when rotated to lay flat
+trackx = t0 + ecx;      // x-offset to trackStack
 module cardStack(n = 24 + 6) {
-  trr([ecx, 0, 0]) astack(n, [0, 0, tc]) card();
+  trr([ecx, 0, 0]) astack(n, [0, 0, tc1]) card(cardw, cardh, tc0);
 }
 
-trr([0, thf+t0, 0]) multiPlayer();
+trr([t0, thf+t0, 0]) multiPlayer();
 
-trr([trackx, f+side, 0]) trackStack();
-trr([trackx-ecx, f+side, tsz-ecz]) cardStack();
+trr([trackx-ecx, f+side, tsz-ecz+mboxz-ecz -tc]) cardStack();
+trr([trackx,     f+side,       f+mboxz-ecz]) trackStack();
+astack(2, [bz+f, 0, 0])
+trr([2*t0+cardw/18, side/2, mboxz, [0, 90, 0]]) miniBox(ndeck, undef, 2);
 
-trr([f+t0+cardw+ecx, f, 0]) miniBox(ndeck, thf, t0);
+trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/4]);
 
-trr([6 * byt + f, thf+t0, 0]) miniBox(nd2, undef, 2);
-trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/3]);
