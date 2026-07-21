@@ -22,19 +22,21 @@ dpi = 300; dpm = 11.811;
 // cardh = (long ?  732 :  750) / dpm;
 // cardw = 1050/dpm; cardh = 750/dpm;  // Poker
 cardw = 1179/dpm; cardh = 732/dpm;   // Long (100 x 62)mm
-tc = .4;            // thicknes of card (> actual: .33 mm)
+tc0 = .33;          // thickness of card
+tc1 = tc0 + .02;    // stack-z
+tc = .4;            // allocated thickness to cut out for card (> actual: .33 mm)
 rc = 3;             // radius of card corner
 
 tf = 2.5;           // thicknes of frame
 side = .3*inch;     // side rails (7.62 mm)
 thf = cardh + 2 * side; // total height of frame
 
-module card(w = cardw, h = cardh, tc = tc, rc = rc) {
+module card(w = cardw, h = cardh, tc = tc0, rc = rc) {
   color("lightblue") roundedCube([w, h, tc], rc, true); // QQQ: what is actual radius?
 }
 
 // card with colored slots
-module card2(w = cardw, h = cardh, tc = tc, rc = rc) {
+module card2(w = cardw, h = cardh, tc = tc0, rc = rc) {
   color0 = ["red", "#fff205", "#0066CC", "#c941ff"];
   color1 = ["#c941ff", "#0066CC", "#fff205", "red"];
   wl = .5;   // width of black line down the center
@@ -74,7 +76,7 @@ module track(w = cardw, h = cardh, endcap = 0) {
   differenceN(1, endcap == 0 ? 0 : 2) 
   {
     trr([0, -(thf-cardh)/2, 0]) cube([w+xw, thf, tf]);
-    trr([xw/2, 0, tf-tc+p]) card();         // cutout card
+    trr([xw/2, 0, tf-tc+p]) card(cardw, cardh, tc);         // cutout card
 
     trr([w+xw/2-tw/2-p, h/2, tf-tt-tc+pp]) tape(tw, th, tt);  // actual 'tape' cutout
     trr([w+xw/2-cx/2+p, h/2, -p]) tape(cx, th, tf+pp);     // hinge cut using 'tape' cube
@@ -88,7 +90,7 @@ module track(w = cardw, h = cardh, endcap = 0) {
     difference() {
       trr([-ecx, -ecy, 0]) roundedCube([ecx+w/18, thf, tf+ecz], 2, true);
       trr([-ecx+1, 0-ech/2, tf+p]) card(w, h+ech, ecz, .5);
-      trr([0, 0, tf-tc+pp]) card();
+      trr([0, 0, tf-tc+pp]) card(w, h, tc);
     }
   }
 }
@@ -108,7 +110,7 @@ trp = [cardw + xw + 1.0, 0, 0]; // space for print
 tr2 = [cardw + 0.05, 0, 0]; // space for view
 module show(loc = 0) {
 atrans(loc, [tr0, 0, 0, 0, undef]) track(cardw, cardh, loc<3 ? ecx : 0);    // single
-atrans(loc, [tr0, 0, undef, undef]) astack(loc==1 ? 3 : 1, tr2) { track(); card2(); };
+atrans(loc, [tr0, 0, undef, undef]) astack(loc + 1, tr2) { track(); card2(); };
 
 atrans(loc, [undef, 0, 0, 0, tr0]) astack(2, [0, thf+2, 0]) astack(2, trp) track(); // four tracks for print
 cs = 8;
