@@ -19,20 +19,30 @@ module mcard(w = mcardw, h = mcardh, tc = tc, rc = rc) {
 }
 // mcard();
 
-ndeck = 64;
+nd2 = 10+6;   // number in deck2: white, black/grey
+ndeck = 64 + nd2;
 ntc = ndeck * tc;
 
 bx0 = 2.5*inch + 4;
-bz = 1.75*inch+t0;
+bz = 1.75*inch+t0 + 2;
 by1 = 10 * tc + t0;
-by2 = 20;
+by2 = 16;                // taller than the meeples (8x12x12 ~1152 mm3) * 8 = 9200
 byt = by1 + by2 -t0 + .5;
 boxw = cardw + ecx + t0 + ntc + 4*t0;
-bx = (boxw-3*t0)/2;
+boxy = thf+ 3 * (byt + t0);
+boxz = bz;
 
+bx = (boxw-3*t0)/2;       // fit playerBoxes to size of outer box
+echo("bx * by2 * bz = ", bx * by2 * bz, bx/12, by2, bz); // 53000 > 8000
+echo("boxw, boxy", boxw, boxy);
 module playerBox() {
-  trr([0, t0, 0]) box([bx, by1, bz]);
-  trr([0, by1, 0]) box([bx, by2, bz]);
+  color("#e0e0e0d9")
+  slotifyY2([bz, .7*bx, 2*t0, 4], [bx*.5, by1 + .2*t0, bz*.7], undef, 3, false)
+  slotifyY2([bz, .8*bx, 2*t0, 4], [bx*.5, 1.2*t0, bz*.5], undef, 3, false) {
+    trr([0, t0, 0]) box([bx, by1, bz]);
+    trr([0, by1, 0]) box([bx, by2, bz]);
+  }
+  trr([2*t0, 4*t0, t0, [90, 0, 0]]) mcard();
 }
 module multiPlayer() {
   astack(2, [bx+.5, 0, 0], tr0)
@@ -44,14 +54,18 @@ module miniDeck(n = 64) {
   astack(n, [0, 0, tc], tr0) mcard();
 }
 
-module miniBox(n = ndeck) {
-  box([ntc + 2*t0, thf+2*t0, bz]);
+module miniBox(bz) {
+  ntb = nd2 * tc; // for white, black/grey cards
+  box( [ntc + 2*t0, thf+1.5*t0, bz]);
+  trr([ntc-ntb+1*t0, 0, 0]) color("blue") cube([ntb+t0, thf+1.5*t0, 3]);
 } 
 
-trr([p-t0, p-t0, 0]) miniBox();
-trr([0, 3*t0+f, 0, [90, 0, 90]]) miniDeck();
 trr([0, thf, 0]) multiPlayer();
 
-trr([ecx+ntc+2*t0 , t0+side, 0]) trackStack();
+trr([ecx+ntc+2*t0 , t0/2+side, 0]) trackStack();
 
-trr([-t0, -t0, -t0]) color("red") box([boxw, thf+ 3*( by1 + by2 + 3 * t0 ), 20]);
+trr([0, 3*t0+f, 0, [90, 0, 90]]) miniDeck();
+trr([ntc-(nd2*tc)+0*t0, 5*t0+f, 3, [90, 0, 90]]) miniDeck(nd2);
+
+trr([p-t0, p-t0, 0]) miniBox(6*tf+2*ecz + 10);
+*trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/3]);
