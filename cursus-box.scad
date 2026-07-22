@@ -28,8 +28,8 @@ bx = mcardw + 2 + 2*t0; // mcardw + slack
 dz = 2;                  // extend boxes above cards
 bz = 1.75*inch + t0 + dz;// extend boxes above cards
 byc = t0 + nd2 * tc1 + t0;  // thin section for cards (10 * .35) 2 * 3.5 = 5.5mm
-bym = t0 + 12.5;            // taller than the meeples
-by = bym + 5.5;         // total-y of playerBox; meeples (8x12x12 ~1152 mm3) * 8 = 9200
+bym = t0 + 12.5;            // taller than the meeples (8x12x12 ~1152 mm3) * 8 = 9200
+by = bym + 5.5;         // total-y of playerBox; 19mm
 byt = by + f;           // total width + fudge in multiPlayer
 boxw = 2*t0 + (cardw + ecx) + 2*t0; // exterior size of main box
 boxy = t0 + (thf+ t0 + bx) + t0;
@@ -44,21 +44,24 @@ echo("boxw, boxy", boxw, boxy);
 // cx: x-offset to show cards in stack
 // meep: (false) if true show a meep cylinder in the mbox
 module playerBox(nc = nd2, cx = 1, meep = false) {
-  ncc = nc == 0 ? 48 : nc;   // 48 -> 18.8mm will fit in by=19mm playerBox
-  byc = t0 + ncc * tc1 + t0;
-  bdy = (nc > 0) ? byc : by; // offset div to full box-y
-  dzd = (nc > 0) ? dz : 0;   // and div is full height-z
-  echo("playerBox: nc=", nc, "cx=", cx, "byc=", byc);
-  trr([by+t0, 0, 0, [0, 0, 90]]) {
-  color("#e0e0e0d9")
-  slotifyY2([bz-dzd, .6*bx, 2*t0, 4], [bx*.5, bdy + .2*t0, bz*.7], undef, 3, false)
-  slotifyY2([bz-  0, .5*bx, 2*t0, 4], [bx*.5,      1.2*t0, bz*.5], undef, 3, false) {
-    trr([0,  t0, 0]) box([bx, by, bz]);     // cardsBox (& meepleBox)
-    divXZ([bz-dzd, bx, bdy]);
-  }
-  if (cx > 0) {
-    trr([cx, byc, t0, [90, 0, 0]]) astack(ncc, [0, 0, tc1]) mcard();
-  }
+  ncc = (nc > 0) ? nc : 48;   // 48 -> 18.8mm will fit in by=19mm playerBox
+  byc = t0 + ncc * tc1;
+  // hack to remove slot unless doing a miniBox2:
+  t0__2 = (nc > 0 && nc < 15) ? t0 * -2 : t0 * .2;
+  // echo("playerBox: nc=", nc, "cx=", cx, "byc=", byc);
+  trr([by, 0, 0, [0, 0, 90]]) {
+    color("#e0e0e0d9") {
+      if (nc > 0) {
+      slotifyY2([bz-dz, .6*bx, 2*t0, 4], [bx*.5, byc- t0*.2, bz*.7], undef, 3, false)
+        divXZ([bz-dz, bx, byc], 0);
+      }
+      slotifyY2([bz- 0, .6*bx, 2*t0, 4], [bx*.5, by - t0__2, bz*.7], undef, 3, false)
+      slotifyY2([bz- 0, .5*bx, 2*t0, 4], [bx*.5,      t0*.2, bz*.5], undef, 3, false)
+        box([bx, by, bz]);     // cardsBox (& meepleBox)
+    }
+    if (cx > 0) {
+      trr([cx, byc, t0, [90, 0, 0]]) astack(ncc, [0, 0, tc1]) mcard();
+    }
   }
   if (meep) trr([(by-byc)/4, cardw/2, 0, [0, 90, 0, [4, 0, 4]]]) meeple();
 }
@@ -69,11 +72,11 @@ module multiPlayer(n = 6, cx = 2, meep = false) {
 
 
 // miniBox(48) same size as playerBox, so we use playerBox, to be exact.
-module miniBox2(n = ndeck, mbh = thf, cx = 0) {
+module miniBox2(n = ndeck, mbh = bx, cx = 0) {
   echo("miniBox2: n=", n, "cy=", cx);
-  playerBox(0); 
+  playerBox(0, cx); 
 }
-module miniBox(n = ndeck, mbh = thf, cy = 0) {
+module miniBox(n = ndeck, mbh = bx, cy = 0) {
   mbx = t0 + (n * tc1) + t0;
   mbh = def(mbh, bx);
   mbz = bz - 0;
@@ -82,7 +85,7 @@ module miniBox(n = ndeck, mbh = thf, cy = 0) {
     slotifyX2([mbz, mbh * .5, 2*t0, 4], [mbx-t0/2, mbh/2, mbz/2], undef, 4, false)
     box([mbx, mbh, mbz]);
     if (cy > 0) {
-      trr([t0, cy, t0, [90, 0, 90]]) miniDeck(n);
+      trr([t0, cy, t0, [90, 0, 90]]) astack(n, [0, tc1, 0]) mcard();
     }
   }
 } 
