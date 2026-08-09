@@ -21,15 +21,16 @@ dpi = 300; dpm = 11.811;
 // cardw = (long ? 1179 : 1050) / dpm; 
 // cardh = (long ?  732 :  750) / dpm;
 // cardw = 1050/dpm; cardh = 750/dpm;  // Poker
-cardw = 1179/dpm; cardh = 732/dpm;   // Long (100 x 62)mm
+cardw = 1179/dpm+3*f; cardh = 732/dpm+2*f;   // Long (100 x 62)mm
 tc0 = .33;          // thickness of card
 tc1 = tc0 + .02;    // stack-z
 tc = .4;            // allocated thickness to cut out for card (> actual: .33 mm)
-rc = 3;             // radius of card corner
+rc = 2.7;           // radius of card corner
 
 tf = 2.5;           // thicknes of frame
 side = .3*inch;     // side rails (7.62 mm)
 thf = cardh + 2 * side; // total height of frame
+echo("cardw, cardh", cardw, cardh);
 
 module card(w = cardw, h = cardh, tc = tc0, rc = rc) {
   color("lightblue") roundedCube([w, h, tc], rc, true); // QQQ: what is actual radius?
@@ -124,4 +125,4 @@ atrans(loc, [[1-cs/2, .1, tf], 0, undef, undef]) astack(2, [-9, 0, 0], tr0) asta
 // 3: single-print
 // 4: quad-print
 // 5: none - as library
-show(5);
+show(2);
