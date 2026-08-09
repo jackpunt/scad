@@ -20,19 +20,22 @@ module mcard(w = mcardw, h = mcardh, tc = tc0, rc = rc) {
   trr([0, 0, pp]) color("lightblue") roundedCube([w, h, tc], rc, true); // QQQ: what is actual radius?
 }
 
-// 80 Cards
+// 80 Cards: 64 + 16 = 48 + 16 + 16
 nd2 = 10;           // cards in playerBox: 4-bidValue, 6-bidCol
-ndeck = 48;         // half the 80 cards
+ndeck = 48;         // most of the 80 cards (48 + 32)
+ncard = 18;         // non-deck cards (white, black/grey)
 
 bx = mcardw + 2 + 2*t0; // mcardw + slack
 dz = 2;                  // extend boxes above cards
 bz = 1.75*inch + t0 + dz;// extend boxes above cards
 byc = t0 + nd2 * tc1 + t0;  // thin section for cards (10 * .35) 2 * 3.5 = 5.5mm
 bym = t0 + 12.5;            // taller than the meeples (8x12x12 ~1152 mm3) * 8 = 9200
-by = bym + 5.5;         // total-y of playerBox; 19mm
+by = bym + 5.7;         // total-y of playerBox; 19.2mm
 byt = by + f;           // total width + fudge in multiPlayer
-boxw = 2*t0 + (cardw + ecx) + 2*t0; // exterior size of main box
-boxy = t0 + (thf+ t0 + bx) + t0;
+pbwide = 6 * byt;
+tswide = t0 + cardw + ecx + t0; // extra t0 fudge space.
+boxw = t0 + max(pbwide, tswide) + t0; // exterior size of main box
+boxy = t0 + (thf+ t0 + bx) + 2*t0;
 boxz = bz;
 
 
@@ -52,7 +55,7 @@ module playerBox(nc = nd2, cx = 1, meep = false) {
   trr([by, 0, 0, [0, 0, 90]]) {
     color("#e0e0e0d9") {
       if (nc > 0) {
-      slotifyY2([bz-dz, .6*bx, 2*t0, 4], [bx*.5, byc- t0*.2, bz*.7], undef, 3, false)
+      slotifyY2([bz-dz, .6*bx, 2*t0, 4], [bx*.5, byc- t0*-.5, bz*.7], undef, 3, false)
         divXZ([bz-dz, bx, byc], 0);
       }
       slotifyY2([bz- 0, .6*bx, 2*t0, 4], [bx*.5, by - t0__2, bz*.7], undef, 3, false)
@@ -92,8 +95,8 @@ module miniBox(n = ndeck, mbh = bx, cy = 0) {
 
 mboxz = ndeck*tc1 + 2*t0; // miniBox-z when rotated to lay flat
 trackx = t0 + ecx;        // x-offset to trackStack
-cstackz = (24+6) * tc1 - ecz;
-trkz = f + cstackz + (tsz - ecz);
+cstackz = (24+6) * tc1 - ecz;     // above stack of 24 track cards
+trkz = f + cstackz + (tsz - ecz); // folded track z-extent
 
 module cardStack(n = 24 + 6) {
   trr([ecx, 0, 0]) astack(n, [0, 0, tc1]) card(cardw, cardh, tc0);
@@ -101,15 +104,22 @@ module cardStack(n = 24 + 6) {
 
 // loc: 0 - full stack, design mode
 // 1: spread
-loc = 0;
+// 2: single playerBox
+// 3: miniBox2(ndeck) & playerBox(ndeck2, 0)
+loc = 3;
 atrans(loc, [[0, 0, 0], 0]) trr([0, thf+t0, 0]) multiPlayer(6, loc==0 ? 2 : 0);
-
-atrans(loc, [[0, 0, 0], 0]) {
-  trr([bz+t0 + 3*t0+cardw/9, side/2, mboxz+trkz, [0, 90, 0]]) playerBox(16);
-  trr([        3*t0+cardw/9, side/2, mboxz+trkz, [0, 90, 0]]) miniBox2(ndeck, undef, (loc == 0) ? 2 : 0);// miniBox(48, undef, loc==0 ? 2: 0);
+atrans(loc, [undef, undef, [0, 0, 0]]) multiPlayer(1, 0);
+atrans(loc, [undef, 0, 0, [0, 0, 0]]) {
+  trr([    0, 0, 0]) miniBox2(ndeck);
+  trr([by+t0, 0, 0]) playerBox(ncard, 0);
+  trr([2*(by+t0), 0, 0]) playerBox(nd2, 0, false);
+}
+atrans(loc, [[0, 0, 0], 0, undef]) {
+  trr([        3*t0+cardw/9, side/2, mboxz+trkz, [0, 90, 0]]) miniBox2(ndeck, undef, (loc == 0) ? 2 : 0);
+  trr([bz+t0 + 3*t0+cardw/9, side/2, mboxz+trkz, [0, 90, 0]]) playerBox(ncard, (loc==0) ? 2 : 0);
 }
 atrans(loc, [[0, 0, 0]]) trr([trackx,     f+side, 0+cstackz]) trackStack();
 atrans(loc, [[0, 0, 0]]) trr([trackx-ecx, f+side,  0]) cardStack();
 
-atrans(loc, [[0, 0, 0], [-3-boxw, 0, 0]]) trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/5]);
+atrans(loc, [[0-f/2, 0, 0], [-3-boxw, 0, 0]]) trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/5]);
 
