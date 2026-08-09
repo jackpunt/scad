@@ -102,9 +102,9 @@ tsz = 4 * (tzt) + 2 * (tzt + ecz); // total z-height of folded stack
 
 // note: endcap extends to -ecx
 module trackStack() {
-  trr([0, 0, 0, [180, 0, 0, [0, cardh/2, (ecz+tf)/2]]])  track(cardw, cardh, ecx); // TODO: rotate 180-x 
+  trr([0, 0, 0, [180, 0, 0, [0, cardh/2, (ecz+tf)/2]]])  track(cardw, cardh, ecx);
   trr([0, 0, ecz + tzt]) astack(4, [0, 0, tzt], tr0) track();
-  trr([0, 0, ecz + tzt*5 + tt]) track(cardw, cardh, ecx);
+  trr([0, 0, ecz + tzt*5 ]) track(cardw, cardh, ecx);
 }
 
 trp = [cardw + xw + 1.0, 0, 0]; // space for print
@@ -125,4 +125,4 @@ atrans(loc, [[1-cs/2, .1, tf], 0, undef, undef]) astack(2, [-9, 0, 0], tr0) asta
 // 3: single-print
 // 4: quad-print
 // 5: none - as library
-show(2);
+show(5);
