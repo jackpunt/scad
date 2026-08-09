@@ -103,23 +103,30 @@ module cardStack(n = 24 + 6) {
 }
 
 // loc: 0 - full stack, design mode
-// 1: spread
-// 2: single playerBox
-// 3: miniBox2(ndeck) & playerBox(ndeck2, 0)
-loc = 3;
-atrans(loc, [[0, 0, 0], 0]) trr([0, thf+t0, 0]) multiPlayer(6, loc==0 ? 2 : 0);
-atrans(loc, [undef, undef, [0, 0, 0]]) multiPlayer(1, 0);
-atrans(loc, [undef, 0, 0, [0, 0, 0]]) {
-  trr([    0, 0, 0]) miniBox2(ndeck);
-  trr([by+t0, 0, 0]) playerBox(ncard, 0);
-  trr([2*(by+t0), 0, 0]) playerBox(nd2, 0, false);
-}
-atrans(loc, [[0, 0, 0], 0, undef]) {
+// 1: print all
+// 2: miniBox2(ndeck) & cardBox = playerBox(ncard)
+// 3: miniBo2, cardBox, playerBox(nd2)
+// 4-8: multiPlayer(loc-2)
+loc = 6;
+// 0 miniBox & pb(ncard) @ 90-degrees
+atrans(loc, [[0, 0, 0]]) {
   trr([        3*t0+cardw/9, side/2, mboxz+trkz, [0, 90, 0]]) miniBox2(ndeck, undef, (loc == 0) ? 2 : 0);
   trr([bz+t0 + 3*t0+cardw/9, side/2, mboxz+trkz, [0, 90, 0]]) playerBox(ncard, (loc==0) ? 2 : 0);
 }
+// 0: trackStack & cardStack
 atrans(loc, [[0, 0, 0]]) trr([trackx,     f+side, 0+cstackz]) trackStack();
 atrans(loc, [[0, 0, 0]]) trr([trackx-ecx, f+side,  0]) cardStack();
-
+// 0 & 1: "red" box
 atrans(loc, [[0-f/2, 0, 0], [-3-boxw, 0, 0]]) trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/5]);
+// 0 & 1: full & print-6
+atrans(loc, [[0, 0, 0], 0]) trr([0, thf+t0, 0]) multiPlayer(6, loc==0 ? 2 : 0);
+// 2: minBox2 & playerBox(ncard) & playerBox(nd2)
+atrans(loc, [undef, [0, 0, 0], 1, 1]) {
+  trr([    0, 0, 0]) miniBox2(ndeck);
+  trr([by+t0, 0, 0]) playerBox(ncard, 0); // cardBox
+  if (loc == 3)  // one of each
+  trr([2*(by+t0), 0, 0]) playerBox(nd2, 0);
+}
+// 4--8: multiPlayer(loc-2) print (no cards)
+atrans(loc, [undef, 0, 0, 0, [0, 0, 0], 4, 4, 4, 4]) multiPlayer(loc-2, 0);
 
