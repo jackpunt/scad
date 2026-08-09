@@ -32,6 +32,7 @@ byc = t0 + nd2 * tc1 + t0;  // thin section for cards (10 * .35) 2 * 3.5 = 5.5mm
 bym = t0 + 12.5;            // taller than the meeples (8x12x12 ~1152 mm3) * 8 = 9200
 by = bym + 5.7;         // total-y of playerBox; 19.2mm
 byt = by + f;           // total width + fudge in multiPlayer
+byp = by + 1;           // playerBox spaced for print
 pbwide = 6 * byt;
 tswide = t0 + cardw + ecx + t0; // extra t0 fudge space.
 boxw = t0 + max(pbwide, tswide) + t0; // exterior size of main box
@@ -123,10 +124,10 @@ atrans(loc, [[0, 0, 0], 0]) trr([0, thf+t0, 0]) multiPlayer(6, loc==0 ? 2 : 0);
 // 2: minBox2 & playerBox(ncard) & playerBox(nd2)
 atrans(loc, [undef, [0, 0, 0], 1, 1]) {
   trr([    0, 0, 0]) miniBox2(ndeck);
-  trr([by+t0, 0, 0]) playerBox(ncard, 0); // cardBox
+  trr([byp, 0, 0]) playerBox(ncard, 0); // cardBox
   if (loc == 3)  // one of each
-  trr([2*(by+t0), 0, 0]) playerBox(nd2, 0);
+  trr([byp * 2, 0, 0]) playerBox(nd2, 0);
 }
 // 4--8: multiPlayer(loc-2) print (no cards)
-atrans(loc, [undef, 0, 0, 0, [0, 0, 0], 4, 4, 4, 4]) multiPlayer(loc-2, 0);
+atrans(loc, [undef, 0, 0, 0, [0, 0, 0], 4, 4, 4, 4]) astack(loc-2, [byp, 0, 0]) playerBox(nd2, 0);
 
