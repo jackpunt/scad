@@ -8,7 +8,6 @@ sqrt3 = sqrt(3);    // 1.732
 sqrt3_2 = sqrt3/2;  // .866
 inch = 25.4;        // mm per inch
 tr0 = [0, 0, 0];    // CONST
-t0 = 1;             // not in use?
 
 
 // frame to hold the [long | poker] track cards for Cursus Honorum
@@ -71,7 +70,6 @@ module tape(w, h, t = .25) {
 
 xw = -.0;   // trim width (so end-corner is truncated)
 ecx = 14;   // endcap x-width: cardw + ecx (total width) = 114mm (4.5")
-ech = 2*(side-t0);   // endcap y-height beyond card (< side * 2) ~2*side - 2+t0
 ecz = 2;    // endcap z-height above track
 tt = .35;   // thickness of tape, approx?
 
@@ -84,6 +82,9 @@ module track(w = cardw, h = cardh, endcap = 0) {
   alx = 4;
   aly = 2.5;
   aey = cardh/2 - 2.44;
+  ect = 1; // endcap 'rail' thickness
+  ech = 2 * (side - ect);  // endcap y-height beyond card, leaving rail
+
   module align(ex, ey = aey, df = 0) {
    * color("blue")
     trr([ex-alx/2, ey - df/2 + (cardh - aly)/2, -p]) cube([alx, aly + df, tf - tc + 2*pp]);
@@ -113,7 +114,7 @@ module track(w = cardw, h = cardh, endcap = 0) {
     ecy = (thf-cardh)/2;
     difference() {
       trr([-ecx, -ecy, 0]) roundedCube([ecx+w/18, thf, tf+ecz], 2, true);
-      trr([-ecx+1, 0-ech/2, tf+p]) roundedCube([ecx+w/18, h+ech, ecz], .8, true); // roundedCube for cubes
+      trr([-ecx+ect, -ech/2, tf+p]) roundedCube([ecx+w/18, h+ech, ecz], .8, true); // roundedCube for cubes
       trr([-cf/2, -cf/2, tf-tc+pp]) card(w+cf, h+cf, tc, rc - rf); // actual card cutout
     }
   }
@@ -124,22 +125,22 @@ tzt = tf + tt + f;
 tsz = 4 * (tzt) + 2 * (tzt + ecz); // total z-height of folded stack
 
 // note: endcap extends to -ecx
-module trackStack() {
-  trr([0, 0, 0, [180, 0, 0, [0, cardh/2, (ecz+tf)/2]]])  track(cardw, cardh, ecx);
-  trr([0, 0, ecz + tzt]) astack(4, [0, 0, tzt], tr0) track();
-  trr([0, 0, ecz + tzt*5 ]) track(cardw, cardh, ecx);
+module trackStack(dx = 0) {
+  trr([dx, 0, 0, [180, 0, 0, [0, cardh/2, (ecz+tf)/2]]])  track(cardw, cardh, ecx);
+  trr([dx, 0, ecz + tzt]) astack(4, [0, 0, tzt], tr0) track();
+  trr([dx, 0, ecz + tzt*5 ]) track(cardw, cardh, ecx);
 }
 
 trp = [cardw + 1.0, 0, 0]; // space for print
 tr2 = [cardw + 0.05, 0, 0]; // space for view
 module show(loc = 0) {
-atrans(loc, [tr0, 0, 0, 0, undef]) track(cardw, cardh, loc<3 ? ecx : 0);    // single
-atrans(loc, [tr0, 0, undef, undef]) astack(loc + 1, tr2) { track(); *card2(); };
-// 4: --> four tracks for print
-atrans(loc, [undef, 0, 0, 0, tr0]) astack(2, [0, thf+2, 0]) astack(2, trp) track(); // four tracks for print
-// 1 & 2:  show some cubes:
-cs = 8;
-// atrans(loc, [[1-cs/2, .1, tf], 0]) astack(2, [-9, 0, 0], tr0) astack(4, [0, cs+.21, 0], tr0, ["green", "pink", "grey"]) cube([cs,cs,cs]);
+  atrans(loc, [tr0, 0, 0, 0, undef]) track(cardw, cardh, loc<3 ? ecx : 0);    // single
+  atrans(loc, [tr0, 0, undef, undef]) astack(loc + 1, tr2) { track(); *card2(); };
+  // 4: --> four tracks for print
+  atrans(loc, [undef, 0, 0, 0, tr0]) astack(2, [0, thf+2, 0]) astack(2, trp) track(); // four tracks for print
+  // 1 & 2:  show some cubes:
+  cs = 8;
+  // atrans(loc, [[1-cs/2, .1, tf], 0]) astack(2, [-9, 0, 0], tr0) astack(4, [0, cs+.21, 0], tr0, ["green", "pink", "grey"]) cube([cs,cs,cs]);
 }
 
 // loc:
