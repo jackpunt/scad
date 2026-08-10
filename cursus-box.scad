@@ -1,6 +1,8 @@
 use <mylib.scad>;
 include <cursus-track.scad>;
 
+t0 = 1.3;             // not in cursus-track
+
 // 6 small boxes for cards & meeps
 // large box for 6-track folded, deck of 64 + 12, plus the small boxes
 
@@ -37,11 +39,19 @@ pbwide = 6 * byt;
 tswide = t0 + cardw + ecx + t0; // extra t0 fudge space.
 boxw = t0 + max(pbwide, tswide) + t0; // exterior size of main box
 boxy = t0 + (thf+ t0 + bx) + 2*t0;
-boxz = bz;
+boxz = bz/1 + t0 * 1.67; // base, slack for 2 cards
 
+
+module mainBox(ig) {
+  box([boxw, boxy, boxz]);
+}
+
+module mainLid(dl = f, lz = 1.8) {
+  trr([-t0-f, -t0-f, 0]) box([boxw+2*t0+2*f, boxy+ 2* t0+2*f, lz]);
+}
 
 echo("bx * bym * bz = ", bx * bym * bz, bx/12, bym, bz, "by=", by, "byc=", byc); // 53000 > 8000
-echo("boxw, boxy", boxw, boxy);
+echo("boxw, boxy", boxw, boxy, boxw/inch, boxy/inch);
 
 // fortuitously, 48 cards fit in a playerBox, so we use it for the miniBox!
 // nc: number of cards to fit
@@ -93,32 +103,36 @@ module miniBox(n = ndeck, mbh = bx, cy = 0) {
     }
   }
 } 
-
+ncardz = (24 + 6);
 mboxz = ndeck*tc1 + 2*t0; // miniBox-z when rotated to lay flat
 trackx = t0 + ecx;        // x-offset to trackStack
-cstackz = (24+6) * tc1 - ecz;     // above stack of 24 track cards
+cstackz = ncardz * tc1 - ecz;     // above stack of 24 track cards
 trkz = f + cstackz + (tsz - ecz); // folded track z-extent
 
-module cardStack(n = 24 + 6) {
+module cardStack(n = ncardz) {
   trr([ecx, 0, 0]) astack(n, [0, 0, tc1]) card(cardw, cardh, tc0);
 }
-
+u10 = [];
 // loc: 0 - full stack, design mode
 // 1: print all
 // 2: miniBox2(ndeck) & cardBox = playerBox(ncard)
 // 3: miniBo2, cardBox, playerBox(nd2)
 // 4-8: multiPlayer(loc-2)
-loc = 6;
+// 10: print mainBox
+loc = 10;
+show(5);
 // 0 miniBox & pb(ncard) @ 90-degrees
 atrans(loc, [[0, 0, 0]]) {
-  trr([        3*t0+cardw/9, side/2, mboxz+trkz, [0, 90, 0]]) miniBox2(ndeck, undef, (loc == 0) ? 2 : 0);
-  trr([bz+t0 + 3*t0+cardw/9, side/2, mboxz+trkz, [0, 90, 0]]) playerBox(ncard, (loc==0) ? 2 : 0);
+  trr([        1*t0, side/2, mboxz+trkz, [0, 90, 0]]) miniBox2(ndeck, undef, (loc == 0) ? 2 : 0);
+  trr([bz+t0/2+ 1*t0, bz+side, mboxz+trkz, [0, 90, -90]]) playerBox(ncard, (loc==0) ? 2 : 0);
 }
 // 0: trackStack & cardStack
-atrans(loc, [[0, 0, 0]]) trr([trackx,     f+side, 0+cstackz]) trackStack();
+atrans(loc, [[0, 0, 0]]) trr([trackx,     f+side, 0+cstackz]) trackStack(-1);
 atrans(loc, [[0, 0, 0]]) trr([trackx-ecx, f+side,  0]) cardStack();
 // 0 & 1: "red" box
-atrans(loc, [[0-f/2, 0, 0], [-3-boxw, 0, 0]]) trr([-t0, -t0, -t0]) color("red") box([boxw, boxy, boxz/5]);
+atrans(loc, [[0-f/2, 0, 0], [-(3+boxw), 0, 0], undef, 2,
+    2, 2, 2, 2, 2, 2, 0,]) trr([-t0, -t0, -t0]) color("red") mainBox([boxw, boxy, boxz]);
+atrans(loc, [[0-f/2, 0, 0], [-2*(3+boxw), 0, 0]]) trr([-t0, -t0, -2*t0]) color("green") mainLid();
 // 0 & 1: full & print-6
 atrans(loc, [[0, 0, 0], 0]) trr([0, thf+t0, 0]) multiPlayer(6, loc==0 ? 2 : 0);
 // 2: minBox2 & playerBox(ncard) & playerBox(nd2)
