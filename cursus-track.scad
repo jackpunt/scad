@@ -21,16 +21,18 @@ dpi = 300; dpm = 11.811;
 // cardw = (long ? 1179 : 1050) / dpm; 
 // cardh = (long ?  732 :  750) / dpm;
 // cardw = 1050/dpm; cardh = 750/dpm;  // Poker
-cardw = 1179/dpm+3*f; cardh = 732/dpm+2*f;   // Long (100 x 62)mm
+cardw = 1179/dpm; cardh = 732/dpm;   // Long (100 x 62)mm
+cf = 6*f;           // fudge size of card for cutout
+rf = -.5;            // fudge corner radius
 tc0 = .33;          // thickness of card
 tc1 = tc0 + .02;    // stack-z
-tc = .4;            // allocated thickness to cut out for card (> actual: .33 mm)
-rc = 2.7;           // radius of card corner
+tc = .5;            // allocated thickness to cut out for card (> actual: .33 mm)
+rc = 3.0;           // radius of card corner (actual = 3mm)
 
-tf = 2.5;           // thicknes of frame
+tf = 2.3;           // thicknes of frame
 side = .3*inch;     // side rails (7.62 mm)
 thf = cardh + 2 * side; // total height of frame
-echo("cardw, cardh", cardw, cardh);
+echo("cardw, cardh", cardw, cardh, "+cf", cardw+cf, cardh+cf);
 
 module card(w = cardw, h = cardh, tc = tc0, rc = rc) {
   color("lightblue") roundedCube([w, h, tc], rc, true); // QQQ: what is actual radius?
@@ -46,7 +48,7 @@ module card2(w = cardw, h = cardh, tc = tc0, rc = rc) {
   module slot(sw=sw, h = h/2) {
     cube([sw, h, tc], true);   // a block of color, called 'slot' in ng/columns
   }
-  trr([xw/2, 0, tf-tc])
+  trr([0, 0, tf-tc])
   intersection() {
     card(w, h, tc, rc);    // cut to shape of card
     trr([0, h/2, 0])
@@ -65,33 +67,52 @@ module tape(w, h, t = .25) {
   trr([-w/2, -h/2, 0]) cube([w, h, t], false);
 }
 
-xw = -.2;   // extra width (so end-corner will hold card)
+xw = -.0;   // trim width (so end-corner is truncated)
 ecx = 14;   // endcap x-width: cardw + ecx (total width) = 114mm (4.5")
 ech = 12;   // endcap y-height beyond card (< side * 2) ~2*side - 2+t0
 ecz = 2;    // endcap z-height above track
 tt = .35;   // thickness of tape, approx?
 
+// w: x-size (cardw)
+// h: y-size (cardh)
+// endcap: endcap x-size (0)
 module track(w = cardw, h = cardh, endcap = 0) {
   tw = 1*inch; th = 2.15*inch; // cutout for tape: x-width, y-height
-  cx = 5;   // cutout x-dim for tape/hinge
-  differenceN(1, endcap == 0 ? 0 : 2) 
+  cx = 2.5; // cutout x-dim for tape/hinge
+  alx = 4;
+  aly = 2.5;
+  aey = cardh/2 - 2.44;
+  module align(ex, ey = aey, df = 0) {
+   * color("blue")
+    trr([ex-alx/2, ey - df/2 + (cardh - aly)/2, -p]) cube([alx, aly + df, tf - tc + 2*pp]);
+  }
+  differenceN(3, endcap == 0 ? 0 : 2) 
   {
-    trr([0, -(thf-cardh)/2, 0]) cube([w+xw, thf, tf]);
-    trr([xw/2, 0, tf-tc+p]) card(cardw, cardh, tc);         // cutout card
+    difference() {
+      trr([-xw, -(thf-cardh)/2, 0]) cube([w+2*xw, thf, tf]);
+      trr([w-(cx/2-p), h/2, -p]) tape(cx, th, tf+pp);     // hinge cut using 'tape' cube
+      if (endcap == 0) {
+      trr([0+(cx/2-p), h/2, -p]) tape(cx, th, tf+pp);     // hinge cut using 'tape' cube
+      }
+    }
+    align(w, aey);  // add tang
+    align(0, -aey); // add tang
 
-    trr([w+xw/2-tw/2-p, h/2, tf-tt-tc+pp]) tape(tw, th, tt);  // actual 'tape' cutout
-    trr([w+xw/2-cx/2+p, h/2, -p]) tape(cx, th, tf+pp);     // hinge cut using 'tape' cube
+    align(w, -aey, f); // cut slot
+    trr([-cf/2, -cf/2, tf-tc+p]) card(cardw+cf, cardh+cf, tc, rc - rf);  // cutout card
+    trr([w-tw/2, h/2, tf-tt-tc+pp]) tape(tw, th, tt);  // actual 'tape' cutout
+
     // differenceN will elide for endcap:
-    trr([0+tw/2-p, h/2, tf-tt-tc+pp]) tape(tw, th, tt);  // actual 'tape' cutout
-    trr([0+cx/2-p, h/2, -p]) tape(cx, th, tf+pp);     // hinge cut using 'tape' cube
+    align(0, aey, f); // cut slot
+    trr([0+tw/2, h/2, tf-tt-tc+pp]) tape(tw, th, tt);  // actual 'tape' cutout
   }
   if (endcap > 0) {
     ecx = endcap;
     ecy = (thf-cardh)/2;
     difference() {
       trr([-ecx, -ecy, 0]) roundedCube([ecx+w/18, thf, tf+ecz], 2, true);
-      trr([-ecx+1, 0-ech/2, tf+p]) card(w, h+ech, ecz, .5);
-      trr([0, 0, tf-tc+pp]) card(w, h, tc);
+      trr([-ecx+1, 0-ech/2, tf+p]) roundedCube([ecx+w/18, h+ech, ecz], .5, true); // roundedCube for cubes
+      trr([-cf/2, -cf/2, tf-tc+pp]) card(w+cf, h+cf, tc, rc - rf); // actual card cutout
     }
   }
 }
@@ -107,20 +128,21 @@ module trackStack() {
   trr([0, 0, ecz + tzt*5 ]) track(cardw, cardh, ecx);
 }
 
-trp = [cardw + xw + 1.0, 0, 0]; // space for print
+trp = [cardw + 1.0, 0, 0]; // space for print
 tr2 = [cardw + 0.05, 0, 0]; // space for view
 module show(loc = 0) {
 atrans(loc, [tr0, 0, 0, 0, undef]) track(cardw, cardh, loc<3 ? ecx : 0);    // single
-atrans(loc, [tr0, 0, undef, undef]) astack(loc + 1, tr2) { track(); card2(); };
-
+atrans(loc, [tr0, 0, undef, undef]) astack(loc + 1, tr2) { track(); *card2(); };
+// 4: --> four tracks for print
 atrans(loc, [undef, 0, 0, 0, tr0]) astack(2, [0, thf+2, 0]) astack(2, trp) track(); // four tracks for print
+// 1 & 2:  show some cubes:
 cs = 8;
-atrans(loc, [[1-cs/2, .1, tf], 0, undef, undef]) astack(2, [-9, 0, 0], tr0) astack(4, [0, cs+.21, 0], tr0, ["green", "pink", "grey"]) cube([cs,cs,cs]);
+// atrans(loc, [[1-cs/2, .1, tf], 0]) astack(2, [-9, 0, 0], tr0) astack(4, [0, cs+.21, 0], tr0, ["green", "pink", "grey"]) cube([cs,cs,cs]);
 }
 
 // loc:
-// 0: single card & endcap,
-// 1: double, w/cards, 
+// 0: endcap w/card & cubes
+// 1: double, w/cards & cubes, 
 // 2: endcap-print, 
 // 3: single-print
 // 4: quad-print
