@@ -21,8 +21,8 @@ dpi = 300; dpm = 11.811;
 // cardw = (long ? 1179 : 1050) / dpm; 
 // cardh = (long ?  732 :  750) / dpm;
 // cardw = 1050/dpm; cardh = 750/dpm;  // Poker
-cardw = 1179/dpm; cardh = 732/dpm;   // Long (100 x 62)mm
-cf = 6*f;           // fudge size of card for cutout
+cardw = 100.2 + 0*1179/dpm; cardh = 62.3 + 0* 732/dpm;   // Long (100 x 62)mm
+cf = 4*f;           // fudge size of card for cutout
 rf = -.5;            // fudge corner radius
 tc0 = .33;          // thickness of card
 tc1 = tc0 + .02;    // stack-z
@@ -30,9 +30,11 @@ tc = .5;            // allocated thickness to cut out for card (> actual: .33 mm
 rc = 3.0;           // radius of card corner (actual = 3mm)
 
 tf = 2.3;           // thicknes of frame
-side = .3*inch;     // side rails (7.62 mm)
+side = .32*inch;     // side rails (10.16 mm)
 thf = cardh + 2 * side; // total height of frame
 echo("cardw, cardh", cardw, cardh, "+cf", cardw+cf, cardh+cf);
+// "cardw, cardh", 99.8222, 61.9761, "+cf", 100.902, 63.0561 (original; cf = 6*f)
+// "cardw, cardh", 100.2  , 62.3   , "+cf", 100.920, 63.02 (new; cf = 4*f)
 
 module card(w = cardw, h = cardh, tc = tc0, rc = rc) {
   color("lightblue") roundedCube([w, h, tc], rc, true); // QQQ: what is actual radius?
@@ -69,7 +71,7 @@ module tape(w, h, t = .25) {
 
 xw = -.0;   // trim width (so end-corner is truncated)
 ecx = 14;   // endcap x-width: cardw + ecx (total width) = 114mm (4.5")
-ech = 12;   // endcap y-height beyond card (< side * 2) ~2*side - 2+t0
+ech = 2*(side-t0);   // endcap y-height beyond card (< side * 2) ~2*side - 2+t0
 ecz = 2;    // endcap z-height above track
 tt = .35;   // thickness of tape, approx?
 
@@ -111,7 +113,7 @@ module track(w = cardw, h = cardh, endcap = 0) {
     ecy = (thf-cardh)/2;
     difference() {
       trr([-ecx, -ecy, 0]) roundedCube([ecx+w/18, thf, tf+ecz], 2, true);
-      trr([-ecx+1, 0-ech/2, tf+p]) roundedCube([ecx+w/18, h+ech, ecz], .5, true); // roundedCube for cubes
+      trr([-ecx+1, 0-ech/2, tf+p]) roundedCube([ecx+w/18, h+ech, ecz], .8, true); // roundedCube for cubes
       trr([-cf/2, -cf/2, tf-tc+pp]) card(w+cf, h+cf, tc, rc - rf); // actual card cutout
     }
   }
