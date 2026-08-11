@@ -736,7 +736,7 @@ module gridDXZ(nx, nz, k, tr = [ 1, 0, 1 ])
 // - cs: child size; begin grid @ (cs, cs+1)
 // - tx: x spaceing
 // - ty: y spaceing
-// t: (t0) translate cube
+// t: (t0) z-translate cube (up from center)
 module cubesGrid(bw, bh, stt, t = t0) {
   stt = def(stt, [5, 10, 20]);
   cs = stt[0]; tx = stt[1]; ty = stt[2];
@@ -756,9 +756,9 @@ module cubesGrid(bw, bh, stt, t = t0) {
   flx = fl3(bw, cs, tx);
   fly = fl3(bh, cs, ty);  
 
-  translate([0, 0, cs])
+  translate([0, 0, 0 + t])
   gridify(flx, fly, 2) 
-  cube([cs, cs, cs * t], true);
+  cube([cs, cs, cs], true);
 }
 
 // grid test:
