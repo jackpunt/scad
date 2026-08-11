@@ -1,7 +1,8 @@
 use <mylib.scad>;
 include <cursus-track.scad>;
 
-t0 = 1.3;             // not in cursus-track
+t0 = 1;               // not in cursus-track: thickness of box
+bt0 = 1.3;
 
 // 6 small boxes for cards & meeps
 // large box for 6-track folded, deck of 64 + 12, plus the small boxes
@@ -27,7 +28,7 @@ nd2 = 10;           // cards in playerBox: 4-bidValue, 6-bidCol
 ndeck = 48;         // most of the 80 cards (48 + 32)
 ncard = 18;         // non-deck cards (white, black/grey)
 
-bx = mcardw + 2 + 2*t0; // mcardw + slack
+bx = mcardw + 2 + 2*t0; // external minibox: mcardw + slack=2, 2 * wall thickness = t0
 dz = 2;                  // extend boxes above cards
 bz = 1.75*inch + t0 + dz;// extend boxes above cards
 byc = t0 + nd2 * tc1 + t0;  // thin section for cards (10 * .35) 2 * 3.5 = 5.5mm
@@ -35,24 +36,31 @@ bym = t0 + 12.5;            // taller than the meeples (8x12x12 ~1152 mm3) * 8 =
 by = bym + 5.7;         // total-y of playerBox; 19.2mm
 byt = by + f;           // total width + fudge in multiPlayer
 byp = by + 1;           // playerBox spaced for print
-pbwide = 6 * byt;
-tswide = t0 + cardw + ecx + t0; // extra t0 fudge space.
-boxw = t0 + max(pbwide, tswide) + t0; // exterior size of main box
-boxy = t0 + (thf+ t0 + bx) + 2*t0;
-boxz = bz/1 + t0 * 2; // base, slack for 3 cards
+pbwide = 6 * byt;       // playerBox stack width
+tswide = t0 + cardw + ecx + t0; // track & ecx + extra 2*t0 fudge space.
+echo("pbwide, tswide =", pbwide, tswide); // interior x-width required
+
+boxw = bt0 + max(pbwide, tswide) + bt0; // exterior size of main box
+boxy = bt0 + (thf+ 2*bt0 + bx) + bt0;    //
+boxz = bz/1 + bt0 * 2; // base, slack for 3 cards
 
 
 module mainBox(ig, c = "red", tt = 1.5) {
   // on a hot day, printer fan crushes the near wall! add a support strut:
-  slotifyY2([boxz, boxw*.7, tt*2, 18], [boxw/2, thf+1.5*t0+tt, bz*.3], undef, 20 )
-  divXZ([boxz, boxw, thf+2*t0], 0, 0, tt);
+  slotifyY2([boxz, boxw*.7, tt*2, 18], [boxw/2, thf+1.5*bt0+tt, bz*.3], undef, 20 )
+  divXZ([boxz, boxw, thf+2*bt0], 0, 0, tt);
   color(c)
-  box([boxw, boxy, boxz], t0);
+  box(lwh=[boxw, boxy, boxz], t=bt0, r=.6);
 }
 
 module mainLid(dl = f, lz = 18, c = "green") {
+  lt = 1.5;
+  dxy = lt+dl;
   color(c)
-  trr([-t0-dl, -t0-dl, 0]) box([boxw+ 2*t0 + 2*dl, boxy+ 2*t0 + 2*dl, lz]);
+  difference() {
+    trr([-dxy, -dxy, 0]) box([boxw + 2*dxy, boxy + 2*dxy, lz], lt);
+  //   cubesGrid(bw = boxw, bh = boxy, stt = [5, 20, 20], t=-3);
+  }
 }
 
 echo("bx * bym * bz = ", bx * bym * bz, bx/12, bym, bz, "by=", by, "byc=", byc); // 53000 > 8000
@@ -124,7 +132,7 @@ u10 = [];
 // 3: miniBo2, cardBox, playerBox(nd2)
 // 4-8: multiPlayer(loc-2)
 // 10: print mainBox
-loc = 10;
+loc = 9;
 show(5);
 // 0 miniBox & pb(ncard) @ 90-degrees
 atrans(loc, [[0, 0, 0]]) {
@@ -136,9 +144,9 @@ atrans(loc, [[0, 0, 0]]) trr([trackx,     f+side, 0+cstackz]) trackStack(-1);
 atrans(loc, [[0, 0, 0]]) trr([trackx-ecx, f+side,  0]) cardStack();
 // 0 & 1: "red" box
 atrans(loc, [[0-f/2, 0, 0], [-(3+boxw), 0, 0], undef, 2,
-    2, 2, 2, 2, 2, 2, 0,]) trr([-t0, -t0, -t0]) mainBox([boxw, boxy, boxz]);
+    2, 2, 2, 2, 2, 2, 0,]) trr([-bt0, -bt0, -bt0]) mainBox([boxw, boxy, boxz]);
 atrans(loc, [[0-f/2, 0, 0], [-2*(3+boxw), 0, 0], undef, 2,
-    2, 2, 2, 2, 2, 0,]) trr([-t0, -t0, -2*t0]) color("green") mainLid();
+    2, 2, 2, 2, 2, 0,]) trr([-bt0, -bt0, -2*bt0]) mainLid(f, 18, "purple");
 // 0 & 1: full & print-6
 atrans(loc, [[0, thf + 2*t0, 0], 0]) multiPlayer(6, loc==0 ? 2 : 0);
 // 2: minBox2 & playerBox(ncard) & playerBox(nd2)
