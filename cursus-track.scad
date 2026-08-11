@@ -29,7 +29,7 @@ tc = .5;            // allocated thickness to cut out for card (> actual: .33 mm
 rc = 3.0;           // radius of card corner (actual = 3mm)
 
 tf = 2.3;           // z-thickness of frame
-side = .32*inch;     // side rails (10.16 mm)
+side = .32*inch;     // side rails (.32 -> .813 mm; .30 -> .762mm)
 thf = cardh + 2 * side; // total y-height of frame [track]
 echo("cardw, cardh", cardw, cardh, "+cf", cardw+cf, cardh+cf);
 // "cardw, cardh", 99.8222, 61.9761, "+cf", 100.902, 63.0561 (original; cf = 6*f)

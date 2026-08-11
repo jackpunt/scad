@@ -37,29 +37,51 @@ by = bym + 5.7;         // total-y of playerBox; 19.2mm
 byt = by + f;           // total width + fudge in multiPlayer
 byp = by + 1;           // playerBox spaced for print
 pbwide = 6 * byt;       // playerBox stack width
-tswide = t0 + cardw + ecx + t0; // track & ecx + extra 2*t0 fudge space.
+tswide = bt0 + bt0 + cardw + ecx + bt0; // track & ecx + extra 2*t0 fudge space.
 echo("pbwide, tswide =", pbwide, tswide); // interior x-width required
 
-boxw = bt0 + max(pbwide, tswide) + bt0; // exterior size of main box
+// boxw = bt0 + max(pbwide, tswide) + bt0; // exterior size of main box
 boxy = bt0 + (thf+ 2*bt0 + bx) + bt0;    //
 boxz = bz/1 + bt0 * 2; // base, slack for 3 cards
+boxw = 120.68; //boxy = 151.856;       // orig box size
+// "boxw, boxy", 120.68, 151.856, 4.75118, 5.97858
+// "boxw, boxy", 118.88, 151.256, 4.68031, 5.95496
 
-
-module mainBox(ig, c = "red", tt = 1.5) {
+// bxyz: [boxw, boxy, boxz
+// c: ("red")
+// tt: div thickness (bt0)
+module mainBox(bxyz, c = "red", tt = t0) {
+  boxw = def(bxyz[0], boxw); 
+  boxy = def(bxyz[1], boxy);
+  boxz = def(bxyz[2], boxz);
   // on a hot day, printer fan crushes the near wall! add a support strut:
-  slotifyY2([boxz, boxw*.7, tt*2, 18], [boxw/2, thf+1.5*bt0+tt, bz*.3], undef, 20 )
-  divXZ([boxz, boxw, thf+2*bt0], 0, 0, tt);
+  slotifyY2([boxz, boxw*.7, tt*2, 18], [boxw/2, thf+1.3*bt0+tt, boxz*.3], undef, 20)
+  divXZ([boxz, boxw, thf+1.5*bt0], 0, 0, tt);
   color(c)
   box(lwh=[boxw, boxy, boxz], t=bt0, r=.6);
 }
 
-module mainLid(dl = f, lz = 18, c = "green") {
-  lt = 1.5;
-  dxy = lt+dl;
+font = "Baskerville:style=Bold Italic";
+fontsize = 10;
+module ttext(str="title", d = .6) {
+  trr([0, 0, 0, [180, 0, 0, [0, 0, d/2]]])
+  linear_extrude(height = d) 
+  rotate([0, 0, 90]) text(text=str, font=font, size=fontsize, halign="center", valign="center");
+}
+
+lt = 1.5;     // lid thickness
+module mainLid(fl = f, lz = 18, c = "green") {
+  dxy = lt + fl;   // extend around box
+  sr = 40;         // slot radius]
+  lh = fontsize * 1.3; // line height
   color(c)
+  trr([-dxy, -dxy, 0]) 
+  slotifyX2([lz+dxy, sr, 3*dxy, sr/3], [boxw+dxy, boxy/2, lz - sr/2], undef, 3)
+  slotifyX2([lz+dxy, sr, 3*dxy, sr/3], [       0, boxy/2, lz - sr/2], undef, 3)
   difference() {
-    trr([-dxy, -dxy, 0]) box([boxw + 2*dxy, boxy + 2*dxy, lz], lt);
-  //   cubesGrid(bw = boxw, bh = boxy, stt = [5, 20, 20]);
+    box([boxw + 2*dxy, boxy + 2*dxy, lz + dxy], lt);
+    trr([boxw/2-lh/2, boxy/2, -p]) ttext("Cursus");
+    trr([boxw/2+lh/2, boxy/2, -p]) ttext("Honorum");
   }
 }
 
@@ -118,7 +140,7 @@ module miniBox(n = ndeck, mbh = bx, cy = 0) {
 } 
 ncardz = (24 + 6);
 mboxz = ndeck*tc1 + 2*t0; // miniBox-z when rotated to lay flat
-trackx = t0 + ecx;        // x-offset to trackStack
+trackx = bt0 + ecx;       // x-offset to trackStack
 cstackz = ncardz * tc1 - ecz;     // above stack of 24 track cards
 trkz = f + cstackz + (tsz - ecz); // folded track z-extent
 
@@ -136,17 +158,17 @@ loc = 9;
 show(5);
 // 0 miniBox & pb(ncard) @ 90-degrees
 atrans(loc, [[0, 0, 0]]) {
-  trr([        1*t0, side/2, mboxz+trkz, [0, 90, 0]]) miniBox2(ndeck, undef, (loc == 0) ? 2 : 0);
-  trr([bz+t0/2+ 1*t0, bz+side, mboxz+trkz, [0, 90, -90]]) playerBox(ncard, (loc==0) ? 2 : 0);
+  trr([      f+  1*bt0, side/2, mboxz+trkz, [0, 90, 0]]) miniBox2(ndeck, undef, (loc == 0) ? 2 : 0);
+  trr([bz+t0/2+ 1*bt0, bz+side, mboxz+trkz, [0, 90, -90]]) playerBox(ncard, (loc==0) ? 2 : 0);
 }
 // 0: trackStack & cardStack
 atrans(loc, [[0, 0, 0]]) trr([trackx,     f+side, 0+cstackz]) trackStack(-1);
 atrans(loc, [[0, 0, 0]]) trr([trackx-ecx, f+side,  0]) cardStack();
 // 0 & 1: "red" box
 atrans(loc, [[0-f/2, 0, 0], [-(3+boxw), 0, 0], undef, 2,
-    2, 2, 2, 2, 2, 2, 0,]) trr([-bt0, -bt0, -bt0]) mainBox([boxw, boxy, boxz]);
+    2, 2, 2, 2, 2, 2, 0,]) trr([-bt0, -bt0, -bt0]) mainBox();
 atrans(loc, [[0-f/2, 0, 0], [-2*(3+boxw), 0, 0], undef, 2,
-    2, 2, 2, 2, 2, 0,]) trr([-bt0, -bt0, -2*bt0]) mainLid(f, 18, "purple");
+    2, 2, 2, 2, 2, 0,]) trr([-bt0, -bt0, -bt0 - lt]) mainLid(.12, boxz-f, "purple");
 // 0 & 1: full & print-6
 atrans(loc, [[0, thf + 2*t0, 0], 0]) multiPlayer(6, loc==0 ? 2 : 0);
 // 2: minBox2 & playerBox(ncard) & playerBox(nd2)
