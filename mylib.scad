@@ -414,23 +414,25 @@ module roundedTube(sxy = 10, r = 2, k = 0, txyz = t0) {
 // in XY plane; endcaps for a roundedTube
 // xyz: [dx, dy, dz] (10) x,y size; dz translate
 // r: [r,r,r,r] (2)
-// k: kut
+// k: kut the roundedRect (0); 0 --> keep all
 // t: z-axis extrusion
 module divXY(xyz = 10, r = 2, k, tz = t0) {
-  dz = is_undef(xyz.z) ? 0 : xyz.z;
+  xyz = is_list(xyz) ? xyz : [xyz, xyz];
+  dz = def(xyz[2], 0);
   translate([ 0, 0, dz ])    //
       linear_extrude(height = tz) //
       roundedRect([ xyz.x, xyz.y ], r, k);
 }
 
-// a roundedRect divider (@x) across the YZ plane of a box:
-// hwx: [z,y,x] --> z-height, y-depth, x-translation (of leftmost edge)
+// divZY: a roundedRect divider (@x) across the YZ plane of a box:
+// zyx: [z,y,x] --> z-height, y-depth, x-translation (of leftmost edge)
 // r: radius ([r,r,r,r])
 // k: (0) k<0 cut k from top; k>0 cut k from bottom (keep top)
 // - k == 0 --> keep all
 // t: thick (dx = t0)
 module div(zyx = 10, r = 2, k, tx = t0) {
-  dx = is_undef(zyx[2]) ? 0 : zyx[2];
+  zyx = is_list(zyx) ? zyx : [zyx, zyx];
+  dx = def(zyx[2], 0);
   translate([ dx + tx, 0, 0 ])    //
       rotate([ 0, -90 ])          // flip XY to YZ, extrude to -X
       linear_extrude(height = tx) // extrude up Z
@@ -438,14 +440,17 @@ module div(zyx = 10, r = 2, k, tx = t0) {
 }
 
 // on the XZ plane, displaced by y
-// zxy -> z-height, x-width, y-translation
-// t: thickness of extrusion
+// zxy -> [z-height, x-width, (y-translation = 0)]
+// r: for roundedRect [(0,0), (0,dy), (dx,dy), (dx,0)]
+// t: thickness of extrusion (2)
+//
 // zxy: [dz, dx, dy] (10) z,x size; dy translate
 // r: [r,r,r,r] (2)
-// k: kut
+// k: kut the roundedRect (0) 0 --> keep all
 // t: z-axis extrusion (t0)
 module divXZ(zxy = 10, r = 2, k, ty = t0) {
-  dy = is_undef(zxy[2]) ? 0 : zxy[2];
+  zxy = is_list(zxy) ? zxy : [zxy, zxy];
+  dy = def(zxy[2], 0);
   translate([0, dy + ty, 0])
       rotate([ 90, 0, 0 ])       //
       linear_extrude(height = ty) //
@@ -551,7 +556,7 @@ module slotifyX(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   rot0 = is_undef(rot) ? 1 : rot; // flip XY to YZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
   // echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
-  if (!is_undef(riq)) rc2(0, h, w, t, r, tr, ss, riq)
+  rc2(0, h, w, t, r, tr, ss, def(riq, [0]))
   difference() 
   {
     children(0);
@@ -601,8 +606,9 @@ module slotifyY(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   r = is_undef(hwtr[3]) ? min(h, w)/2 : hwtr[3]; // main radius
   rot0 = is_undef(rot) ? [0,90,90] : rot; // flip XY to XZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
+  // riq = def(riq, []);
   // echo("slotifyY: hwtr=", [ h, w, t, r ], "rott=", rott);
-  if (!is_undef(riq)) rc2(1, h, w, t, r, tr, ss, riq)
+  rc2(1, h, w, t, r, tr, ss, def(riq, [0]))
   difference() 
   {
     children(0);
@@ -654,7 +660,7 @@ module slotifyZ(hwtr, tr = [ 0, 0, 0 ], rot, riq, ss = false) {
   rot0 = is_undef(rot) ? 2 : rot; // flip XY to XZ plane
   rott = is_list(rot0) ? rot0 : rotOfId(rot0);
   // echo("slotify: hwtr=", [ h, w, t, r ], "rott=", rott);
-  if (!is_undef(riq)) rc2(2, h, w, t, r, tr, ss, riq)
+  rc2(2, h, w, t, r, tr, ss, def(riq, [0]))
   difference() 
   {
     children(0);
