@@ -39,15 +39,20 @@ pbwide = 6 * byt;
 tswide = t0 + cardw + ecx + t0; // extra t0 fudge space.
 boxw = t0 + max(pbwide, tswide) + t0; // exterior size of main box
 boxy = t0 + (thf+ t0 + bx) + 2*t0;
-boxz = bz/1 + t0 * 1.67; // base, slack for 2 cards
+boxz = bz/1 + t0 * 2; // base, slack for 3 cards
 
 
-module mainBox(ig) {
-  box([boxw, boxy, boxz]);
+module mainBox(ig, c = "red", tt = 1.5) {
+  // on a hot day, printer fan crushes the near wall! add a support strut:
+  slotifyY2([boxz, boxw*.7, tt*2, 18], [boxw/2, thf+1.5*t0+tt, bz*.3], undef, 20 )
+  divXZ([boxz, boxw, thf+2*t0], 0, 0, tt);
+  color(c)
+  box([boxw, boxy, boxz], t0);
 }
 
-module mainLid(dl = f, lz = 1.8) {
-  trr([-t0-f, -t0-f, 0]) box([boxw+2*t0+2*f, boxy+ 2* t0+2*f, lz]);
+module mainLid(dl = f, lz = 18, c = "green") {
+  color(c)
+  trr([-t0-dl, -t0-dl, 0]) box([boxw+ 2*t0 + 2*dl, boxy+ 2*t0 + 2*dl, lz]);
 }
 
 echo("bx * bym * bz = ", bx * bym * bz, bx/12, bym, bz, "by=", by, "byc=", byc); // 53000 > 8000
@@ -131,10 +136,11 @@ atrans(loc, [[0, 0, 0]]) trr([trackx,     f+side, 0+cstackz]) trackStack(-1);
 atrans(loc, [[0, 0, 0]]) trr([trackx-ecx, f+side,  0]) cardStack();
 // 0 & 1: "red" box
 atrans(loc, [[0-f/2, 0, 0], [-(3+boxw), 0, 0], undef, 2,
-    2, 2, 2, 2, 2, 2, 0,]) trr([-t0, -t0, -t0]) color("red") mainBox([boxw, boxy, boxz]);
-atrans(loc, [[0-f/2, 0, 0], [-2*(3+boxw), 0, 0]]) trr([-t0, -t0, -2*t0]) color("green") mainLid();
+    2, 2, 2, 2, 2, 2, 0,]) trr([-t0, -t0, -t0]) mainBox([boxw, boxy, boxz]);
+atrans(loc, [[0-f/2, 0, 0], [-2*(3+boxw), 0, 0], undef, 2,
+    2, 2, 2, 2, 2, 0,]) trr([-t0, -t0, -2*t0]) color("green") mainLid();
 // 0 & 1: full & print-6
-atrans(loc, [[0, 0, 0], 0]) trr([0, thf+t0, 0]) multiPlayer(6, loc==0 ? 2 : 0);
+atrans(loc, [[0, thf + 2*t0, 0], 0]) multiPlayer(6, loc==0 ? 2 : 0);
 // 2: minBox2 & playerBox(ncard) & playerBox(nd2)
 atrans(loc, [undef, [0, 0, 0], 1, 1]) {
   trr([    0, 0, 0]) miniBox2(ndeck);
