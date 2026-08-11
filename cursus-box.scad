@@ -59,7 +59,7 @@ module mainLid(dl = f, lz = 18, c = "green") {
   color(c)
   difference() {
     trr([-dxy, -dxy, 0]) box([boxw + 2*dxy, boxy + 2*dxy, lz], lt);
-  //   cubesGrid(bw = boxw, bh = boxy, stt = [5, 20, 20], t=-3);
+  //   cubesGrid(bw = boxw, bh = boxy, stt = [5, 20, 20]);
   }
 }
 
