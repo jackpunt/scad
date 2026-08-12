@@ -40,23 +40,23 @@ pbwide = 6 * byt;       // playerBox stack width
 tswide = bt0 + bt0 + cardw + ecx + bt0; // track & ecx + extra 2*t0 fudge space.
 echo("pbwide, tswide =", pbwide, tswide); // interior x-width required
 
-// boxw = bt0 + max(pbwide, tswide) + bt0; // exterior size of main box
-boxy = bt0 + (thf+ 2*bt0 + bx) + bt0;    //
+boxw = bt0 + max(pbwide, tswide) + bt0; // exterior size of main box
+boxy = bt0 + (thf+ 4*bt0 + bx) + bt0;   //
 boxz = bz/1 + bt0 * 2; // base, slack for 3 cards
-boxw = 120.68; //boxy = 151.856;       // orig box size
+// boxw = 120.68; boxy = 151.856;       // orig box size
 // "boxw, boxy", 120.68, 151.856, 4.75118, 5.97858
 // "boxw, boxy", 118.88, 151.256, 4.68031, 5.95496
 
 // bxyz: [boxw, boxy, boxz
 // c: ("red")
 // tt: div thickness (bt0)
-module mainBox(bxyz, c = "red", tt = t0) {
+module mainBox(bxyz, c = "red", tt = bt0) {
   boxw = def(bxyz[0], boxw); 
   boxy = def(bxyz[1], boxy);
   boxz = def(bxyz[2], boxz);
   // on a hot day, printer fan crushes the near wall! add a support strut:
   slotifyY2([boxz, boxw*.7, tt*2, 18], [boxw/2, thf+1.3*bt0+tt, boxz*.3], undef, 20)
-  divXZ([boxz, boxw, thf+1.5*bt0], 0, 0, tt);
+  divXZ([boxz, boxw, thf+2*bt0], 0, 0, tt);
   color(c)
   box(lwh=[boxw, boxy, boxz], t=bt0, r=.6);
 }
@@ -153,8 +153,10 @@ u10 = [];
 // 2: miniBox2(ndeck) & cardBox = playerBox(ncard)
 // 3: miniBo2, cardBox, playerBox(nd2)
 // 4-8: multiPlayer(loc-2)
-// 10: print mainBox
-loc = 9;
+// 9: print mainBox
+// 10: print mainLid
+// 11: show mainBox & mainLid
+loc = 0;
 show(5);
 // 0 miniBox & pb(ncard) @ 90-degrees
 atrans(loc, [[0, 0, 0]]) {
@@ -166,11 +168,11 @@ atrans(loc, [[0, 0, 0]]) trr([trackx,     f+side, 0+cstackz]) trackStack(-1);
 atrans(loc, [[0, 0, 0]]) trr([trackx-ecx, f+side,  0]) cardStack();
 // 0 & 1: "red" box
 atrans(loc, [[0-f/2, 0, 0], [-(3+boxw), 0, 0], undef, 2,
-    2, 2, 2, 2, 2, 2, 0,]) trr([-bt0, -bt0, -bt0]) mainBox();
+    2, 2, 2, 2, 2, 0, 2, 0]) trr([-bt0, -bt0, -bt0]) mainBox();
 atrans(loc, [[0-f/2, 0, 0], [-2*(3+boxw), 0, 0], undef, 2,
-    2, 2, 2, 2, 2, 0,]) trr([-bt0, -bt0, -bt0 - lt]) mainLid(.12, boxz-f, "purple");
+    2, 2, 2, 2, 2, 2, 0, 0]) trr([-bt0, -bt0, -bt0 - lt - p]) mainLid(.18, boxz-f, "purple");
 // 0 & 1: full & print-6
-atrans(loc, [[0, thf + 2*t0, 0], 0]) multiPlayer(6, loc==0 ? 2 : 0);
+atrans(loc, [[0, thf + 3*bt0, 0], 0]) multiPlayer(6, loc==0 ? 2 : 0);
 // 2: minBox2 & playerBox(ncard) & playerBox(nd2)
 atrans(loc, [undef, [0, 0, 0], 1, 1]) {
   trr([    0, 0, 0]) miniBox2(ndeck);
