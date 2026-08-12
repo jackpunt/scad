@@ -54,8 +54,11 @@ module mainBox(bxyz, c = "red", tt = bt0) {
   boxw = def(bxyz[0], boxw); 
   boxy = def(bxyz[1], boxy);
   boxz = def(bxyz[2], boxz);
+  slotz = 6;    // up from bottom of box
+  dw = by;      // in from sides of box
   // on a hot day, printer fan crushes the near wall! add a support strut:
-  slotifyY2([boxz, boxw*.7, tt*2, 18], [boxw/2, thf+1.3*bt0+tt, boxz*.3], undef, 20)
+  slotifyY2([slotz,       1*dw, tt*2,   ], [boxw/2, thf+1.3*bt0+tt, -dw/2], undef, slotz)
+  slotifyY2([boxz  , boxw-2*dw, tt*2, dw], [boxw/2, thf+1.3*bt0+tt, slotz], undef, dw)
   divXZ([boxz, boxw, thf+2*bt0], 0, 0, tt);
   color(c)
   box(lwh=[boxw, boxy, boxz], t=bt0, r=.6);
@@ -156,7 +159,7 @@ u10 = [];
 // 9: print mainBox
 // 10: print mainLid
 // 11: show mainBox & mainLid
-loc = 0;
+loc = 9;
 show(5);
 // 0 miniBox & pb(ncard) @ 90-degrees
 atrans(loc, [[0, 0, 0]]) {
@@ -172,7 +175,7 @@ atrans(loc, [[0-f/2, 0, 0], [-(3+boxw), 0, 0], undef, 2,
 atrans(loc, [[0-f/2, 0, 0], [-2*(3+boxw), 0, 0], undef, 2,
     2, 2, 2, 2, 2, 2, 0, 0]) trr([-bt0, -bt0, -bt0 - lt - p]) mainLid(.18, boxz-f, "purple");
 // 0 & 1: full & print-6
-atrans(loc, [[0, thf + 3*bt0, 0], 0]) multiPlayer(6, loc==0 ? 2 : 0);
+atrans(loc, [[0, thf + 3*bt0, 0], 0, undef, 2, 2, 2, 2, 2, 2, ]) multiPlayer(6, loc==0 ? 2 : 0);
 // 2: minBox2 & playerBox(ncard) & playerBox(nd2)
 atrans(loc, [undef, [0, 0, 0], 1, 1]) {
   trr([    0, 0, 0]) miniBox2(ndeck);
