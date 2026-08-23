@@ -21,8 +21,8 @@ cr = 2.5; // center hole radius
 
 
 // a pipe with a hole in the end cap:
-module piece1 (r = r1, cr = cr, t1 = t0 + t0) {
-%  pipe([r, r, h], t0);       // pipe with t0 wall
+module piece1 (r = r1, cr = cr, h = h, t1 = t0 + t0) {
+  pipe([r, r, h], t0);       // pipe with t0 wall
   pipe([r, r, t1], r-cr);    // end cap with cr hole in center
 }
 
@@ -62,14 +62,16 @@ difference() {
 
 
 dx = 1; // separation of piece1 & piece2
+h2 = 10;
 
 module piece2(r = r2) {
-  // trr([0, 0, -0, [0, 90, 0, [r-0, 0, 0]]])
-  trr([r1+dx, 0, r, [0, 90, 0, [r*0, 0, 0]]])
+  trr([r1+dx, 0, r, [0, 90, 0]])
   difference() {
-    piece1(r, 9, t0);
-    trr([-1.6*r, -r-p, -p])
-    cube([r, 2*r+pp, h+pp]); // cut the top
+    piece1(r, 9, h2, t0);
+    trr([-1.5*r, -r-p, -p])
+    cube([r, 2*r+pp, h2+pp]); // cut the top: [z, y, x]
+    trr([-r, -9-p, 0-p])
+    cube([r, 9*2+pp, t0+pp]);
   }
 }
 
@@ -77,5 +79,8 @@ x0 = cr * 2; // offset x: clearance of center hole & nutlock
 cy = 16;  // cube y-size
 cz = 6;   // cube z-size (fillet)
 piece2();
-trr([x0, -cy/2, 0]) cube([r1 + h + dx - x0, cy, t0]);
+trr([x0, -cy/2, 0]) cube([r1 + h2 + dx - x0, cy, t0]);
 trr([r1-t0, -cy/2, 0]) cube([2*t0+dx, cy, cz]);
+
+// Note: make teeth smaller, 
+// Note: measure size of nutlock (cr + 1 was just a guess)
