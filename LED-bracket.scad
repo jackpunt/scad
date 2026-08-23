@@ -14,13 +14,16 @@ tr0 = [0, 0, 0];    // CONST
 
 // bracket hold outdoor LED lamp
 
-h = 15 + t0;
+h = 15 + t0; // NOTE: this requires a longer screw! (or fill inside an cut nut lock)
 r1 = 15; // outside radius of piece1
-r2 = 17; // 
+r2 = 17; //
+cr = 2.5; // center hole radius 
 
-module piece1 (r = r1, cr = 2.5) {
-  pipe([r, r, h], 2);
-  pipe([r, r, 2], r-cr);
+
+// a pipe with a hole in the end cap:
+module piece1 (r = r1, cr = cr) {
+  pipe([r, r, h], t0);       // pipe with t0 wall
+  pipe([r, r, t0], r-cr);    // end cap with cr hole in center
 }
 
 // r: radius of ring
@@ -51,13 +54,20 @@ module piece1_tooth(d = .5) {
 }
 piece1_tooth();
 
+
+dx = 1; // separation of piece1 & piece2
+
 module piece2(r = r2) {
-  trr([0, 0, -0, [0, 90, 0, [r-0, 0, 0]]])
+  // trr([0, 0, -0, [0, 90, 0, [r-0, 0, 0]]])
+  trr([r1+dx, 0, r, [0, 90, 0, [r*0, 0, 0]]])
   difference() {
     piece1(r, 9);
     trr([-1.6*r, -r-p, -p])
-    cube([r, 2*r+pp, h+pp]);
+    cube([r, 2*r+pp, h+pp]); // cut the top
   }
 }
-
+cy = 16;  // cube y-size
+cz = 6;   // cube z-size (fillet)
 piece2();
+trr([cr, -cy/2, 0]) cube([r1 + h + dx - cr, cy, t0]);
+trr([r1-t0, -cy/2, 0]) cube([2*t0+dx, cy, cz]);
