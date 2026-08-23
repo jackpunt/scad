@@ -14,11 +14,13 @@ tr0 = [0, 0, 0];    // CONST
 
 // bracket hold outdoor LED lamp
 
-r1 = 16;
-h = 10;
-module piece1 (r = r1) {
+h = 15 + t0;
+r1 = 15; // outside radius of piece1
+r2 = 17; // 
+
+module piece1 (r = r1, cr = 2.5) {
   pipe([r, r, h], 2);
-  pipe([r, r, 2], r-2.5);
+  pipe([r, r, 2], r-cr);
 }
 
 // r: radius of ring
@@ -38,11 +40,24 @@ module tooth_ring(n = 30, r = 20, z = 2, t = t0) {
     tooth(r+dt, z*(r+dt)/(r-dt), t);
   }
 }
+module piece1_tooth(d = .5) {
   piece1();
   trr([0, 0, h-3])
   intersection() {
     piece1();
     trr([0, 0, 3])
-    tooth_ring(30, 16, .5);
+    tooth_ring(30, 16, d);
   }
+}
+piece1_tooth();
 
+module piece2(r = r2) {
+  trr([0, 0, -0, [0, 90, 0, [r-0, 0, 0]]])
+  difference() {
+    piece1(r, 9);
+    trr([-1.6*r, -r-p, -p])
+    cube([r, 2*r+pp, h+pp]);
+  }
+}
+
+piece2();
