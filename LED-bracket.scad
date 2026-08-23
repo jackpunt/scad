@@ -21,36 +21,30 @@ cr = 2.5; // center hole radius
 
 
 // a pipe with a hole in the end cap:
-module piece1 (r = r1, cr = cr) {
+module piece1 (r = r1, cr = cr, t1 = t0 + t0) {
   pipe([r, r, h], t0);       // pipe with t0 wall
-  pipe([r, r, t0], r-cr);    // end cap with cr hole in center
+  pipe([r, r, t1], r-cr);    // end cap with cr hole in center
 }
 
-// r: radius of ring
 // n: number of teeth in full circle (360-degree)
+// r: radius of ring
 // z: depth of notch (90-degre notch)
 // t: thickness of ring
-module tooth_ring(n = 30, r = 20, z = 2, t = t0) {
-  module tooth(r = 20, z = 5, t = t) {
+module tooth_ring(n = 30, r = r1, z = 1, t = t0) {
+  module  tooth(r = r, z = z, t = t) {
     trr([r, 0, 0, [0, -90, 0]])
-    linear_extrude(height = t, scale = (r-t)/ r)  polygon([[0, z], [0, -z], [z, 0]]);
+    linear_extrude(height = t, scale = (r-t)/ r)
+      polygon([[0, z], [0, -z], [z, 0]]);
   }
   deg = 360 / n; dt = t/2;
-  for (d = [0 : deg : 360-deg]) 
-  rotate([0, 0, d])
-  {
-    tooth(r-dt+p, z, t);
-    tooth(r+dt, z*(r+dt)/(r-dt), t);
-  }
+  for (d = [0 : deg : deg]) 
+    rotate([0, 0, d])
+    tooth(r-dt);
 }
-module piece1_tooth(d = .5) {
+module piece1_tooth(z = .5) {
   piece1();
-  trr([0, 0, h-3])
-  intersection() {
-    piece1();
-    trr([0, 0, 3])
-    tooth_ring(30, 16, d);
-  }
+  trr([0, 0, h-p])
+    tooth_ring(30, 16, z);
 }
 piece1_tooth();
 
@@ -61,7 +55,7 @@ module piece2(r = r2) {
   // trr([0, 0, -0, [0, 90, 0, [r-0, 0, 0]]])
   trr([r1+dx, 0, r, [0, 90, 0, [r*0, 0, 0]]])
   difference() {
-    piece1(r, 9);
+    piece1(r, 9, t0);
     trr([-1.6*r, -r-p, -p])
     cube([r, 2*r+pp, h+pp]); // cut the top
   }
