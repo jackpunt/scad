@@ -31,20 +31,20 @@ module piece1 (r = r1, cr = cr, t1 = t0 + t0) {
 // z: depth of notch (90-degre notch)
 // t: thickness of ring
 module tooth_ring(n = 30, r = r1, z = 1, t = t0) {
-  module  tooth(r = r, z = z, t = t) {
+  module tooth(r = r, z = z, t = t) {
     trr([r, 0, 0, [0, -90, 0]])
-    linear_extrude(height = t, scale = (r-t)/ r)
+    linear_extrude(height = t, scale = (r-t)/r)
       polygon([[0, z], [0, -z], [z, 0]]);
   }
   deg = 360 / n; dt = t/2;
-  for (d = [0 : deg : deg]) 
+  for (d = [0 : deg : 360-deg]) 
     rotate([0, 0, d])
-    tooth(r-dt);
+    tooth(r);
 }
 module piece1_tooth(z = .5) {
   piece1();
   trr([0, 0, h-p])
-    tooth_ring(30, 16, z);
+    tooth_ring(30, r1, z);
 }
 piece1_tooth();
 
