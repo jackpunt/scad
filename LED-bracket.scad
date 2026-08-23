@@ -22,7 +22,7 @@ cr = 2.5; // center hole radius
 
 // a pipe with a hole in the end cap:
 module piece1 (r = r1, cr = cr, t1 = t0 + t0) {
-  pipe([r, r, h], t0);       // pipe with t0 wall
+%  pipe([r, r, h], t0);       // pipe with t0 wall
   pipe([r, r, t1], r-cr);    // end cap with cr hole in center
 }
 
@@ -41,12 +41,24 @@ module tooth_ring(n = 30, r = r1, z = 1, t = t0) {
     rotate([0, 0, d])
     tooth(r);
 }
+
+module nutlock() {
+  trr([0, 0, -p])
+  linear_extrude(height = t0) 
+  circle(r = cr+1, $fn = 6);
+}
+
 module piece1_tooth(z = .5) {
   piece1();
   trr([0, 0, h-p])
     tooth_ring(30, r1, z);
 }
-piece1_tooth();
+difference() {
+  piece1_tooth();
+  nutlock();  
+  // Note: dont need this cut-out: screw is long enough even with extra t0 thickness!
+  // reversing would not help, bc other side is also thick and has center pipe...
+}
 
 
 dx = 1; // separation of piece1 & piece2
@@ -60,8 +72,10 @@ module piece2(r = r2) {
     cube([r, 2*r+pp, h+pp]); // cut the top
   }
 }
+
+x0 = cr * 2; // offset x: clearance of center hole & nutlock
 cy = 16;  // cube y-size
 cz = 6;   // cube z-size (fillet)
 piece2();
-trr([cr, -cy/2, 0]) cube([r1 + h + dx - cr, cy, t0]);
+trr([x0, -cy/2, 0]) cube([r1 + h + dx - x0, cy, t0]);
 trr([r1-t0, -cy/2, 0]) cube([2*t0+dx, cy, cz]);
