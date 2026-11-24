@@ -40,6 +40,10 @@ h0 = h00+3.0;
 npc = 30;    // number of player cards
 pbt = npc * t01 + 2 * t0; // player box thick?
 
+nTemple = 6;
+nTempleCards = 24;        // number of 'special' action cards (4 x nTemples)
+cardz = t01 * (nTempleCards + 4);
+
 pdw = 216;   // playerBoard-x-width
 pdh = 133;   // playerBoard-y-height
 pdz = 21;    // playerBoard-z
@@ -53,8 +57,9 @@ psz = 30;       // 3 cm depth
 // (w0 x h0) sleeved card size
 module card(n = 1, w = w0, h = h0, cz = t00, c = "lightblue") {
   // put cards in sideways orientation:
-  astack(n, [0, 0, cz]) color(c) cube([h, w, cz]);
+  astack(n, [0, 0, cz]) color(c) cube([w, h, cz*.9]);
 }
+
 module playerBox() {
   // hold 3 * (8 combat) + 6 * (1 Action)
   module cardSection(npc = npc) {
@@ -86,16 +91,7 @@ module combatBoard() {
   }
 }
 
-module temple() {
-
-}
-module coinTray() {
-
-}
-module woodTray() {
-
-}
-module specialCards(n = 24) {
+module specialCards(n = nTempleCards) {
   card(n);
 }
 
@@ -124,11 +120,13 @@ module taperBox(w = shipw, h = shiph, z = tilez9, rz = 0) {
   cr = w/4;   // cylinder radius
   dy = dwh/2-dw/2;
   wh = (w + h)/2;
-  module cut(r = cr) {
+  module cut(r = cr, dir = 1) {
+    trr([0, dir * dy, -p]) {
     scale([1,.5]) 
     trr([0, 0, (bz0+tilez9+pp)/2]) cylinder(h = bz0+tilez9+pp, r = r, center = true);
     trr([0, 0, bz0+(bz0+tilez9+pp)/2]) cube([2*r, dw + .1 +8*p, tilez9+bz0+pp], true);
-    trr([0, dw/2, (bz0+tilez9+pp)/2]) cube([2*r, dw + .1 +8*p, tilez9+bz0+pp], true);
+    trr([0, dir*dw/2, (bz0+tilez9+pp)/2]) cube([2*r, dw + .1 +8*p, tilez9+bz0+pp], true);
+    }
   }
   // extrude & rotate while centered; then offset from [0, 0]
   trr([dww/2, dwh/2, 0, [0, 0, rz]])
@@ -136,8 +134,8 @@ module taperBox(w = shipw, h = shiph, z = tilez9, rz = 0) {
     linear_extrude(height = shz, scale = (wh + 2 * t0) / (wh + 2 * dw))
     trr([-dww/2, -dwh/2, 0]) roundedRect([dww, dwh], 1);
     trr([-w/2,   -h/2, bz0]) roundedCube([w, h, shz], .2, true); // tile
-    trr([0, -dy, -p]) cut(cr);      // base slot & finger cut
-    trr([0, +dy, -p]) cut(cr);      // base slot & finger cut
+    cut(cr, -1);      // base slot & finger cut
+    cut(cr, +1);      // base slot & finger cut
   }
 }
 module shipBox() {
@@ -150,22 +148,25 @@ module shipBox() {
   dy = shiph + 2 * dw + .05;
   astack(3, [0, dy, 0])
   astack(3, [dx, 0, 0]) 
-  trr([t0+.1, t0+.1, pp]) 
+  trr([w0 + .1, t0+.1, pp]) 
   aBox();
 }
 
 fortw = 36.1;
 forth = 18.1;
-fortox = t0 + 3 * (shipw + 2 * dw);
+fortox = t0;// + 3 * (shipw + 2 * dw);
+fortoy = t0 + 3 * (shiph + 2 * dw + .05) + 4.0;
 module fortBox() {
   module aBox() {
+    dwh = forth + 2 * dw;
+    trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]])
     color("red") taperBox(fortw, forth);
   }
   dx = fortw + 2 * dw + .1;
   dy = forth + 2 * dw + .1;
-  astack(4, [dx, 0, 0])
-  astack(2, [0, dy, 0])
-  trr([fortox + .1, t0 + .1, pp])
+  astack(9, [dy, 0, 0])
+  // astack(2, [0, dy, 0])
+  trr([fortox + .1, fortoy + .1, pp])
   aBox();
 
 }
@@ -181,20 +182,48 @@ module coinTray(n = 33) {
  box([coind+1 + t2, n * coinz + t2, trayz]);
 }
 module woodTray() {
-  box([trayw, trayh, trayz]);
+  color("#5555555a")
+  trr([t0, t0, t0 + cardz])
+  box([w0-t0, h0-t0, tilez9-cardz]);
 }
 
 module cardTray() {
-  trr([t0, t0, tilez9 + t2]) box([h0+1, w0+1, 28 * t01]);
+  trr([0, .5, 0]) box([w0+3*t0, h0+3*t0, tilez9]);
+  trr([t0, t0, t0])
+  specialCards();
+}
+
+module temple() {
 
 }
 
-module neutralLid(f = 0) {
-  color("lightblue")
-  trr([0-p, t0, ntz - 2* t0]) cube([ntx-t0+f, nty-t2+f, t0+f]);
-  trr([0-p,   -p, ntz - 2* t0]) cube([3*t0+pp, nty+pp, t2+f]);
-  trr([ntx-3*t0-p,   -p, ntz - 2* t0]) cube([3*t0+pp, nty+pp, t2+f]);
+// cs: child size; begin grid @ (cs, cs+1)
+// nc: columns
+// nr: rows
+module lidGrid(bw, bh, cs = 5, nc = undef, nr = undef) {
+  nc = def(nc, bw/(2 * cs));
+  nr = def(nr, bh/(2 * cs));
+  x0 = cs;
+  xi = (bw - cs) / nc;
+  xm = bw - cs;
+  y0 = cs + 1;
+  yi = (bh - cs) / nr;
+  ym = bh - cs;
+  translate([0, 0, -t0])
+  gridify([x0, xi, xm], [y0, yi, ym], 2) cube([cs, cs, cs]);
+}
 
+module neutralLid(f = 0) {
+  color("#3e9eff3e") 
+  trr([0-p, t0, ntz - 2* t0]) 
+  difference() {
+  cube([ntx-t0+f, nty-t2+f, t0+f]);
+  if (f <= 0) lidGrid(ntx-t0, nty-t2, 5);
+  }
+  if (f > 0) {
+    trr([0-p,        -p, ntz - 2* t0 ]) cube([3*t0+pp, nty+pp, t2+f]);
+    trr([ntx-3*t0-p, -p, ntz - 2* t0 ]) cube([3*t0+pp, nty+pp, t2+f]);
+  }
 }
 
 // temple risers?, coin tray, wood tray, 
@@ -202,19 +231,22 @@ module neutralLid(f = 0) {
 // 9 & 1/2 ship-upgrade tile holders
 module neutralTray() {
   difference() {
-  roundedBox([ntx, nty, ntz], 1, [t0, t2, t0]);
-  neutralLid(.2);
+    roundedBox([ntx, nty, ntz], 1, [t0, 1.5, t0]);
+    neutralLid(.2);
   }
-  *cardTray();
+  cardTray();
 
   * atrans(loc, [[ntx-30, t0, trayz + t0]])
   coinTray(40);
 
-  * atrans(loc, [[ntx-trayw, 0, t0]])
+  atrans(loc, [[0, 0, t0]])
   woodTray();
 
   trr([t0, t0, t0]) shipBox();
   trr([t0, t0, t0]) fortBox();
+  
+  atrans(loc, [-1, [0,0,0]]) neutralLid();
+
 }
 
 // 0: all - assembled
