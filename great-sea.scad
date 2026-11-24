@@ -97,7 +97,7 @@ module specialCards(n = 24) {
 }
 
 // size of neutral box:
-ntx = boxy - pdo*2;
+ntx = boxy - pdo;
 nty = boxy - pdh;
 ntz = boxz - cbz;
 echo("nxt, nty, ntz =", [ntx, nty, ntz]);
@@ -109,7 +109,7 @@ shipw = 30;
 shiph = 24;
 shipz = tilez;  // cardboard stock thickness (1.78)
 
-dw = 2.5;
+dw = 2.1;
 bz0 = 2;         // taperBox base thickness
 module taperBox(w = shipw, h = shiph, z = tilez9) {
   // linearExtrude(taper) roundedRect(), cut finger slots on side and base
@@ -129,17 +129,30 @@ module taperBox(w = shipw, h = shiph, z = tilez9) {
   }
 }
 module shipBox() {
-  dx = shiph + 2 * dw + .1;
-  astack(6, [dx, 0, 0])
-  taperBox(shipw, shiph, tilez9);
-  astack(3, [dx, 0, 0])
-  trr([0, 0, tilez9 + bz0 + .1]) taperBox(shipw, shiph, tilez9);
+  module aBox() {
+   color("blue") 
+   trr([0, 0, 0, [0, 0, 90, [shipw/2+dw, shiph/2+dw, 0]]]) 
+   taperBox(shipw, shiph);
+  }
+  dx = shipw + 2 * dw + .1;
+  astack(3, [0, shiph+2*dw, 0])
+  astack(3, [dx, 0, 0]) 
+  trr([dw*2, dw*2, 0]) 
+  aBox();
 }
 
 fortw = 36;
 forth = 18;
+fortox = 3 * (shipw + 2 * dw + .1);
 module fortBox() {
-
+  module aBox() {
+    color("red") taperBox(fortw, forth);
+  }
+  dx = fortw + 2 * dw + .1;
+  astack(5, [forth + 2 * dw + .1, 0, 0])
+  astack(2, [0, fortw + 2 * dw, 0])
+  trr([fortox+ dw, t0, 0])
+  aBox();
 }
 
 coind = 24;
@@ -157,26 +170,7 @@ module woodTray() {
 }
 
 module cardTray() {
-
-  cdx = h0 + t2;   // card div x-size
-  cdy = nty * .62; // card div y-size
-  trr([cdx, nty - cdy, 0]) cube([t0, cdy, ntz]); // card div
-  trr([t0/2, nty - cdy + 5, 0]) cube([cdx, t0, ntz * .75]); // strut
-
-  // support for tilted "special action" (temple) cards:
-  ang = -180 + 48;
-  tanz = tan(ang);
-  cosz = cos(ang);
-  sinz = sin(ang);
-  sinz2 = sinz * 2; // .7 -> 1.4 
-
-  csn = 28;     // cards stack number
-  csh = w0 * .8;
-  csy = nty - csn * tanz * t01; // or * tan(ang) ?
-  trr([t0/2, csy-t0, 0, [-ang, 0, 0, [0, 0, t0/2]]]) cube([h0+t2, csh, t0]);   // card support
-
-  if (loc == 0) astack(24, [0, -sinz * t01, 0])
-  trr([t0, csy, t0, [-ang, 0, 0, [0, 0, t01/2]]]) specialCards(1);
+  trr([t0, t0, tilez9 + t2]) box([h0+1, w0+1, 28 * t01]);
 
 }
 
@@ -184,17 +178,18 @@ module cardTray() {
 // worker/damage/stat tray, "special action" (temple) cards
 // 9 & 1/2 ship-upgrade tile holders
 module neutralTray() {
-  % box([ntx, nty, ntz]);
-  cardTray();
+   box([ntx, nty, ntz]);
+  
+  *cardTray();
 
-  atrans(loc, [[ntx-30, t0, trayz + t0]])
+  * atrans(loc, [[ntx-30, t0, trayz + t0]])
   coinTray(40);
 
-  atrans(loc, [[ntx-trayw, 0, t0]])
+  * atrans(loc, [[ntx-trayw, 0, t0]])
   woodTray();
 
   shipBox();
-
+  fortBox();
 }
 
 // 0: all - assembled
@@ -209,7 +204,7 @@ atrans(loc, [[pdo, 1, pdz], [0, 0, 0]]) playerBox();
 module outerBox(tb = .2) {
    trr([-tb, -tb, -tb]) box([boxy + 2*tb, boxy + 2*tb, boxz + tb], tb);
 }
-% atrans(loc, [[0, 0, 0]]) outerBox(.02);
+* atrans(loc, [[0, 0, 0]]) outerBox(.02);
 
 // playerboards
 atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, 0]) color("#af4900") cube([pdw, pdh, pdz]); // '#af4900'
