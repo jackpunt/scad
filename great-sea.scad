@@ -10,23 +10,29 @@ p = .001;
 pp = 2 * p;
 t0 = 1;
 f = .18;
-t2 = 2*t0;
+t2 = 2*t0;    // 2 walls
 
 sample = false;  // true to print mini-box
 
-mapz = 11.5;   // map thickness reduces availablbe box depth
+cbw = 140;       // combat board
+cbh = 100;
+cbz = 8;
+
+mapz = 11.5 + 2; // map thickness reduces availablbe box depth + rule book
 
 // box size and placement constraint (3x4 grid in square box)
 boxy = 220;    // internal XY-dim of cardboard box (components must fit within)
 boxz = 65 - mapz;    // internal height of cardboard box (components must fit within)
 
+// Garphill 54x86 cards
 w00 = sample ? 27 : 54;  // official card size [short dimension]
 h00 = sample ? 42 : 86;  // official card size [long dimension]
+
+ds = 12;       // dice size
 
 t00 = 8/24;    // = .333mm card thickness: sleeves 60 mics = .06 mm ==> .393 == .4 with sleeves?
 t01 = .400;    // = .33 + .6 mm; thickness when stacking sleeved cards (compressed) TBD when sleeve arrive.
 
-// euroPoker size (with sleeves):
 // width of card with sleeves
 w0 = w00+2.5;
 // height of card with sleeves
@@ -34,15 +40,21 @@ h0 = h00+3.0;
 npc = 30;    // number of player cards
 pbt = npc * t01 + 2 * t0; // player box thick?
 
-pdw = 216;   // playerBoard
-pdh = 133;
-pdz = 21;
-pdo = 2;
+pdw = 216;   // playerBoard-x-width
+pdh = 133;   // playerBoard-y-height
+pdz = 21;    // playerBoard-z
+pdo = 2;     // player board offset (in view)
 
-csw = h0 + t2;  // cardSection
+// PlayerBox:
+csw = h0 + 13 + t2;  // cardSection
 csh = w0 + t2;
 psz = 30;       // 3 cm depth
 
+// (w0 x h0) sleeved card size
+module card(n = 1, w = w0, h = h0, cz = t00, c = "lightblue") {
+  // put cards in sideways orientation:
+  astack(n, [0, 0, cz]) color(c) cube([h, w, cz]);
+}
 module playerBox() {
   // hold 3 * (8 combat) + 6 * (1 Action)
   module cardSection(npc = npc) {
@@ -51,21 +63,159 @@ module playerBox() {
   module partsSection() {
     box([csw, csh, psz], [t0, t0, -1], [2, 2, 1.1]);
   }
+  module pboxLid() {
+    inz = 3 + t0;
+    cube([csw, csh, t0]);
+    trr([t0, t0, t0-inz])
+    box([csw-t2, csh-t2, inz], [t0, t0, -1], [2, 2, 1.1]);
+  }
   cardSection();
   partsSection();
 }
-astack(2, [csw, 0, 0])
-astack(2, [0, csh, 0])
-trr([pdo, pdo, pdz]) playerBox();
+
+module combatBoard() {
+  cbws = 68.0;     // central "tab" height (wide part < cbh = 100)
+  cbhi = 87.8;     // width of narrow part (less than cbw = 140)
+  trr([0, cbh/2, cbz/2]) 
+  {
+    roundedCube([cbw, cbhi, cbz], 3, true, true);
+    roundedCube([cbws, cbh, cbz], 3, true, true);
+  }
+}
+
+module temple() {
+
+}
+module coinTray() {
+
+}
+module woodTray() {
+
+}
+module specialCards(n = 24) {
+  card(n);
+}
+
+// size of neutral box:
+ntx = boxy - pdo*2;
+nty = boxy - pdh;
+ntz = boxz - cbz;
+echo("nxt, nty, ntz =", [ntx, nty, ntz]);
+
+tilez = 1.8;  // thickness of cardboard stock (1.78)
+tilez9 = 9.5 * tilez;  // stack of 9 tiles
+
+shipw = 30;
+shiph = 24;
+shipz = tilez;  // cardboard stock thickness (1.78)
+
+dw = 2.5;
+bz0 = 2;         // taperBox base thickness
+module taperBox(w = shipw, h = shiph, z = tilez9) {
+  // linearExtrude(taper) roundedRect(), cut finger slots on side and base
+  dww = w + 2 * dw;
+  dwh = h + 2 * dw;
+  shz = z + bz0;
+  cr = w/4; dy = 2 * cr - 0  ; 
+  wh = (w + h)/2;
+  trr([dwh/2, dww/2, 0, [0, 0, 90]]) 
+  difference() {
+    linear_extrude(height = shz, scale = (wh + 2 * t0) / (wh + 2 * dw))
+    trr([-(dww)/2, -(dwh)/2, 0]) roundedRect([dww, dwh], 1);
+    trr([-w/2, -h/2, bz0]) roundedCube([w, h, shz], .5, true);
+    trr([-w/4, -dwh/2, bz0]) cube([shipw/2, dwh+p, shz+pp]);
+    trr([0, -dy, -p]) cylinder(h = bz0+pp, r = cr);
+    trr([0, +dy, -p]) cylinder(h = bz0+pp, r = cr);
+  }
+}
+module shipBox() {
+  dx = shiph + 2 * dw + .1;
+  astack(6, [dx, 0, 0])
+  taperBox(shipw, shiph, tilez9);
+  astack(3, [dx, 0, 0])
+  trr([0, 0, tilez9 + bz0 + .1]) taperBox(shipw, shiph, tilez9);
+}
+
+fortw = 36;
+forth = 18;
+module fortBox() {
+
+}
+
+coind = 24;
+coinz = 1.8;  // stack of 30 <= 54mm
+trayz = coind + t2;
+trayw = ntx - 6 * (shiph+2*dw);
+trayh = nty - t0;
+
+module coin () { cylinder(h = coinz, r = coind/2); }
+module coinTray(n = 33) {
+ box([coind+1 + t2, n * coinz + t2, trayz]);
+}
+module woodTray() {
+  box([trayw, trayh, trayz]);
+}
+
+module cardTray() {
+
+  cdx = h0 + t2;   // card div x-size
+  cdy = nty * .62; // card div y-size
+  trr([cdx, nty - cdy, 0]) cube([t0, cdy, ntz]); // card div
+  trr([t0/2, nty - cdy + 5, 0]) cube([cdx, t0, ntz * .75]); // strut
+
+  // support for tilted "special action" (temple) cards:
+  ang = -180 + 48;
+  tanz = tan(ang);
+  cosz = cos(ang);
+  sinz = sin(ang);
+  sinz2 = sinz * 2; // .7 -> 1.4 
+
+  csn = 28;     // cards stack number
+  csh = w0 * .8;
+  csy = nty - csn * tanz * t01; // or * tan(ang) ?
+  trr([t0/2, csy-t0, 0, [-ang, 0, 0, [0, 0, t0/2]]]) cube([h0+t2, csh, t0]);   // card support
+
+  if (loc == 0) astack(24, [0, -sinz * t01, 0])
+  trr([t0, csy, t0, [-ang, 0, 0, [0, 0, t01/2]]]) specialCards(1);
+
+}
+
+// temple risers?, coin tray, wood tray, 
+// worker/damage/stat tray, "special action" (temple) cards
+// 9 & 1/2 ship-upgrade tile holders
+module neutralTray() {
+  % box([ntx, nty, ntz]);
+  cardTray();
+
+  atrans(loc, [[ntx-30, t0, trayz + t0]])
+  coinTray(40);
+
+  atrans(loc, [[ntx-trayw, 0, t0]])
+  woodTray();
+
+  shipBox();
+
+}
+
+// 0: all - assembled
+// 1: single box
+loc = 0; 
+
+if (loc == 0) astack(2, [csw+.2, 0, 0])
+if (loc == 0) astack(2, [0, csh+.2, 0])
+atrans(loc, [[pdo, 1, pdz], [0, 0, 0]]) playerBox();
 
 // outer box:
 module outerBox(tb = .2) {
    trr([-tb, -tb, -tb]) box([boxy + 2*tb, boxy + 2*tb, boxz + tb], tb);
 }
-% outerBox(.02);
+% atrans(loc, [[0, 0, 0]]) outerBox(.02);
 
 // playerboards
-trr([ pdo, 0, 0]) color("#af4900") cube([pdw, pdh, pdz]); // '#af4900'
+atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, 0]) color("#af4900") cube([pdw, pdh, pdz]); // '#af4900'
 
+// combat boards:
+// atrans(loc, [[0, 0, 0]]) trr([boxy/2, boxy-cbh-1, boxz-cbz-p]) combatBoard();
 
-trr([-30, 0, 0]) box([20, 20, 5], [1, 1, -1], [2, 2, 1.1]);
+// neutral tray:
+atrans(loc, [[0, 0, 0]]) trr([pdo, pdh, 0]) neutralTray();
