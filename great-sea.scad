@@ -76,10 +76,13 @@ module playerBox() {
 module combatBoard() {
   cbws = 68.0;     // central "tab" height (wide part < cbh = 100)
   cbhi = 87.8;     // width of narrow part (less than cbw = 140)
+  c = "#d4ebfe1c";// '#7fccf610'
   trr([0, cbh/2, cbz/2]) 
   {
+    color(c) 
     roundedCube([cbw, cbhi, cbz], 3, true, true);
-    roundedCube([cbws, cbh, cbz], 3, true, true);
+    color(c) 
+    roundedCube([cbws, cbh, cbz-p], 3, true, true);
   }
 }
 
@@ -96,21 +99,21 @@ module specialCards(n = 24) {
   card(n);
 }
 
-// size of neutral box:
-ntx = boxy - pdo;
-nty = boxy - pdh;
-ntz = boxz - cbz;
-echo("nxt, nty, ntz =", [ntx, nty, ntz]);
-
 tilez = 1.8;  // thickness of cardboard stock (1.78)
 tilez9 = 9.5 * tilez;  // stack of 9 tiles
+
+dw = 2.1;
+bz0 = 2;         // taperBox base thickness
+
+// size of neutral box:
+ntx = boxy - 2*pdo;  // x-size of box
+nty = pdh;  // y-size of box (boxy - cbh - t2) ?
+ntz = tilez9 + bz0 + 3 + 1;  // z-size of box
+echo("nxt, nty, ntz =", [ntx, nty, ntz]);
 
 shipw = 30.1;
 shiph = 24.1;
 shipz = tilez;  // cardboard stock thickness (1.78)
-
-dw = 2.1;
-bz0 = 2;         // taperBox base thickness
 
 // rz: rotation around z-axis (while still centered around [0,0] )
 module taperBox(w = shipw, h = shiph, z = tilez9, rz = 0) {
@@ -118,17 +121,23 @@ module taperBox(w = shipw, h = shiph, z = tilez9, rz = 0) {
   dww = w + 2 * dw;
   dwh = h + 2 * dw;
   shz = z + bz0;
-  cr = w/4; dy = 2 * cr - 0;  // cylinder radius
+  cr = w/4;   // cylinder radius
+  dy = dwh/2-dw/2;
   wh = (w + h)/2;
+  module cut(r = cr) {
+    scale([1,.5]) 
+    trr([0, 0, (bz0+tilez9+pp)/2]) cylinder(h = bz0+tilez9+pp, r = r, center = true);
+    trr([0, 0, bz0+(bz0+tilez9+pp)/2]) cube([2*r, dw + .1 +8*p, tilez9+bz0+pp], true);
+    trr([0, dw/2, (bz0+tilez9+pp)/2]) cube([2*r, dw + .1 +8*p, tilez9+bz0+pp], true);
+  }
   // extrude & rotate while centered; then offset from [0, 0]
   trr([dww/2, dwh/2, 0, [0, 0, rz]])
   difference() {
     linear_extrude(height = shz, scale = (wh + 2 * t0) / (wh + 2 * dw))
     trr([-dww/2, -dwh/2, 0]) roundedRect([dww, dwh], 1);
     trr([-w/2,   -h/2, bz0]) roundedCube([w, h, shz], .2, true); // tile
-    trr([-w/4, -dwh/2, bz0]) cube([w/2, dwh+p, shz+pp]); // finger slot
-    trr([0, -dy, -p]) cylinder(h = bz0+pp, r = cr);      // base slot
-    trr([0, +dy, -p]) cylinder(h = bz0+pp, r = cr);      // base slot
+    trr([0, -dy, -p]) cut(cr);      // base slot & finger cut
+    trr([0, +dy, -p]) cut(cr);      // base slot & finger cut
   }
 }
 module shipBox() {
@@ -137,16 +146,16 @@ module shipBox() {
    trr([0, 0, 0 ]) 
    taperBox(shipw, shiph, tilez9);
   }
-  dx = shipw + 2 * dw + .0;
-  dy = shiph + 2 * dw + .0;
+  dx = shipw + 2 * dw + .05;
+  dy = shiph + 2 * dw + .05;
   astack(3, [0, dy, 0])
   astack(3, [dx, 0, 0]) 
-  trr([t0+.1, t0+.1, 0]) 
+  trr([t0+.1, t0+.1, pp]) 
   aBox();
 }
 
-forth = 36.1;
-fortw = 18.1;
+fortw = 36.1;
+forth = 18.1;
 fortox = t0 + 3 * (shipw + 2 * dw);
 module fortBox() {
   module aBox() {
@@ -156,7 +165,7 @@ module fortBox() {
   dy = forth + 2 * dw + .1;
   astack(4, [dx, 0, 0])
   astack(2, [0, dy, 0])
-  trr([fortox + .1, t0 + .1, 0])
+  trr([fortox + .1, t0 + .1, pp])
   aBox();
 
 }
@@ -180,12 +189,22 @@ module cardTray() {
 
 }
 
+module neutralLid(f = 0) {
+  color("lightblue")
+  trr([0-p, t0, ntz - 2* t0]) cube([ntx-t0+f, nty-t2+f, t0+f]);
+  trr([0-p,   -p, ntz - 2* t0]) cube([3*t0+pp, nty+pp, t2+f]);
+  trr([ntx-3*t0-p,   -p, ntz - 2* t0]) cube([3*t0+pp, nty+pp, t2+f]);
+
+}
+
 // temple risers?, coin tray, wood tray, 
 // worker/damage/stat tray, "special action" (temple) cards
 // 9 & 1/2 ship-upgrade tile holders
 module neutralTray() {
-  roundedBox([ntx, nty, ntz], 1);
-  
+  difference() {
+  roundedBox([ntx, nty, ntz], 1, [t0, t2, t0]);
+  neutralLid(.2);
+  }
   *cardTray();
 
   * atrans(loc, [[ntx-30, t0, trayz + t0]])
@@ -194,15 +213,15 @@ module neutralTray() {
   * atrans(loc, [[ntx-trayw, 0, t0]])
   woodTray();
 
-  shipBox();
-  fortBox();
+  trr([t0, t0, t0]) shipBox();
+  trr([t0, t0, t0]) fortBox();
 }
 
 // 0: all - assembled
 // 1: single box
 loc = 0; 
 
-if (loc == 0) astack(2, [csw+.2, 0, 0])
+*if (loc == 0) astack(2, [csw+.2, 0, 0])
 if (loc == 0) astack(2, [0, csh+.2, 0])
 atrans(loc, [[pdo, 1, pdz], [0, 0, 0]]) playerBox();
 
@@ -210,13 +229,14 @@ atrans(loc, [[pdo, 1, pdz], [0, 0, 0]]) playerBox();
 module outerBox(tb = .2) {
    trr([-tb, -tb, -tb]) box([boxy + 2*tb, boxy + 2*tb, boxz + tb], tb);
 }
-% atrans(loc, [[0, 0, 0]]) outerBox(.02);
+* atrans(loc, [[0, 0, 0]]) outerBox(.02);
 
 // playerboards
 atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, 0]) color("#af4900") cube([pdw, pdh, pdz]); // '#af4900'
 
-// combat boards:
-// atrans(loc, [[0, 0, 0]]) trr([boxy/2, boxy-cbh-1, boxz-cbz-p]) combatBoard();
-
 // neutral tray:
-atrans(loc, [[0, 0, 0]]) trr([pdo, pdh, 0]) neutralTray();
+atrans(loc, [[0, 0, 0]]) trr([pdo, 0, pdz]) neutralTray();
+*atrans(loc, [[0, 0, 0]]) trr([pdo, 0, pdz]) neutralLid();
+
+// combat boards:
+*atrans(loc, [[0, 0, 0]]) trr([boxy/2, t0, boxz-cbz-p]) combatBoard();
