@@ -72,40 +72,43 @@ module specialCards(n = nTempleCards) {
   card(n, h0, w0);
 }
 
+// hold 3 * (8 combat) + 6 * (1 Action) = 30 cards
+module cardSection(npc = npc) {
+  astack(2, [0, 0, csz + f1])
+  astack(2, [csh+f1, 0, 0])
+  roundedBox([csh, csw, csz], 1);
+}
+module partsSection() {
+  csx = 2 * (csh + f1);
+  psx = boxy - csx - f1;
+  psy = boxy - pdh -.5;
+  psz = boxz - t0;
+  echo("psx, psy, psz = ", [psx, psy, psz]);
+  trr([csx + f1, pdh-nty+f1, 0]) roundedBox([psx/2, psy/2, psz], 1);
+  echo("parts volume: ", [psx/2, psy/2, psz], psx/2 * psy/2 * psz / 1000);
+}
+module neutralSection() {
+  dy = pdh - nty;  // 3.5
+  nsx = 2 * (csh + f1);
+  nsy = csw - dy;
+  nsz = boxz - 2 * (csz + f1);
+  trr([0, dy+f1, 2 * csz + f1]) color("#ac8a45")
+  roundedBox([nsx, nsy, nsz], 1);
+  echo("neutral volume: ", [nsx/2, nsy/2, nsz], nsx * nsy * nsz / 1000);
+}
+module pboxLid() {
+  inz = 3 + t0;
+  cube([csw, csh, t0]);
+  trr([t0, t0, t0-inz])
+  box([csw-t2-f1, csh-t2-f1, inz], [t0, t0, -1], [2, 2, 1.1]);
+}
+
 module playerBox() {
-  // hold 3 * (8 combat) + 6 * (1 Action) = 30 cards
-  module cardSection(npc = npc) {
-    astack(2, [0, 0, csz + f1])
-    astack(2, [csh+f1, 0, 0])
-    roundedBox([csh, csw, csz], 1);
-  }
-  module partsSection() {
-    csx = 2 * (csh + f1);
-    psx = boxy - csx - f1;
-    psy = boxy - pdh -.5;
-    psz = boxz - t0;
-    echo("psx, psy, psz = ", [psx, psy, psz]);
-    // trr([csx + f1, pdh-nty+f1, 0]) roundedBox([psx, psy, psz], 1);
-    astack(2, [0, psy/2+f1, 0]) astack(2, [psx/2+f1, 0, 0])
-    trr([csx + f1, pdh-nty+f1, 0]) roundedBox([psx/2, psy/2, psz], 1);
-    echo("parts volume: ", [psx/2, psy/2, psz], psx/2 * psy/2 * psz / 1000);
-  }
-  module neutralSection() {
-    dy = pdh - nty;  // 3.5
-    nsx = 2 * (csh + f1);
-    nsy = csw - dy;
-    nsz = boxz - 2 * (csz + f1);
-    trr([0, dy+f1, 2 * csz + f1]) color("#ac8a45")
-    roundedBox([nsx, nsy, nsz], 1);
-    echo("neutral volume: ", [nsx/2, nsy/2, nsz], nsx * nsy * nsz / 1000);
-  }
-  module pboxLid() {
-    inz = 3 + t0;
-    cube([csw, csh, t0]);
-    trr([t0, t0, t0-inz])
-    box([csw-t2-f1, csh-t2-f1, inz], [t0, t0, -1], [2, 2, 1.1]);
-  }
   cardSection();
+  csx = 2 * (csh + f1);
+  psx = boxy - csx - f1;
+  psy = boxy - pdh -.5;
+  astack(2, [0, psy/2+f1, 0]) astack(2, [psx/2+f1, 0, 0])
   partsSection();
   neutralSection();
 }
@@ -321,12 +324,14 @@ module playerBoards() {
 }
 
 // 0: all - assembled
-// 1: single box
-loc = 0; 
+// 1: playerBox
+// 2: single partsSection
+loc = 2; 
 
 // if (loc == 0) astack(2, [csw+.2, 0, 0])
 // if (loc == 0) astack(2, [0, csh+.2, 0])
 atrans(loc, [[0, nty+f1, 0], [0, 0, 0]]) playerBox();
+atrans(loc, [undef, 0, [0, 0, 0]]) partsSection();
 echo("boxy-nty=", boxy-nty, "h0=", h0);
 
 
