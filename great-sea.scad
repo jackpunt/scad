@@ -41,7 +41,7 @@ w0 = w00+2.5;
 h0 = h00+1.5;
 npc = 30;    // number of player cards
 t1c = t0 * 1;//.7;
-pbt = (npc+4) * t01; // player box thick?
+csz = t0 + (npc+4) * t01; // player box thick?
 
 combatt = 5;    // thickness of combat status disks
 combatd = 18;   // diameter of combat status disks (10 of them)
@@ -75,18 +75,9 @@ module specialCards(n = nTempleCards) {
 module playerBox() {
   // hold 3 * (8 combat) + 6 * (1 Action) = 30 cards
   module cardSection(npc = npc) {
-    // csd2 = 2 * pbt + t1c; ss = false;
-    // trr([0, 0, csd2, [-90, 0, 0]]) 
-    {
-      // slotifyY2([csh, 60, 3 * t0, 8], [csw/2, csd2/2, 40], undef, 3, ss)
-      // divXZ([csh, csw, csd2/2], 0, 0, t1c);
-      // slotifyY2([csh, 60, 3 * t0, 8], [csw/2, 0, 40], undef, 3, ss)
-      // slotifyY2([csh, 60, 3 * t0, 8], [csw/2, csd2, 40], undef, 3, ss)
-      astack(2, [0, 0, pbt+t0+f1])
-      astack(2, [csh+f1, 0, 0])
-      // trr([0, 0, 0, [0, 0, 0, [0, 0, pbt + t0]]])
-        roundedBox([csh, csw, pbt + t0], 1);
-    }
+    astack(2, [0, 0, csz + f1])
+    astack(2, [csh+f1, 0, 0])
+    roundedBox([csh, csw, csz], 1);
   }
   module partsSection() {
     csx = 2 * (csh + f1);
@@ -99,15 +90,24 @@ module playerBox() {
     trr([csx + f1, pdh-nty+f1, 0]) roundedBox([psx/2, psy/2, psz], 1);
     echo("parts volume: ", [psx/2, psy/2, psz], psx/2 * psy/2 * psz / 1000);
   }
+  module neutralSection() {
+    dy = pdh - nty;  // 3.5
+    nsx = 2 * (csh + f1);
+    nsy = csw - dy;
+    nsz = boxz - 2 * (csz + f1);
+    trr([0, dy+f1, 2 * csz + f1]) color("#ac8a45")
+    roundedBox([nsx, nsy, nsz], 1);
+    echo("neutral volume: ", [nsx/2, nsy/2, nsz], nsx * nsy * nsz / 1000);
+  }
   module pboxLid() {
     inz = 3 + t0;
     cube([csw, csh, t0]);
     trr([t0, t0, t0-inz])
     box([csw-t2-f1, csh-t2-f1, inz], [t0, t0, -1], [2, 2, 1.1]);
   }
-  // astack(2, [0, 0, pbt-t0])
   cardSection();
   partsSection();
+  neutralSection();
 }
 
 module combatBoard() {
