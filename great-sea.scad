@@ -41,7 +41,8 @@ h0 = h00+3.0;
 npc = 30;    // number of player cards
 pbt = npc * t01 + 2 * t0; // player box thick?
 
-combatd = 18;   // diameter of combat status tokens (10 of them)
+combatt = 5;    // thickness of combat status disks
+combatd = 18;   // diameter of combat status disks (10 of them)
 damaged = 8;    // x, y, z dimension of orange cube. (12 of them)
 templed = 19;   // diameter of Temple disks
 
@@ -154,7 +155,7 @@ module shipBox() {
   dy = shiph + 2 * dw + .05;
   astack(3, [0, dy, 0])
   astack(3, [dx, 0, 0]) 
-  trr([ntx - dw - 3*(dx), t0 + dw +  .1, pp]) 
+  trr([ntx - dw - 3 * dx, t0 + dw + .1, pp]) 
   aBox();
 }
 
@@ -188,13 +189,10 @@ module cardTray() {
 
 coind = 23.2;
 coinz = 1.8;  // stack of 30 <= 54mm
-trayz = coind + t2;
-trayw = ntx - 6 * (shiph+2*dw);
-trayh = nty - t0;
 
 module coin () { cylinder(h = coinz, r = coind/2); }
 module coinTray(n = 40) {
-  cx = 4 * coind + 3 * t0 ; cy = coind+2*t0; cz = tilez9 + bz0 + .9;
+  cx = 4 * coind + 1.5 * t0 ; cy = coind+2*t0; cz = tilez9 + bz0 + .9;
   coinv = round(coind * coind * coinz * n); 
   box([cx+t2, cy+t2, cz]);
   astack(10, [0, 0, coinz])
@@ -212,8 +210,21 @@ module woodTray(n = 40) {
   echo("woodTray: wx, wy, wz", [wx, wy, wz], wx * wy * wz/1000, woodv/1000);
 }
 
-module temple() {
+module statDisks() {
+  h = combatt; r = combatd/2;
+  module statd() {
+    cylinder(h = h, r = r);
+  }
+  astack(9, [0, h, 0], undef, ["red", "blue","green","orange","violet"])
+  trr([0, 0, r, [-90, 0, 0]]) statd();
+  trr([-14.1, 9, 10, [0, 90, 0]]) 
+  color("violet") statd();
+}
 
+module temples() {
+  h = tilez; d = templed;
+  astack(nTemple, [0, h, 0], undef, "#fefcbc9a")
+    trr([0, 0, d/2, [-90, 0, 0]]) cylinder(h = h*.9, d = d);
 }
 
 // cs: child size; begin grid @ (cs, cs+1)
@@ -254,7 +265,13 @@ module neutralTray() {
     neutralLid(.2);
   }
 
-  trr([t0+ t0, ty + t0, t0]) specialCards();  // align with cardTray()
+  trr([t0 + t0, ty + t0, t0]) specialCards();  // align with cardTray()
+
+  trr([cardTrayw + 12.3 + t2, 20+ fortw/2 + 2*dw + 2*t0, t0])
+  statDisks();
+
+  trr([cardTrayw + 10 + t2, fortw/2 + 2*dw + 2*t0, t0])
+  astack(6, [0, tilez, 0]) temples();
 
   atrans(loc, [[t0+f, w0 +5 + ty, t0]])
   coinTray(40);
@@ -269,6 +286,9 @@ module neutralTray() {
   
   atrans(loc, [-1, [0,0,0]]) neutralLid();
 
+}
+module playerBoards() {
+ * color("#af4900") cube([pdw, pdh, pdz]); // '#af4900'
 }
 
 // 0: all - assembled
@@ -285,12 +305,12 @@ module outerBox(tb = .2) {
 }
 * atrans(loc, [[0, 0, 0]]) outerBox(.02);
 
-// playerboards
-atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, 0]) color("#af4900") cube([pdw, pdh, pdz]); // '#af4900'
+// playerBoards:
+atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, ntz]) playerBoards();
 
 // neutral tray:
-atrans(loc, [[0, 0, 0]]) trr([pdo, 0, pdz]) neutralTray();
-*atrans(loc, [[0, 0, 0]]) trr([pdo, 0, pdz]) neutralLid();
+atrans(loc, [[0, 0, 0]]) trr([0, 0, 0]) neutralTray();
+*atrans(loc, [[0, 0, 0]]) trr([0, 0, 0]) neutralLid();
 
 // combat boards:
 *atrans(loc, [[0, 0, 0]]) trr([boxy/2, t0, boxz-cbz-p]) combatBoard();
