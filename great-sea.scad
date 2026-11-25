@@ -178,8 +178,8 @@ module taperBox(w = 30, h = 24, z = tilez9, rz = 0) {
   }
 }
 
-shipw = 30.1;
-shiph = 24.1;
+shipw = 30.3;     // double fudge
+shiph = 24.3;     // double fudge
 shipdx = shipw + 2 * dw + f1/2;
 shipdy = shiph + 2 * dw + f1/2;
 shipx0 = ntx - dw - 3 * shipdx; 
@@ -197,15 +197,15 @@ module shipBox(ns = 3) {
   aBox();
 }
 
-fortw = 36.1;     // fort internal size
-forth = 18.1;     // fort internal size
+fortw = 36.3;     // fort internal size (double fudge)
+forth = 18.3;     // fort internal size (double fudge)
 fortdx = fortw + 2 * dw + .1;
 fortdy = forth + 2 * dw + .1;
 fortx0 = t0 + f1;
 forty0 = nty - ty - fortw - 2 * dw - f1;
 
 module fortBox(lf = 9, sf = 1) {
-  module aBox(fortw = fortw) {
+  module aBox(fortw = fortw, forth = forth) {
     dwh = forth + 2 * dw;
     trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]]) // rotate around lower-right corner
     color("red") taperBox(fortw, forth);
@@ -217,7 +217,7 @@ module fortBox(lf = 9, sf = 1) {
   // one half-size fort: (forty0 -forth-2*dw - 2*t0 - 2 * f1)
   trr([fortx0, cardTrayh + t0, -p])
   astack(sf, [0, 0, 0])
-  aBox(fortw/2);
+  aBox(18.8, 18.8);  // 18.4 + double fudge
 }
 
 module cardTray() {
@@ -343,13 +343,6 @@ module playerBoards() {
   color("#af49006a") cube([pdw, pdh, pdz]); // '#af4900'
 }
 
-// 0: all - assembled
-// 1: playerBox
-// 2: single partsSection
-// 3: neutralTray
-// 4: test print fort/ship boxes
-loc = 3; 
-
 // if (loc == 0) astack(2, [csw+.2, 0, 0])
 // if (loc == 0) astack(2, [0, csh+.2, 0])
 atrans(loc, [[0, nty+f1, 0], [0, 0, 0]]) playerBox();
@@ -377,6 +370,14 @@ atrans(loc, [[0, 0, 0]]) outerBox(.02);
 atrans(loc, [-1, -1, -1, -1, [0,0,0]]) {
   // test print the fort/ship boxes:
   trr([0, -87, 0]) fortBox(1, 0);
-  trr([-67, -1, 0]) fortBox(0, 1);
+  trr([23, -61, 0]) fortBox(0, 1);
   trr([-66, 1, 0]) shipBox(1);
 }
+
+
+// 0: all - assembled
+// 1: playerBox
+// 2: single partsSection
+// 3: neutralTray
+// 4: test print fort/ship boxes
+loc = 4; 
