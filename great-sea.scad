@@ -65,7 +65,6 @@ pdo = 2;     // player board offset (in view)
 // PlayerBox:
 csw = h0 + t2;  // cardSection
 csh = w0 + t2;
-psz = 30;       // 3 cm depth
 
 // (w0 x h0) sleeved card size
 module card(n = 1, w = w0, h = h0, cz = t01, c = "lightblue") {
@@ -132,7 +131,7 @@ module combatBoard() {
 }
 
 dw = 2.1;        // fort/ship external wedge size
-bz0 = 1.6;       // taperBox base thickness
+bz0 = 2;         // taperBox base thickness
 
 tilez = 1.8;  // thickness of cardboard stock (1.78)
 tilez9 = 9.5 * tilez;  // stack of 9 tiles
@@ -215,8 +214,8 @@ module fortBox(lf = 9, sf = 1) {
   astack(lf, [fortdy, 0, 0])
   trr([fortx0, forty0, pp])
   aBox();
-  // one half-size fort:
-  trr([fortx0, forty0 -forth-2*dw - t0 - 2 * f1, -p])
+  // one half-size fort: (forty0 -forth-2*dw - 2*t0 - 2 * f1)
+  trr([fortx0, cardTrayh + t0, -p])
   astack(sf, [0, 0, 0])
   aBox(fortw/2);
 }
@@ -311,11 +310,13 @@ module neutralTray() {
 
   trr([t0, ty+f1, t0]) shipBox();
   trr([t0, 0, t0]) fortBox();
+
   divz = tilezb + 1.9 * t0;
-  divXZ([divz, shipx0, forty0-t0-f1], 0, 0, t0);
-    div([divz, forty0-f1, shipx0 - t0], 0, 0, t0);
-    div([divz, forty0-f1, cardTrayw - t0 +pp], 0, 0, t0);
-    div([   4, forty0-f1, cardTrayw - t0 +pp], 0, 0, t0);
+  divy = forty0 - t0 -f1;
+  divXZ([divz, shipx0, divy - t0], 0, 0, t0);
+    div([divz, divy, shipx0 - t0], 0, 0, t0);
+    div([divz, divy, cardTrayw - t0 +pp], 0, 0, t0);
+    div([   4, divy, cardTrayw - t0 +pp], 0, 0, t0);
 
   trr([t0 + t0, ty + t0, t0]) specialCards();  // align with cardTray()
 
@@ -347,7 +348,7 @@ module playerBoards() {
 // 2: single partsSection
 // 3: neutralTray
 // 4: test print fort/ship boxes
-loc = 0; 
+loc = 3; 
 
 // if (loc == 0) astack(2, [csw+.2, 0, 0])
 // if (loc == 0) astack(2, [0, csh+.2, 0])
