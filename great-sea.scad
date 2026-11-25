@@ -89,12 +89,12 @@ module partsSection() {
 }
 module neutralSection() {
   dy = pdh - nty;  // 3.5
-  nsx = 2 * (csh + f1);
+  nsx = csh;
   nsy = csw - dy;
   nsz = boxz - 2 * (csz + f1);
   trr([0, dy+f1, 2 * csz + f1]) color("#ac8a45")
   roundedBox([nsx, nsy, nsz], 1);
-  echo("neutral volume: ", [nsx/2, nsy/2, nsz], nsx * nsy * nsz / 1000);
+  echo("neutral volume: ", [nsx, nsy, nsz], nsx * nsy * nsz / 1000);
 }
 module pboxLid() {
   inz = 3 + t0;
@@ -110,7 +110,7 @@ module playerBox() {
   psy = boxy - pdh -.5;
   astack(2, [0, psy/2+f1, 0]) astack(2, [psx/2+f1, 0, 0])
   partsSection();
-  neutralSection();
+  astack(2, [csx/2, 0, 0]) neutralSection();
 }
 
 module combatBoard() {
@@ -326,7 +326,7 @@ module playerBoards() {
 // 0: all - assembled
 // 1: playerBox
 // 2: single partsSection
-loc = 2; 
+loc = 0; 
 
 // if (loc == 0) astack(2, [csw+.2, 0, 0])
 // if (loc == 0) astack(2, [0, csh+.2, 0])
