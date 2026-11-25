@@ -40,7 +40,8 @@ w0 = w00+2.5;
 // height of card with sleeves
 h0 = h00+1.5;
 npc = 30;    // number of player cards
-pbt = npc * t01 + 2 * t0; // player box thick?
+t1c = t0 * 1;//.7;
+pbt = npc * t01 + 1 * t0; // player box thick?
 
 combatt = 5;    // thickness of combat status disks
 combatd = 18;   // diameter of combat status disks (10 of them)
@@ -72,9 +73,16 @@ module specialCards(n = nTempleCards) {
 }
 
 module playerBox() {
-  // hold 3 * (8 combat) + 6 * (1 Action)
+  // hold 3 * (8 combat) + 6 * (1 Action) = 30 cards
   module cardSection(npc = npc) {
-    box([csw, csh, pbt]);
+    csd2 = 2 * pbt + t1c; ss = false;
+    trr([0, 0, csd2, [-90, 0, 0]]) {
+      slotifyY2([csh, 60, 3 * t0, 8], [csw/2, csd2/2, 40], undef, 3, ss)
+      divXZ([csh, csw, csd2/2], 0, 0, t1c);
+      slotifyY2([csh, 60, 3 * t0, 8], [csw/2, 0, 40], undef, 3, ss)
+      slotifyY2([csh, 60, 3 * t0, 8], [csw/2, csd2, 40], undef, 3, ss)
+      box([csw, csd2, csh]);
+    }
   }
   module partsSection() {
     box([csw, csh, psz], [t0, t0, -1], [2, 2, 1.1]);
@@ -85,8 +93,9 @@ module playerBox() {
     trr([t0, t0, t0-inz])
     box([csw-t2, csh-t2, inz], [t0, t0, -1], [2, 2, 1.1]);
   }
+  // astack(2, [0, 0, pbt-t0])
   cardSection();
-  partsSection();
+ * partsSection();
 }
 
 module combatBoard() {
@@ -200,7 +209,7 @@ module coin () { cylinder(h = coinz, r = coind/2); }
 module coinTray(n = 40) {
   cx = 4 * coind + 1.5 * t0 ; cy = coind+2*t0; cz = tilez9 + bz0 + .9;
   coinv = round(coind * coind * coinz * n); 
-  box([cx+t2, cy+t2, cz]);
+  box([cx+t2, cy+t0, cz]);
   // show the coins:
   astack(10, [0, 0, coinz])
   astack(4, [coind, 0, 0])
@@ -228,7 +237,7 @@ module statDisks() {
 }
 
 module temples() {
-  h = tilez * 1.75; d = templed;  // templez could go up to 3.11!
+  h = tilez * 1; d = templed;  // templez could go up to 3.11!
   astack(nTemple, [0, h, 0], undef, "#fefcbc9a")
     trr([0, 0, d/2, [-90, 0, 0]]) cylinder(h = h*.9, d = d);
 }
@@ -274,8 +283,8 @@ module neutralTray() {
 
   trr([t0 + t0, ty + t0, t0]) specialCards();  // align with cardTray()
 
-  trr([shipx0 - combatd/2 + 1.2, 17+ fortw/2 + 2*dw + 2*t0, t0])
-  statDisks();
+  trr([shipx0 - combatd/2 + 1.2, 10 + fortw/2 + 2*dw + 2*t0, t0])
+    statDisks();
 
   trr([shipx0 - templed/2 + 1.2, fortw/2 + 4.4, t0])
     temples();
