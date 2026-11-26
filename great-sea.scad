@@ -95,9 +95,11 @@ module specialCards(n = nTempleCards) {
 }
 
 // hold 3 * (8 combat) + 6 * (1 Action) = 30 cards
-module cardSection(npc = npc) {
-  astack(2, [0, 0, csz + f1])
-  astack(2, [csh+f1, 0, 0])
+// if (df == 0) stack on z-axis
+module cardSection(nx = 2, nz = 2, df = 0) {
+  row2 = (df == 0) ? [0, 0, csz + f1] : [0, csw + f1 + df, 0];
+  astack(nz, row2)
+  astack(nx, [csh + f1+ df, 0, 0])
   roundedBox([csh, csw, csz], 1);
 }
 
@@ -192,15 +194,15 @@ shipdx = shipw + 2 * dw + f1/2;
 shipdy = shiph + 2 * dw + f1/2;
 shipx0 = ntx - dw - 3 * shipdx; 
 
-module shipBox(ns = 3) {
+module shipBox(nx = 3, ny = 3, df = 0) {
   module aBox() {
     dwh = shiph + 2 * dw;
     color("blue") 
     // trr([0, 0, 0, [0, 0, 0, [dwh/2, dwh/2, 0]]])
     taperBox(shipw, shiph, tilez9);
   }
-  astack(ns, [0, shipdy, 0])
-  astack(ns, [shipdx, 0, 0]) 
+  astack(ny, [0, shipdy + df, 0])
+  astack(nx, [shipdx + df, 0, 0]) 
   trr([shipx0, 0, pp]) 
   aBox();
 }
@@ -212,14 +214,14 @@ fortdy = forth + 2 * dw + .1;
 fortx0 = t0 + f1;
 forty0 = nty - ty - fortw - 2 * dw - f1;
 
-module fortBox(lf = 9, sf = 1) {
+module fortBox(lf = 9, sf = 1, df = 0) {
   module aBox(fortw = fortw, forth = forth) {
     dwh = forth + 2 * dw;
     trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]]) // rotate around lower-right corner
     color("red") taperBox(fortw, forth);
   }
   // row of 9 large forts:
-  astack(lf, [fortdy, 0, 0])
+  astack(lf, [fortdy + df, 0, 0])
   trr([fortx0, forty0, pp])
   aBox();
   // one half-size fort: (forty0 -forth-2*dw - 2*t0 - 2 * f1)
@@ -357,9 +359,6 @@ module playerBoards() {
 // if (loc == 0) astack(2, [csw+.2, 0, 0])
 // if (loc == 0) astack(2, [0, csh+.2, 0])
 atrans(loc, [[0, nty+f1, 0], [0, 0, 0]]) playerBox();
-atrans(loc, [undef, 0, [0, 0, 0]]) astack(3, [0, 45, 0]) partsSection();
-echo("boxy-nty=", boxy-nty, "h0=", h0);
-
 
 // neutral tray:
 atrans(loc, [[0, 0, 0], -1, -1, 0]) trr([0, 0, 0]) neutralTray();
@@ -378,13 +377,23 @@ module outerBox(tb = .2) {
 }
 atrans(loc, [[0, 0, 0]]) outerBox(.02);
 
+// 2: partsSection
+atrans(loc, [-1, -1, [0, 0, 0]]) astack(3, [0, 45, 0]) partsSection();
+
+// 4: test print the fort/ship boxes:
 atrans(loc, [-1, -1, -1, -1, [0,0,0]]) {
-  // test print the fort/ship boxes:
   trr([-1, -87, 0]) fortBox(1, 0);
   trr([23, -61, 0]) fortBox(0, 1);
   trr([-66, 1, 0]) shipBox(1);
 }
+// 5: print 8 fort & ship
+atrans(loc, [-1, -1, -1, -1, -1, [0,0,0]]) {
+  trr([0, -25, 0]) fortBox(8, 0, .4);
+  trr([-shipx0, 0, 0]) shipBox(4, 2, .4);
+}
 
+// 6: 4 cardSection
+atrans(loc, [-1, -1, -1, -1, -1, -1, [0,0,0]]) cardSection(2, 2, .5);
 // a meeple
 // trr([5, 5, 1.1* t0 +  nTempleCards * t01]) cube([8, 22, 10, ]);
 
@@ -393,4 +402,6 @@ atrans(loc, [-1, -1, -1, -1, [0,0,0]]) {
 // 2: single partsSection
 // 3: neutralTray
 // 4: test print fort/ship boxes
-loc = 3; 
+// 5: print 8 ship/fort boxes
+
+loc = 6; 
