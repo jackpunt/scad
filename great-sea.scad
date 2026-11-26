@@ -35,10 +35,10 @@ ds = 12;       // dice size
 t00 = 8/24;    // = .333mm card thickness: sleeves 60 mics = .06 mm ==> .393 == .4 with sleeves?
 t01 = .400;    // = .33 + .6 mm; thickness when stacking sleeved cards (compressed) TBD when sleeve arrive.
 
-// width of card with sleeves
-w0 = w00+2.5;
-// height of card with sleeves
-h0 = h00+1.5;
+// width of card with sleeves (56) 88x56
+w0 = w00+2;
+// height of card with sleeves (88)
+h0 = h00+2;
 
 pdw = 216;   // playerBoard-x-width
 pdh = 133;   // playerBoard-y-height
@@ -57,15 +57,15 @@ lidc = 1.4;      // overhang 'clip' above lid
 
 // size of neutral box:
 ntx = boxy ;  // x-size of box
-nty = pdh - 3.5;  // y-size of box (boxy - cbh - t2) ?
+nty = pdh - 6.5;  // y-size of box (boxy - cbh - t2) ?
 ntz0 = tilezb + t0 + .1;
 ntzl = ntz0 + lidf;         // top of 'lid'
 ntz  = ntzl + lidc;  // z-size of box (incl: lid & overhang) 
 echo("nxt, nty, ntz =", [ntx, nty, ntz], "tilezb =", tilezb);
 
 // Note: left & bottom end-cap are embedded in tray wall
-cardTrayw = h0 + t0 + t0 + 3;  // 2 endcaps + 3 gaps; balance with h0 sleeve size
-cardTrayh = w0 + t0 + ty + 2; // abuts bottom edge: 
+cardTrayw = h0 + t2 + t0 + 2;  // 2 endcaps + 3 gaps; balance with h0 sleeve size
+cardTrayh = w0 + t0 + ty + 4; // abuts bottom edge: 
 
 npc = 30;    // number of player cards
 t1c = t0 * 1;//.7;
@@ -81,8 +81,11 @@ nTempleCards = 24;        // number of 'special' action cards (4 x nTemples)
 cardz = t01 * (nTempleCards + 4);
 
 // PlayerBox:
-csw = (boxy - nty - 3 * f1);// > (h0 + t2);  // cardSection
-csh = w0 + t2;
+csh = (boxy - nty - 1 * f1);// > (h0 + t2);  // cardSection
+csw = w0 + t2 + t0;  // t0 fudge around card
+if (csh < h0  + t2 + t2 ) echo("csh < h0 + t2: ", csh -t2, h0);
+
+echo("cardTrayw =", cardTrayw, "cardTrayh =", cardTrayh, "nty=", nty, nty+cardTrayw);
 
 // (w0 x h0) sleeved card size
 module card(n = 1, w = w0, h = h0, cz = t01, c = "lightblue") {
@@ -91,23 +94,25 @@ module card(n = 1, w = w0, h = h0, cz = t01, c = "lightblue") {
 }
 
 module specialCards(n = nTempleCards) {
-  card(n, h0, w0);
+  card(n, h0, w0);  // rotate
 }
 
 // hold 3 * (8 combat) + 6 * (1 Action) = 30 cards
 // if (df == 0) stack on z-axis
 module cardSection(nx = 2, nz = 2, df = 0) {
-  row2 = (df == 0) ? [0, 0, csz + f1] : [0, csw + f1 + df, 0];
+  row2 = (df == 0) ? [0, 0, csz + f1] : [0, csh + f1 + df, 0];
   astack(nz, row2)
-  astack(nx, [csh + f1+ df, 0, 0])
-  roundedBox([csh, csw, csz], 1);
+  astack(nx, [csw + f1+ df, 0, 0]) {
+  box([csw, csh, csz], t0);
+  trr([(csw-w0)/2, (csh-h0)/2, t0]) card(1, w0, h0);
+  }
 }
 
 // given cardSection x-extent & boxy: compute 
-function psxyzc(csx = 2 * (csh + f1)) = [
-  (boxy - csx) / 2 - f1,
-  (csw - 3.5)/2,
-  boxz,
+function psxyzc(csx = 2 * (csw + f1)) = [
+  (boxy - csx) / 2 - f1, // psx
+  (csh - (pdh - nty))/2, // psy
+  boxz,                  // psz
   csx
 ];
 
@@ -123,8 +128,8 @@ module partsSection() {
 }
 module neutralSection() {
   dy = pdh - nty;  // 3.5
-  nsx = csh;
-  nsy = csw - dy;
+  nsx = csw;
+  nsy = csh - dy;
   nsz = pdz;// boxz - 2 * (csz + f1);
   trr([0, dy+f1, 2 * csz + f1]) color("#ac8a45")
   roundedBox([nsx, nsy, nsz], 1);
@@ -141,7 +146,7 @@ module playerBox() {
   astack(2, [0, psy+f1, 0]) 
   astack(2, [psx+f1, 0, 0])
   partsSection();
-  astack(2, [csx/2, 0, 0]) neutralSection();
+ * astack(2, [csx/2, 0, 0]) neutralSection();
 }
 
 module combatBoard() {
@@ -162,6 +167,7 @@ module combatBoard() {
 // z: interior z-size
 // rz: rotation around z-axis (while still centered around [0,0] )
 module taperBox(w = 30, h = 24, z = tilez9, rz = 0) {
+  z = def(z, tilez9);
   // linearExtrude(taper) roundedRect(), cut finger slots on side and base
   dww = w + 2 * dw;  // full width
   dwh = h + 2 * dw;  // full height
@@ -190,9 +196,10 @@ module taperBox(w = 30, h = 24, z = tilez9, rz = 0) {
 
 shipw = 30.5;     // double fudge
 shiph = 24.5;     // double fudge
-shipdx = shipw + 2 * dw + f1/2;
-shipdy = shiph + 2 * dw + f1/2;
+shipdx = shipw + 2 * dw + f1;
+shipdy = shiph + 2 * dw + f1;
 shipx0 = ntx - dw - 3 * shipdx; 
+shipy0 = ty + f1;
 
 module shipBox(nx = 3, ny = 3, df = 0) {
   module aBox() {
@@ -203,31 +210,32 @@ module shipBox(nx = 3, ny = 3, df = 0) {
   }
   astack(ny, [0, shipdy + df, 0])
   astack(nx, [shipdx + df, 0, 0]) 
-  trr([shipx0, 0, pp]) 
+  trr([shipx0, shipy0, pp]) 
   aBox();
 }
 
 fortw = 36.5;     // fort internal size (double fudge)
 forth = 18.5;     // fort internal size (double fudge)
-fortdx = fortw + 2 * dw + .1;
-fortdy = forth + 2 * dw + .1;
-fortx0 = t0 + f1;
-forty0 = nty - ty - fortw - 2 * dw - f1;
+fortdx = fortw + 2 * dw + f1;
+fortdy = forth + 2 * dw + f1;
+fortx0 = ntx - t0 - 3 * fortdx;
+forty0 = shipy0 + 3 * shipdy + t0;
 
 module fortBox(lf = 9, sf = 1, df = 0) {
   module aBox(fortw = fortw, forth = forth) {
     dwh = forth + 2 * dw;
-    trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]]) // rotate around lower-right corner
+    // trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]]) // rotate around lower-right corner
     color("red") taperBox(fortw, forth);
   }
   // row of 9 large forts:
-  astack(lf, [fortdy + df, 0, 0])
+  astack(lf, [fortdx + df, 0, 0])
   trr([fortx0, forty0, pp])
   aBox();
   // one half-size fort: (forty0 -forth-2*dw - 2*t0 - 2 * f1)
-  trr([fortx0, cardTrayh + t0, -p])
-  astack(sf, [0, 0, 0])
-  aBox(18.8, 18.8);  // 18.4 + double fudge
+  sfxy = 18.8; sfdx = sfxy + 2 * dw + f1;
+  trr([fortx0 - sfdx, forty0, -p])
+  astack(sf, [-sfdx, 0, 0])
+  aBox(sfxy, sfxy);  // 18.4 + double fudge
 }
 
 module cardTray() {
@@ -318,8 +326,8 @@ module neutralTray() {
     neutralLid(lidf);
   }
 
-  trr([t0, ty+f1, t0]) shipBox();
-  trr([t0, 0, t0]) fortBox();
+  trr([t0, 0, t0]) shipBox();
+  trr([t0, 0, t0]) fortBox(3, 1);
 
   divz = ntzl - t0;
   divy = forty0 - t0 -f1;
@@ -356,8 +364,8 @@ module playerBoards() {
   color("#af49006a") cube([pdw, pdh, pdz]); // '#af4900'
 }
 
-// if (loc == 0) astack(2, [csw+.2, 0, 0])
-// if (loc == 0) astack(2, [0, csh+.2, 0])
+// if (loc == 0) astack(2, [csh+.2, 0, 0])
+// if (loc == 0) astack(2, [0, csw+.2, 0])
 atrans(loc, [[0, nty+f1, 0], [0, 0, 0]]) playerBox();
 
 // neutral tray:
@@ -365,10 +373,10 @@ atrans(loc, [[0, 0, 0], -1, -1, 0]) trr([0, 0, 0]) neutralTray();
 *atrans(loc, [[0, 0, 0]]) trr([0, 0, 0]) neutralLid();
 
 // combat boards:
-atrans(loc, [[0, 0, 0]]) trr([boxy/2, t0, ntzl]) combatBoard();
+*atrans(loc, [[0, 0, 0]]) trr([boxy/2, t0, ntzl]) combatBoard();
 
 // playerBoards:
-atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, boxz-pdz]) playerBoards();
+*atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, boxz-pdz]) playerBoards();
 
 // outer box:
 module outerBox(tb = .2) {
@@ -404,4 +412,4 @@ atrans(loc, [-1, -1, -1, -1, -1, -1, [0,0,0]]) cardSection(2, 2, .5);
 // 4: test print fort/ship boxes
 // 5: print 8 ship/fort boxes
 
-loc = 6; 
+loc = 0; 
