@@ -64,7 +64,7 @@ ntz  = ntzl + lidc;  // z-size of box (incl: lid & overhang)
 echo("nxt, nty, ntz =", [ntx, nty, ntz], "tilezb =", tilezb);
 
 // Note: left & bottom end-cap are embedded in tray wall
-cardTrayw = h0 + t2 + t0 + 2;  // 2 endcaps + 3 gaps; balance with h0 sleeve size
+cardTrayw = h0 + t2 + t0 + 4;  // 2 endcaps + 3 gaps; balance with h0 sleeve size
 cardTrayh = w0 + t0 + ty + 4; // abuts bottom edge: 
 
 npc = 30;    // number of player cards
@@ -194,18 +194,23 @@ module taperBox(w = 30, h = 24, z = tilez9, rz = 0) {
   }
 }
 
+fortw = 36.5;     // fort internal size (double fudge)
+forth = 18.5;     // fort internal size (double fudge)
+fortdy = fortw + 2 * dw + f1;
+fortdx = forth + 2 * dw + f1;
+
 shipw = 30.5;     // double fudge
 shiph = 24.5;     // double fudge
-shipdx = shipw + 2 * dw + f1;
-shipdy = shiph + 2 * dw + f1;
-shipx0 = ntx - dw - 3 * shipdx; 
+shipdy = shipw + 2 * dw + f1;
+shipdx = shiph + 2 * dw + f1;
+shipx0 = ntx - dw - 3 * shipdx - fortdx; 
 shipy0 = ty + f1;
 
 module shipBox(nx = 3, ny = 3, df = 0) {
   module aBox() {
     dwh = shiph + 2 * dw;
     color("blue") 
-    // trr([0, 0, 0, [0, 0, 0, [dwh/2, dwh/2, 0]]])
+    trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]])
     taperBox(shipw, shiph, tilez9);
   }
   astack(ny, [0, shipdy + df, 0])
@@ -214,27 +219,26 @@ module shipBox(nx = 3, ny = 3, df = 0) {
   aBox();
 }
 
-fortw = 36.5;     // fort internal size (double fudge)
-forth = 18.5;     // fort internal size (double fudge)
-fortdx = fortw + 2 * dw + f1;
-fortdy = forth + 2 * dw + f1;
-fortx0 = ntx - t0 - 3 * fortdx;
-forty0 = shipy0 + 3 * shipdy + t0;
+fortx0 = ntx - t0 - fortdx;
+forty0 = ty + f1;
 
-module fortBox(lf = 9, sf = 1, df = 0) {
+module fortBox(lf = 3, sf = 1, df = 0) {
   module aBox(fortw = fortw, forth = forth) {
     dwh = forth + 2 * dw;
-    // trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]]) // rotate around lower-right corner
+    trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]]) // rotate around lower-right corner
     color("red") taperBox(fortw, forth);
   }
-  // row of 9 large forts:
-  astack(lf, [fortdx + df, 0, 0])
+  // col of 3 large forts:
+  astack(2, [0, fortdy + df, 0])
   trr([fortx0, forty0, pp])
+  aBox();
+
+  trr([shipx0 - fortdx, shipy0 + 3 * shipdy - fortdy, -p])
   aBox();
   // one half-size fort: (forty0 -forth-2*dw - 2*t0 - 2 * f1)
   sfxy = 18.8; sfdx = sfxy + 2 * dw + f1;
-  trr([fortx0 - sfdx, forty0, -p])
-  astack(sf, [-sfdx, 0, 0])
+  trr([fortx0, shipy0 + 3 * shipdy - sfdx, -p])
+  astack(sf, [0, -sfdx, 0])
   aBox(sfxy, sfxy);  // 18.4 + double fudge
 }
 
@@ -344,10 +348,10 @@ module neutralTray() {
   fdx = (cardTrayw + shipx0 - t0) / 2;
   fdy = ty + f1;
   trr([fdx, fdy + f1 + 12, t0])
-    statDisks();
+  *  statDisks();
 
   trr([fdx, fdy + f1, t0])
-    temples();
+  *  temples();
 
   *atrans(loc, [[t0+f, cardTrayh + f1, t0]])
     coinTray(40);
