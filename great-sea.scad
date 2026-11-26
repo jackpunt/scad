@@ -40,10 +40,10 @@ w0 = w00+2;
 // height of card with sleeves (88)
 h0 = h00+2;
 
-pdw = 216;   // playerBoard-x-width
-pdh = 133;   // playerBoard-y-height
+pdw = 216;   // playerBoard-x-width: 4 residual
+pdh = 133;   // playerBoard-y-height: 87 residual (< 88 sleeve)
 pdz = 21;    // playerBoard-z
-pdo = 2;     // player board offset (in view)
+pdo = (boxy-pdw)/2;     // player board offset (in view)
 
 dw = 2.0;        // fort/ship external wedge size
 bz0 = 1.5;       // taperBox base thickness
@@ -57,19 +57,23 @@ lidc = 1.4;      // overhang 'clip' above lid
 
 // size of neutral box:
 ntx = boxy ;  // x-size of box
-nty = pdh - 6.5;  // y-size of box (boxy - cbh - t2) ?
+nty = pdh - 6.5;  // y-size of box 
 ntz0 = tilezb + t0 + .1;
 ntzl = ntz0 + lidf;         // top of 'lid'
 ntz  = ntzl + lidc;  // z-size of box (incl: lid & overhang) 
 echo("nxt, nty, ntz =", [ntx, nty, ntz], "tilezb =", tilezb);
 
+// PlayerBox: cardSection
+npc = 30;    // number of player cards
+csh = (boxy - nty - 1 * f1);// > (h0 + t2);  // cardSection
+csw = w0 + t2 + t0;  // t0 fudge around card
+csz = t0 + (npc+5) * t01; // 15: useable underhang height: (boxz - pdz) / 2 = 15.25;
+if (csh < h0  + t2 + t2 || true ) echo("csh < h0 + t2: ", csh -t2, h0, "csz=", csz);
+
+
 // Note: left & bottom end-cap are embedded in tray wall
 cardTrayw = h0 + t2 + t0 + 4;  // 2 endcaps + 3 gaps; balance with h0 sleeve size
 cardTrayh = w0 + t0 + ty + 4; // abuts bottom edge: 
-
-npc = 30;    // number of player cards
-t1c = t0 * 1;//.7;
-csz = t0 + (npc+5) * t01; // player box thick?
 
 combatt = 5;    // thickness of combat status disks
 combatd = 18;   // diameter of combat status disks (10 of them)
@@ -80,10 +84,6 @@ nTemple = 6;
 nTempleCards = 24;        // number of 'special' action cards (4 x nTemples)
 cardz = t01 * (nTempleCards + 4);
 
-// PlayerBox:
-csh = (boxy - nty - 1 * f1);// > (h0 + t2);  // cardSection
-csw = w0 + t2 + t0;  // t0 fudge around card
-if (csh < h0  + t2 + t2 ) echo("csh < h0 + t2: ", csh -t2, h0);
 
 echo("cardTrayw =", cardTrayw, "cardTrayh =", cardTrayh, "nty=", nty, nty+cardTrayw);
 
@@ -122,9 +122,9 @@ module partsSection() {
   psy = ps.y; //(boxy - pdh - f1) / 2 - 2 * f1;
   psz = ps.z;
   csx = ps[3];
-  echo("psx, psy, psz = ", [ps.x, ps.y, ps.z]);
+  // echo("psx, psy, psz = ", [ps.x, ps.y, ps.z]);
   trr([csx + f1, pdh-nty+f1, 0]) roundedBox([psx, psy, psz], 1);
-  echo("parts volume: ", [psx, psy, psz], psx * psy * psz / 1000);
+  // echo("parts volume: ", [psx, psy, psz], psx * psy * psz / 1000);
 }
 module neutralSection() {
   dy = pdh - nty;  // 3.5
@@ -166,6 +166,9 @@ module combatBoard() {
 // h: interior height
 // z: interior z-size
 // rz: rotation around z-axis (while still centered around [0,0] )
+// ambient: 
+// - dw: wedge size
+// - bz0: base thickness
 module taperBox(w = 30, h = 24, z = tilez9, rz = 0) {
   z = def(z, tilez9);
   // linearExtrude(taper) roundedRect(), cut finger slots on side and base
@@ -377,10 +380,10 @@ atrans(loc, [[0, 0, 0], -1, -1, 0]) trr([0, 0, 0]) neutralTray();
 *atrans(loc, [[0, 0, 0]]) trr([0, 0, 0]) neutralLid();
 
 // combat boards:
-*atrans(loc, [[0, 0, 0]]) trr([boxy/2, t0, ntzl]) combatBoard();
+atrans(loc, [[0, 0, 0]]) trr([boxy/2, t0, ntzl]) combatBoard();
 
 // playerBoards:
-*atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, boxz-pdz]) playerBoards();
+atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, boxz-pdz]) playerBoards();
 
 // outer box:
 module outerBox(tb = .2) {
