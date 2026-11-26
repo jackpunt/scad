@@ -45,7 +45,7 @@ pdh = 133;   // playerBoard-y-height
 pdz = 21;    // playerBoard-z
 pdo = 2;     // player board offset (in view)
 
-dw = 2.1;        // fort/ship external wedge size
+dw = 2.0;        // fort/ship external wedge size
 bz0 = 1.5;       // taperBox base thickness
 
 tilez = 2;       // thickness of cardboard stock (1.78)
@@ -180,7 +180,7 @@ module taperBox(w = 30, h = 24, z = tilez9, rz = 0) {
   difference() {
     linear_extrude(height = shz, scale = (wh + 2 * t0) / (wh + 2 * dw))
     trr([-dww/2, -dwh/2, 0]) roundedRect([dww, dwh], 1);
-    trr([-w/2,   -h/2, bz0]) roundedCube([w, h, shz], .2, true); // tile
+    trr([-w/2,   -h/2, bz0]) cube([w, h, shz] ); // tile
     cut(cr, -1);      // base slot & finger cut
     cut(cr, +1);      // base slot & finger cut
   }
@@ -330,9 +330,10 @@ module neutralTray() {
 
   trr([t0 + 2* t0, ty + t0, t0]) specialCards();  // align with cardTray()
 
-  fdy = ty + f1 + 1;
-  fdx = cardTrayw + templed/2 + 1.5;
-  trr([fdx, fdy + f1 + 11, t0])
+  // between two divs:
+  fdx = (cardTrayw + shipx0 - t0) / 2;
+  fdy = ty + f1;
+  trr([fdx, fdy + f1 + 12, t0])
     statDisks();
 
   trr([fdx, fdy + f1, t0])
@@ -346,7 +347,7 @@ module neutralTray() {
 
   cardTray();
   
-  atrans(loc, [-1, [0,0,0]]) neutralLid();
+  atrans(loc, [-1, [0,0,0], -1, -1, -1, 5]) neutralLid();
 
 }
 module playerBoards() {
@@ -356,7 +357,7 @@ module playerBoards() {
 // if (loc == 0) astack(2, [csw+.2, 0, 0])
 // if (loc == 0) astack(2, [0, csh+.2, 0])
 atrans(loc, [[0, nty+f1, 0], [0, 0, 0]]) playerBox();
-atrans(loc, [undef, 0, [0, 0, 0]]) partsSection();
+atrans(loc, [undef, 0, [0, 0, 0]]) astack(3, [0, 45, 0]) partsSection();
 echo("boxy-nty=", boxy-nty, "h0=", h0);
 
 
@@ -379,7 +380,7 @@ atrans(loc, [[0, 0, 0]]) outerBox(.02);
 
 atrans(loc, [-1, -1, -1, -1, [0,0,0]]) {
   // test print the fort/ship boxes:
-  trr([0, -87, 0]) fortBox(1, 0);
+  trr([-1, -87, 0]) fortBox(1, 0);
   trr([23, -61, 0]) fortBox(0, 1);
   trr([-66, 1, 0]) shipBox(1);
 }
@@ -392,4 +393,4 @@ atrans(loc, [-1, -1, -1, -1, [0,0,0]]) {
 // 2: single partsSection
 // 3: neutralTray
 // 4: test print fort/ship boxes
-loc = 2; 
+loc = 3; 
