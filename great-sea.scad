@@ -18,7 +18,7 @@ sample = false;  // true to print mini-box
 
 cbw = 140;       // combat board
 cbh = 100;
-cbz = 8;
+cbz = 8;         // 4 * tilez
 
 mapz = 11.5 + 2; // map thickness reduces availablbe box depth + rule book
 
@@ -40,13 +40,36 @@ w0 = w00+2.5;
 // height of card with sleeves
 h0 = h00+1.5;
 
+pdw = 216;   // playerBoard-x-width
+pdh = 133;   // playerBoard-y-height
+pdz = 21;    // playerBoard-z
+pdo = 2;     // player board offset (in view)
+
+dw = 2.1;        // fort/ship external wedge size
+bz0 = 1.5;       // taperBox base thickness
+
+tilez = 2;       // thickness of cardboard stock (1.78)
+tilez9 = tilez * 9.1;  // stack of 9 tiles
+tilezb = tilez9 + bz0; // height of fort/ship holders
+lidz = 1;        // thickness of neutralLid
+lidf = 1.2;      // extend lidz for cutting slot
+lidc = 1.4;      // overhang 'clip' above lid
+
+// size of neutral box:
+ntx = boxy ;  // x-size of box
+nty = pdh - 3.5;  // y-size of box (boxy - cbh - t2) ?
+ntz0 = tilezb + t0 + .1;
+ntzl = ntz0 + lidf;         // top of 'lid'
+ntz  = ntzl + lidc;  // z-size of box (incl: lid & overhang) 
+echo("nxt, nty, ntz =", [ntx, nty, ntz], "tilezb =", tilezb);
+
 // Note: left & bottom end-cap are embedded in tray wall
 cardTrayw = h0 + t0 + t0 + 3;  // 2 endcaps + 3 gaps; balance with h0 sleeve size
 cardTrayh = w0 + t0 + ty + 2; // abuts bottom edge: 
 
 npc = 30;    // number of player cards
 t1c = t0 * 1;//.7;
-csz = t0 + (npc+4) * t01; // player box thick?
+csz = t0 + (npc+5) * t01; // player box thick?
 
 combatt = 5;    // thickness of combat status disks
 combatd = 18;   // diameter of combat status disks (10 of them)
@@ -57,13 +80,8 @@ nTemple = 6;
 nTempleCards = 24;        // number of 'special' action cards (4 x nTemples)
 cardz = t01 * (nTempleCards + 4);
 
-pdw = 216;   // playerBoard-x-width
-pdh = 133;   // playerBoard-y-height
-pdz = 21;    // playerBoard-z
-pdo = 2;     // player board offset (in view)
-
 // PlayerBox:
-csw = h0 + t2;  // cardSection
+csw = (boxy - nty - 3 * f1);// > (h0 + t2);  // cardSection
 csh = w0 + t2;
 
 // (w0 x h0) sleeved card size
@@ -82,37 +100,44 @@ module cardSection(npc = npc) {
   astack(2, [csh+f1, 0, 0])
   roundedBox([csh, csw, csz], 1);
 }
+
+// given cardSection x-extent & boxy: compute 
+function psxyzc(csx = 2 * (csh + f1)) = [
+  (boxy - csx) / 2 - f1,
+  (csw - 3.5)/2,
+  boxz,
+  csx
+];
+
 module partsSection() {
-  csx = 2 * (csh + f1);
-  psx = boxy - csx - f1;
-  psy = boxy - pdh -.5;
-  psz = boxz - t0;
-  echo("psx, psy, psz = ", [psx, psy, psz]);
-  trr([csx + f1, pdh-nty+f1, 0]) roundedBox([psx/2, psy/2, psz], 1);
-  echo("parts volume: ", [psx/2, psy/2, psz], psx/2 * psy/2 * psz / 1000);
+  ps = psxyzc(); 
+  psx = ps.x;
+  psy = ps.y; //(boxy - pdh - f1) / 2 - 2 * f1;
+  psz = ps.z;
+  csx = ps[3];
+  echo("psx, psy, psz = ", [ps.x, ps.y, ps.z]);
+  trr([csx + f1, pdh-nty+f1, 0]) roundedBox([psx, psy, psz], 1);
+  echo("parts volume: ", [psx, psy, psz], psx * psy * psz / 1000);
 }
 module neutralSection() {
   dy = pdh - nty;  // 3.5
   nsx = csh;
   nsy = csw - dy;
-  nsz = boxz - 2 * (csz + f1);
+  nsz = pdz;// boxz - 2 * (csz + f1);
   trr([0, dy+f1, 2 * csz + f1]) color("#ac8a45")
   roundedBox([nsx, nsy, nsz], 1);
   echo("neutral volume: ", [nsx, nsy, nsz], nsx * nsy * nsz / 1000);
 }
-module pboxLid() {
-  inz = 3 + t0;
-  cube([csw, csh, t0]);
-  trr([t0, t0, t0-inz])
-  box([csw-t2-f1, csh-t2-f1, inz], [t0, t0, -1], [2, 2, 1.1]);
-}
 
 module playerBox() {
   cardSection();
-  csx = 2 * (csh + f1);
-  psx = boxy - csx - f1;
-  psy = boxy - pdh -.5;
-  astack(2, [0, psy/2+f1, 0]) astack(2, [psx/2+f1, 0, 0])
+  ps = psxyzc(); 
+  psx = ps.x;
+  psy = ps.y;
+  psz = ps.z;
+  csx = ps[3];
+  astack(2, [0, psy+f1, 0]) 
+  astack(2, [psx+f1, 0, 0])
   partsSection();
   astack(2, [csx/2, 0, 0]) neutralSection();
 }
@@ -129,23 +154,6 @@ module combatBoard() {
     roundedCube([cbws, cbh, cbz-p], 3, true, true);
   }
 }
-
-dw = 2.1;        // fort/ship external wedge size
-bz0 = 2;         // taperBox base thickness
-
-tilez = 1.8;  // thickness of cardboard stock (1.78)
-tilez9 = 9.5 * tilez;  // stack of 9 tiles
-tilezb = tilez9 + bz0; // height of fort/ship holders
-lidz = 1;        // thickness of neutralLid
-lidf = 1.2;      // extend lidz for cutting slot
-lidc = 1.4;      // overhang 'clip' above lid
-
-// size of neutral box:
-ntx = boxy ;  // x-size of box
-nty = pdh - 3.5;  // y-size of box (boxy - cbh - t2) ?
-ntz  = tilezb + 2 * t0 + lidf + lidc;  // z-size of box (incl: lid & overhang) 
-ntz0 = tilezb + 2 * t0 + lidf;         // top of 'lid'
-echo("nxt, nty, ntz =", [ntx, nty, ntz], "tilezb =", tilezb);
 
 // w: interior width (long side; finger cut on this edge)
 // h: interior height
@@ -178,8 +186,8 @@ module taperBox(w = 30, h = 24, z = tilez9, rz = 0) {
   }
 }
 
-shipw = 30.3;     // double fudge
-shiph = 24.3;     // double fudge
+shipw = 30.5;     // double fudge
+shiph = 24.5;     // double fudge
 shipdx = shipw + 2 * dw + f1/2;
 shipdy = shiph + 2 * dw + f1/2;
 shipx0 = ntx - dw - 3 * shipdx; 
@@ -197,8 +205,8 @@ module shipBox(ns = 3) {
   aBox();
 }
 
-fortw = 36.3;     // fort internal size (double fudge)
-forth = 18.3;     // fort internal size (double fudge)
+fortw = 36.5;     // fort internal size (double fudge)
+forth = 18.5;     // fort internal size (double fudge)
 fortdx = fortw + 2 * dw + .1;
 fortdy = forth + 2 * dw + .1;
 fortx0 = t0 + f1;
@@ -221,11 +229,11 @@ module fortBox(lf = 9, sf = 1) {
 }
 
 module cardTray() {
-  cx = cardTrayw; cy = cardTrayh; cz = tilez9;
+  cx = cardTrayw; cy = cardTrayh; cz = ntz0;
   color("#5505f585")
   trr([0+p, 0-p, 0-p]) 
   slotifyY2( [cz, 38, 3 * t0, 2], [cx/2, cy, 0], undef, 2, false )
-  roundedBox([cx, cy, cz], 1);
+  box([cx, cy, cz]);
 }
 
 coind = 23.2;
@@ -311,14 +319,16 @@ module neutralTray() {
   trr([t0, ty+f1, t0]) shipBox();
   trr([t0, 0, t0]) fortBox();
 
-  divz = tilezb + 1.9 * t0;
+  divz = ntzl - t0;
   divy = forty0 - t0 -f1;
   divXZ([divz, shipx0, divy - t0], 0, 0, t0);
     div([divz, divy, shipx0 - t0], 0, 0, t0);
     div([divz, divy, cardTrayw - t0 +pp], 0, 0, t0);
-    div([   4, divy, cardTrayw - t0 +pp], 0, 0, t0);
+    // stop block on small Fort:
+    trr([0, cardTrayh, 0])
+    div([  6 , divy - cardTrayh - t0, 26.3], 0, 0, t0);
 
-  trr([t0 + t0, ty + t0, t0]) specialCards();  // align with cardTray()
+  trr([t0 + 2* t0, ty + t0, t0]) specialCards();  // align with cardTray()
 
   fdy = ty + f1 + 1;
   fdx = cardTrayw + templed/2 + 1.5;
@@ -355,7 +365,7 @@ atrans(loc, [[0, 0, 0], -1, -1, 0]) trr([0, 0, 0]) neutralTray();
 *atrans(loc, [[0, 0, 0]]) trr([0, 0, 0]) neutralLid();
 
 // combat boards:
-atrans(loc, [[0, 0, 0]]) trr([boxy/2, t0, ntz0]) combatBoard();
+atrans(loc, [[0, 0, 0]]) trr([boxy/2, t0, ntzl]) combatBoard();
 
 // playerBoards:
 atrans(loc, [[0, 0, 0]]) trr([ pdo, 0, boxz-pdz]) playerBoards();
@@ -374,10 +384,12 @@ atrans(loc, [-1, -1, -1, -1, [0,0,0]]) {
   trr([-66, 1, 0]) shipBox(1);
 }
 
+// a meeple
+// trr([5, 5, 1.1* t0 +  nTempleCards * t01]) cube([8, 22, 10, ]);
 
 // 0: all - assembled
 // 1: playerBox
 // 2: single partsSection
 // 3: neutralTray
 // 4: test print fort/ship boxes
-loc = 4; 
+loc = 2; 
