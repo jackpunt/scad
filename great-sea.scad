@@ -57,7 +57,7 @@ lidc = 1.4;      // overhang 'clip' above lid
 
 // size of neutral box:
 ntx = boxy ;  // x-size of box
-nty = cbh + 2*ty + 2;// 106;  // y-size of box 
+nty = cbh + 2*ty + 4;// 108;  // y-size of box 
 ntz0 = tilezb + t0 + .1;    // to interior/bottom of lid
 ntzl = ntz0 + lidf;         // top of 'lid'
 ntz  = ntzl + lidc;  // z-size of box (incl: lid & overhang) 
@@ -79,6 +79,7 @@ combatt = 5;    // thickness of combat status disks
 combatd = 18;   // diameter of combat status disks (10 of them)
 damaged = 8;    // x, y, z dimension of orange cube. (12 of them)
 templed = 19;   // diameter of Temple disks
+workerd = 22;   // height of worker meeple
 
 nTemple = 6;
 nTempleCards = 24;        // number of 'special' action cards (4 x nTemples)
@@ -199,8 +200,8 @@ fortdy = forth + 2 * dw + f1;
 
 shipw = 30.5;     // double fudge
 shiph = 24.5;     // double fudge
-shipdx = shipw + 2 * dw + f1;
-shipdy = shiph + 2 * dw + f1;
+shipdx = shiph + 2 * dw + f1;
+shipdy = shipw + 2 * dw + f1;
 shipdx3 = 3 * shipdx;
 shipdy3 = 3 * shipdy;
 shipx0 = ntx - dw - shipdx3;
@@ -210,7 +211,7 @@ module shipBox(nx = 3, ny = 3, df = 0) {
   module aBox() {
     dwh = shiph + 2 * dw;
     color("blue") 
-    // trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]])
+    trr([0, 0, 0, [0, 0, 90, [dwh/2, dwh/2, 0]]])
     taperBox(shipw, shiph, tilez9);
   }
   astack(ny, [0, shipdy + df, 0])
@@ -243,14 +244,15 @@ module fortBox(lf = 3, sf = 1, df = 0) {
 }
 
 module cardTray() {
+  // div is ty @ cardtrayw
   cx = cardTrayw; cy = cardTrayh; cz = ntz0;
+  trr([t0 + 3* t0, ty + 2*t0, t0]) card(nTempleCards, w0, h0);
   color("#5505f585")
   trr([0+p, 0-p, 0-p]) 
-  slotifyX2( [cz, 42, 5 * t0, 1], [cx, cy/2, 0], undef, 4, false )
+  // slotifyX2( [cz, 42, 5 * t0, 1], [cx, cy/2, 0], undef, 4, false )
   div([cz, cy, cx], 0, 0, ty);
   div([cz, cy, t0], 0, 0, .4);
 
-  trr([t0 + 3* t0, ty + 2*t0, t0]) card(nTempleCards, w0, h0);
 }
 
 coind = 23.2;
@@ -287,10 +289,11 @@ module statDisks() {
   // trr([-15.6, 3, 10, [0, 90, 0]]) color("violet") statd();
 }
 
+// aligned: x0 is center of stack, y0 is bottom of stack
 module temples() {
   h = tilez * 1; d = templed;  // templez could go up to 3.11!
-  astack(nTemple, [h, 0, 0], undef, "#fefcbc9a")
-    trr([h, 0, d/2, [0, -90, 0]]) cylinder(h = h*.9, d = d);
+  astack(nTemple, [0, h, 0], undef, "#fefcbc9a")
+    trr([0, 0, d/2, [-90, 0, 0]]) cylinder(h = h*.9, d = d);
 }
 
 // from cubitos
@@ -342,6 +345,32 @@ module neutralLid(lz = lidz) {
     trr([ntx-3*t0-p, -p, ntz0+p]) cube([3*t0+pp, nty+pp, bz]);
   }
 }
+module miscBox(fill = false) {
+  // templeCards & forts
+  divw = 25; // wide for workerd, combatd, templed
+  fdx = (cardTrayw + ty) + divw/2 + f1;
+  fdy = ty + f;
+  divx = fdx + divw/2;
+  div([ntz0, nty -30, divx], 0, 0);
+  trr([18, nty-30, 0]) div([ntz0, 30, divx], 0, 0);
+  trr([divx, 0, 0]) divXZ([ntz0, 18 + t0, nty-30], 0, 0);
+
+  fy0 = fdy + f1;
+  if (fill) trr([fdx, fy0, t0]) temples();
+  fy1 = fy0 + nTemple * tilez;
+  if (fill) trr([fdx, fy1, t0]) statDisks();
+  wdy = 10.2; 
+  wdz = 9.6;
+  fy2 = fy1 + 10 * combatt + f1;
+  if (fill) astack(2, [0, wdy + f1, 0])
+    trr([fdx - workerd/2, fy2, t0])
+    color("orange") cube([workerd, wdy, wdz]);
+  ccc = 8;
+  fy3 = fy2 + 2 * wdy;
+  if (fill) astack(2, [0, 0, ccc + f1])
+  astack(2, [0, ccc + f1, 0])
+  astack(3, [ccc + f1, 0, 0]) trr([fdx-1.5*ccc, fy3, t0]) cube([ccc, ccc, ccc]);
+}
 
 // temple risers?, coin tray, wood tray, 
 // worker/damage/stat tray, "special action" (temple) cards
@@ -351,35 +380,12 @@ module neutralTray() {
     roundedBox([ntx, nty, ntz], 1, [t0, ty, t0]);
     neutralLid(lidf);
   }
-  shipcc = [shipx0 + shipdx3/2, shipy0 + shipdy3/2, 0];
-  trr(shipcc) cylinder(20, 1);
+  shipcc = [shipx0 + shipdx3/2, shipy0 + shipdy3/2, 0]; // horiz
+  // trr(shipcc) cylinder(20, 1);
   trr([t0, 0, t0, [0, 0, 0, shipcc]]) shipBox();
   trr([t0, 0, t0]) fortBox(3, 1);
 
-  divz = ntzl - t0;
-  divy = forty0 - t0 -f1;
-  *divXZ([divz, shipx0, divy - t0], 0, 0, t0);
-    div([divz, divy, shipx0 - t0], 0, 0, t0);
-    div([divz, divy, cardTrayw - t0 +pp], 0, 0, t0);
-    // stop block on small Fort:
-    trr([0, cardTrayh, 0])
-    div([  6 , divy - cardTrayh - t0, 26.3], 0, 0, t0);
-
-  
-  // between two divs:
-  fdx = ntx-30 ;//(cardTrayw + ty);
-  fdy = nty - 10 - t0 - f;
-  trr([fdx, fdy + f1 + 12, t0])
-    statDisks();
-
-  trr([fdx, fdy + f1, t0])
-    temples();
-
-  *atrans(loc, [[t0+f, cardTrayh + f1, t0]])
-    coinTray(40);
-
-  *atrans(loc, [[0, 0, t0]])
-    woodTray();
+  miscBox(loc == 0 || loc == 3);
 
   cardTray();
   
