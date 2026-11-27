@@ -57,7 +57,7 @@ lidc = 1.4;      // overhang 'clip' above lid
 
 // size of neutral box:
 ntx = boxy ;  // x-size of box
-nty = 97;  // y-size of box 
+nty = cbh + 2*ty + 2;// 106;  // y-size of box 
 ntz0 = tilezb + t0 + .1;    // to interior/bottom of lid
 ntzl = ntz0 + lidf;         // top of 'lid'
 ntz  = ntzl + lidc;  // z-size of box (incl: lid & overhang) 
@@ -72,8 +72,8 @@ if (csh < h0  + t2 + t2 || true ) echo("csh < h0 + t2: ", csh -t2, h0, "csz=", c
 
 
 // Note: left & bottom end-cap are embedded in tray wall
-cardTrayw = h0 + t2 + t0 + 4;  // 2 endcaps + 3 gaps; balance with h0 sleeve size
-cardTrayh = w0 + t0 + ty + 4; // abuts bottom edge: 
+cardTrayw = w0 + 6;  // 2 endcaps + 3 gaps; balance with h0 sleeve size
+cardTrayh = nty; // abuts bottom edge: 
 
 combatt = 5;    // thickness of combat status disks
 combatd = 18;   // diameter of combat status disks (10 of them)
@@ -91,10 +91,6 @@ echo("cardTrayw =", cardTrayw, "cardTrayh =", cardTrayh, "nty=", nty, nty+cardTr
 module card(n = 1, w = w0, h = h0, cz = t01, c = "lightblue") {
   // put cards in sideways orientation:
   astack(n, [0, 0, cz]) color(c) cube([w, h, cz * .9]);
-}
-
-module specialCards(n = nTempleCards) {
-  card(n, h0, w0);  // rotate
 }
 
 // hold 3 * (8 combat) + 6 * (1 Action) = 30 cards
@@ -225,7 +221,7 @@ module shipBox(nx = 3, ny = 3, df = 0) {
 
 fortx0 = shipx0 - fortdx;
 forty0 = ty + f1;
-echo("fortdy * 4 =", fortdy*4);
+echo("fortdy * 4 =", fortdy*4, "shipdx3=", shipdx3, "shipdy3 =", shipdy3);
 module fortBox(lf = 3, sf = 1, df = 0) {
   module aBox(fortw = fortw, forth = forth) {
     dwh = forth + 2 * dw;
@@ -247,12 +243,14 @@ module fortBox(lf = 3, sf = 1, df = 0) {
 }
 
 module cardTray() {
-  trr([t0 + 2* t0, ty + t0, t0]) specialCards();  // align with cardTray()
   cx = cardTrayw; cy = cardTrayh; cz = ntz0;
   color("#5505f585")
   trr([0+p, 0-p, 0-p]) 
-  slotifyY2( [cz, 38, 3 * t0, 2], [cx/2, cy, 0], undef, 2, false )
-  box([cx, cy, cz]);
+  slotifyX2( [cz, 42, 5 * t0, 1], [cx, cy/2, 0], undef, 4, false )
+  div([cz, cy, cx], 0, 0, ty);
+  div([cz, cy, t0], 0, 0, .4);
+
+  trr([t0 + 3* t0, ty + 2*t0, t0]) card(nTempleCards, w0, h0);
 }
 
 coind = 23.2;
@@ -291,8 +289,8 @@ module statDisks() {
 
 module temples() {
   h = tilez * 1; d = templed;  // templez could go up to 3.11!
-  astack(nTemple, [0, h, 0], undef, "#fefcbc9a")
-    trr([0, 0, d/2, [-90, 0, 0]]) cylinder(h = h*.9, d = d);
+  astack(nTemple, [h, 0, 0], undef, "#fefcbc9a")
+    trr([h, 0, d/2, [0, -90, 0]]) cylinder(h = h*.9, d = d);
 }
 
 // from cubitos
@@ -369,13 +367,13 @@ module neutralTray() {
 
   
   // between two divs:
-  fdx = (cardTrayw + shipx0 - t0) / 2;
-  fdy = ty + f1;
+  fdx = ntx-30 ;//(cardTrayw + ty);
+  fdy = nty - 10 - t0 - f;
   trr([fdx, fdy + f1 + 12, t0])
-  *  statDisks();
+    statDisks();
 
   trr([fdx, fdy + f1, t0])
-  *  temples();
+    temples();
 
   *atrans(loc, [[t0+f, cardTrayh + f1, t0]])
     coinTray(40);
@@ -383,7 +381,7 @@ module neutralTray() {
   *atrans(loc, [[0, 0, t0]])
     woodTray();
 
-  *cardTray();
+  cardTray();
   
   atrans(loc, [-1, [0,0,0], -1, -1, -1, 1]) neutralLid();
 
