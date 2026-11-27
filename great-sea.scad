@@ -39,6 +39,9 @@ t01 = .440;    // = .33 + .6 mm; thickness when stacking sleeved cards (compress
 w0 = w00+2;
 // height of card with sleeves (88)
 h0 = h00+2;
+// stack of Player Cards:
+npc = 30;    // number of player cards
+z0 = (npc+2) * t01;
 
 pdw = 216;   // playerBoard-x-width: 4 residual
 pdh = 133;   // playerBoard-y-height: 87 residual (< 88 sleeve)
@@ -65,7 +68,6 @@ echo("nxt, nty, ntz =", [ntx, nty, ntz0, ntzl, ntz], "tilezb =", tilezb, "boxz =
 
 // PlayerBox: cardSection
 psz0 = ntz0 - 1.0;        // cut back: cards vs pieces
-npc = 30;    // number of player cards
 csh = w0 + t2 + 4 * t0;  // t0 fudge around card (62)
 csw = h0 + t2 + 4 * t0;  // cardSection (94)
 csz = (boxz - psz0 -f1)/2;  // (pdz + cbz + lidz)/2 >> t0 + (npc+2) * t01;
@@ -100,7 +102,7 @@ module card(n = 1, w = w0, h = h0, cz = t01, c = "lightblue") {
 // if (df == 0) stack on z-axis
 module cardSection(nx = 2, nz = 2, df = 0) {
   row2 = (df == 0) ? [0, 0, csz + f1] : [0, csh + f1 + df, 0];
-  astack(nz, row2)
+  *astack(nz, row2)
   astack(nx, [csw + 32 + f1 + df, 0, 0]) {
     slotifyY2([csz, 12, 3, .1], [csw*.5, 0, csz-1], undef, 0, false)
     slotifyY2([csz, 12, 3, .1], [csw*.5, csh, csz-1], undef, 0, false)
@@ -110,11 +112,31 @@ module cardSection(nx = 2, nz = 2, df = 0) {
     slotifyY2([csz, 12, 3, .1], [csw*.7, csh, csz-1.5], undef, 0, false)
     box([csw, csh, csz], t0);
     if (loc == 0)
-      trr([(csw-h0)/2, (csh-w0)/2, t0]) card(30, h0, w0);
+      trr([(csw-h0)/2, (csh-w0)/2, t0]) card(npc, h0, w0);
   }
+  echo("w0, h0, z0 = ", [w0, h0, z0], "vol=", w0 * h0 * z0 / 1000);
 }
 
-module partsSection(n = 4) {
+module partsSection(nx = 2, nz = 2, df = 0) {
+  tl = 1.1;
+  dlz = 1.1;   //
+  dlxy = 2.5;  // for lid
+  psx = (boxy / 2) - 1 * f1 - dlxy;
+  psy = boxy - pdh - f1 - dlxy;
+  psz = (boxz - f1) / 2 - dlz;  // 
+  csx = 0;
+  let (ci = 0)
+  trr([tl, tl + pdh - nty, 0])
+  astack(nz, [0, 0, psz + f1 + df + dlz])
+  astack(nx, [psx + f1 + df + dlxy, 0, 0]) {
+    echo("ci=", ci); ci = ci+1;
+    roundedBox([psx, psy, psz], 1);
+    if (loc == 0)
+      trr([(csw-h0)/2, (csh-w0)/2, t0]) card(npc, h0, w0);
+  }
+  echo("psx, psy, psz = ", [psx, psy, psz], "vol=", psx * psy * psz / 1000, "net =", psx * psy * psz / 1000 - w0 * h0 * z0 / 1000);
+}
+module partsSection0(n = 4) {
   psx = (boxy / 4) - 3 * f1;
   psy = boxy - nty - f1;
   psz = psz0;  // ntz0 - ...
@@ -123,6 +145,7 @@ module partsSection(n = 4) {
   roundedBox([psx, psy, psz], 1);
   echo("psx, psy, psz = ", [psx, psy, psz], "vol=", psx * psy * psz / 1000);
 }
+
 module combatBoard() {
   cbws = 68.0;     // central "tab" height (wide part < cbh = 100)
   cbhi = 87.8;     // width of narrow part (less than cbw = 140)
