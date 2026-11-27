@@ -98,6 +98,25 @@ module card(n = 1, w = w0, h = h0, cz = t01, c = "lightblue") {
   astack(n, [0, 0, cz]) color(c) cube([w, h, cz * .9]);
 }
 
+module astackxyz(n, d, rot, colors, i0 = 0) {
+  function scolor(ii) = is_list(colors) ? colors[(ii % len(colors))] : colors;
+  dxyz = is_list(d) ? d : [ 0, 0, d ];
+  rxyz = is_list(rot) ? rot : is_undef(rot) ? [ 0, 0, 0 ] : rotOfId(rot);
+  n = is_list(n) ? n : (dxyz.x != 0) ? [ n, 0, 0 ] : (dxyz.y != 0) ? [ 0, n, 0 ] : [0, 0, n];
+  imax = i0 + prod(n) - 1;
+  echo("dxyz=", dxyz, "n=", n, "i0=", i0, "imax=", imax);
+  if (i0 <= imax)
+  for (ii = [i0 : imax]) {
+    // ix = floor(ii/1.0) % n.x;
+    ix = ii % n.x;
+    iy = (floor(ii/n.x)) % n.y;
+    iz = floor(ii/(n.y*n.x)) % n.z;
+    echo(ii, "ix, iy, iz = ", ix, iy, iz);
+    color(scolor(ii))
+    rotate(rxyz) trr(amul(dxyz, [ix, iy, iz])) children();
+  }
+}
+
 // hold 3 * (8 combat) + 6 * (1 Action) = 30 cards
 // if (df == 0) stack on z-axis
 module cardSection(nx = 2, nz = 2, df = 0) {
@@ -116,6 +135,8 @@ module cardSection(nx = 2, nz = 2, df = 0) {
   }
   echo("w0, h0, z0 = ", [w0, h0, z0], "vol=", w0 * h0 * z0 / 1000);
 }
+// Player Colors
+pcolors = ["red", "orange", "purple", "grey"];
 
 module partsSection(nx = 2, nz = 2, df = 0) {
   tl = 1.1;
@@ -124,26 +145,17 @@ module partsSection(nx = 2, nz = 2, df = 0) {
   psx = (boxy / 2) - 1 * f1 - dlxy;
   psy = boxy - pdh - f1 - dlxy;
   psz = (boxz - f1) / 2 - dlz;  // 
-  csx = 0;
-  let (ci = 0)
+  dxyz = [psx + f1 + df + dlxy, 0, psz + f1 + df + dlz];
+  echo("psx, psy, psz = ", [psx, psy, psz], "vol=", psx * psy * psz / 1000, "net =", psx * psy * psz / 1000 - w0 * h0 * z0 / 1000);
   trr([tl, tl + pdh - nty, 0])
-  astack(nz, [0, 0, psz + f1 + df + dlz])
-  astack(nx, [psx + f1 + df + dlxy, 0, 0]) {
-    echo("ci=", ci); ci = ci+1;
+  astackxyz([nx, 1, nz], dxyz, undef, pcolors) {
     roundedBox([psx, psy, psz], 1);
+  }
+  trr([tl, tl + pdh - nty, 0])
+  astackxyz([nx, 1, nz], dxyz) {
     if (loc == 0)
       trr([(csw-h0)/2, (csh-w0)/2, t0]) card(npc, h0, w0);
   }
-  echo("psx, psy, psz = ", [psx, psy, psz], "vol=", psx * psy * psz / 1000, "net =", psx * psy * psz / 1000 - w0 * h0 * z0 / 1000);
-}
-module partsSection0(n = 4) {
-  psx = (boxy / 4) - 3 * f1;
-  psy = boxy - nty - f1;
-  psz = psz0;  // ntz0 - ...
-  csx = 0;
-  astack(n, [psx + f1, 0, 0])
-  roundedBox([psx, psy, psz], 1);
-  echo("psx, psy, psz = ", [psx, psy, psz], "vol=", psx * psy * psz / 1000);
 }
 
 module combatBoard() {
