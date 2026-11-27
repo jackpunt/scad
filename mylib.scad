@@ -21,6 +21,16 @@ function sum(ary = [], n) =
   let(nn = is_undef(n) ? len(ary) - 1 : n)
     (nn < 0) ? 0 : (n == 0) ? ary[0] : ary[nn] + sum(ary, nn-1);
 
+// recursive product of numbers in array (from end [n] to beginning [0])
+// ary: array of numbers to multiply
+// n: index into ary; then recurse with n-1
+// mt: value to return for empty array (1)
+// TBD: should empty array be 1 or 0?
+function prod(ary = [], n, mt = 1) = 
+  !is_list(ary) ? mt :
+  let(nn = is_undef(n) ? len(ary) - 1 : n)
+    (nn < 0) ? mt : (n == 0) ? ary[0] : ary[nn] * prod(ary, nn-1, mt);
+
 
 // n: union first n children, subtract the rest (1)
 // r: ignore the final r children (0)
