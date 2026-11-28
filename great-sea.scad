@@ -121,6 +121,7 @@ module astackxyz(n, d, rot, colors, i0 = 0) {
 // Player Colors
 pcolors = ["red", "orange", "purple", "grey"];
 
+// box for Parts & Player Cards
 module partsSection(nx = 2, ny = 1, nz = 2, df = 0) {
   tl = 1.1;
   dlz = 1.1;   //
@@ -401,6 +402,49 @@ module miscBox(fill = false) {
   }
 }
 
+module sampleLid(lz = lidz) {
+  ntx = 30;
+  nty = 30;
+  ntz0 = 10;
+  ntzl = ntz0 + lidf;         // top of 'lid'
+  ntz  = ntzl + lidc;  // z-size of box (incl: lid & overhang) 
+
+  fm = lz - lidz;
+  lx = ntx - 2*f;
+  ly = nty - ty;
+  if (fm <= .01) color("#3e9eff78")  {
+    trr([0-p, ty/2+f , 0])
+    difference() {
+      cube([lx, ly-2*f, lz]);
+      // lidGrid(lx, ly, [6, 11, 7]);
+    }
+  }
+  if (fm > .01) {
+    trr([0-p, ty/2, ntz0])
+    cube([lx, ly, lz]);
+    bz = (lidz+lidc+fm+pp);  // end-cap when cutting
+    trr([0-p,       -p, ntz0+p]) cube([3*t0+pp, nty+pp, bz]);
+    trr([ntx-3*t0-p, -p, ntz0+p]) cube([3*t0+pp, nty+pp, bz]);
+  }
+}
+
+module sampleTray(lz = lidz) {
+  ntx = 30;
+  nty = 30;
+  ntz0 = 10;
+  ntzl = ntz0 + lidf;         // top of 'lid'
+  ntz  = ntzl + lidc;  // z-size of box (incl: lid & overhang) 
+
+  difference() {
+    roundedBox([ntx, nty, ntz], 1, [t0, ty, t0]);
+    sampleLid(lidf);
+  }
+}
+if (loc == 14) {
+  trr([-50, 0, 0]) sampleTray();
+  trr([-50, 40, 0]) sampleLid();
+}
+
 // temple risers?, coin tray, wood tray, 
 // worker/damage/stat tray, "special action" (temple) cards
 // 9 & 1/2 ship-upgrade tile holders
@@ -408,19 +452,20 @@ module neutralTray(fill = loc == 0 || loc == 3) {
   difference() {
     roundedBox([ntx, nty, ntz], 1, [t0, ty, t0]);
     neutralLid(lidf);
+    // cut holes below cardTray:
     astack(2, [0, (h0+6)/3, 0])
     trr([(w0+6)/2, (h0+6)/3, 0]) cylinder(h = 3, d = 20, center = true);
   }
-  shipcc = [shipx0 + shipdx3/2, shipy0 + shipdy3/2, 0]; // horiz
-  // trr(shipcc) cylinder(20, 1);
   if (fill) {
+    shipcc = [shipx0 + shipdx3/2, shipy0 + shipdy3/2, 0]; // horiz
+    // trr(shipcc) cylinder(20, 1);
     trr([t0, 0, t0, [0, 0, 0, shipcc]]) shipBox();
     trr([t0, 0, t0]) fortBox(3, 1);
   }
 
   miscBox(fill);
 
-  trr(loc == 4 ? [0, -nty, -t0] : [0,0,0]) {
+  *trr(loc == 4 ? [0, -nty, -t0] : [0,0,0]) {
     woodTray(fill ? 40 : 0);
     coinTray(fill);
   }
@@ -466,6 +511,11 @@ atrans(loc, [-1, -1, -1, -1, -1, [0,0,0]]) {
 
 // a meeple
 // trr([5, 5, 1.1* t0 +  nTempleCards * t01]) cube([8, 22, 10, ]);
+
+// 0: everything
+// 1: show with lid
+// 3: just neutral tray:
+// 4: neutralTray for print, with coins & wood (print)
 
 // 0: all - assembled
 // 1: playerBox: partsSection, cardSection
