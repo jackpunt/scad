@@ -60,14 +60,14 @@ lidc = 1.4;      // overhang 'clip' above lid
 
 // size of neutral box:
 ntx = boxy ;  // x-size of box
-nty = cbh + 2*ty + 4;// 108;  // y-size of box 
+nty = pdh;  // y-size of box 
 ntz0 = tilezb + t0 + .1;    // to interior/bottom of lid
 ntzl = ntz0 + lidf;         // top of 'lid'
 ntz  = ntzl + lidc;  // z-size of box (incl: lid & overhang) 
 echo("nxt, nty, ntz =", [ntx, nty, ntz0, ntzl, ntz], "tilezb =", tilezb, "boxz =", boxz );
 
 // PlayerBox: cardSection
-psz0 = ntz0 - 1.0;        // cut back: cards vs pieces
+psz0 = ntz0 - 1.0 - f1;   // z-size of nested box
 csh = w0 + t2 + 4 * t0;  // t0 fudge around card (62)
 csw = h0 + t2 + 4 * t0;  // cardSection (94)
 csz = (boxz - psz0 -f1)/2;  // (pdz + cbz + lidz)/2 >> t0 + (npc+2) * t01;
@@ -77,7 +77,7 @@ if (csz < csz0 || true ) echo("csz < csz0: csz =", csz, "csz0 =", csz0);
 
 // Note: left & bottom end-cap are embedded in tray wall
 cardTrayw = w0 + 6;  // 2 endcaps + 3 gaps; balance with h0 sleeve size
-cardTrayh = nty; // abuts bottom edge: 
+cardTrayh = h0 +ty + 4; // abuts bottom edge: cbh + 2*ty + 4
 
 combatt = 5;    // thickness of combat status disks
 combatd = 18;   // diameter of combat status disks (10 of them)
@@ -89,8 +89,9 @@ nTemple = 6;
 nTempleCards = 24;        // number of 'special' action cards (4 x nTemples)
 cardz = t01 * (nTempleCards + 4);
 
-
-echo("cardTrayw =", cardTrayw, "cardTrayh =", cardTrayh, "nty=", nty, nty+cardTrayw);
+module vol(dxyz, label = "vol: ") {
+  echo(str(label, "psx, psy, psz = ", dxyz, " vol=", prod(dxyz) / 1000));
+}
 
 // (w0 x h0) sleeved card size
 module card(n = 1, w = w0, h = h0, cz = t01, c = "lightblue") {
@@ -206,11 +207,6 @@ module taperBox(w = 30, h = 24, z = tilez9, rz = 0) {
   }
 }
 
-fortw = 36.5;     // fort internal size (double fudge)
-forth = 18.5;     // fort internal size (double fudge)
-fortdx = fortw + 2 * dw + f1;
-fortdy = forth + 2 * dw + f1;
-
 shipw = 30.5;     // double fudge
 shiph = 24.5;     // double fudge
 shipdx = shiph + 2 * dw + f1;
@@ -233,8 +229,17 @@ module shipBox(nx = 3, ny = 3, df = 0) {
   aBox();
 }
 
+fortw = 36.5;     // fort internal size (double fudge)
+forth = 18.5;     // fort internal size (double fudge)
+fortdx = fortw + 2 * dw + f1;
+fortdy = forth + 2 * dw + f1;
+
 fortx0 = shipx0 - fortdx;
 forty0 = ty + f1;
+fortdy3 = fortdy * 3;
+sfxy = 18.8; 
+sfxyw = sfxy + 2 * dw + f1;
+
 echo("fortdy * 4 =", fortdy*4, "shipdx3=", shipdx3, "shipdy3 =", shipdy3);
 module fortBox(lf = 3, sf = 1, df = 0) {
   module aBox(fortw = fortw, forth = forth) {
@@ -250,47 +255,64 @@ module fortBox(lf = 3, sf = 1, df = 0) {
   // trr([fortx0-fortdx, forty0, -p])
   // aBox();
   // one half-size fort: (forty0 -forth-2*dw - 2*t0 - 2 * f1)
-  sfxy = 18.8; sfdx = sfxy + 2 * dw + f1;
-  trr([fortx0 + fortdx - sfdx, forty0 + lf * fortdy + df, -p])
-  astack(sf, [0, -sfdx, 0])
+  trr([fortx0 + fortdx - sfxyw, forty0 + lf * fortdy + df, -p])
+  astack(sf, [0, -sfxyw, 0])
   aBox(sfxy, sfxy);  // 18.4 + double fudge
 }
 
 module cardTray() {
   // div is ty @ cardtrayw
   cx = cardTrayw; cy = cardTrayh; cz = ntz0;
-  if (loc == 0)
+  if (loc == 0 || loc == 3)
     trr([t0 + 3* t0, ty + 2*t0, t0]) card(nTempleCards, w0, h0);
   color("#5505f585")
   trr([0+p, 0-p, 0-p]) 
   // slotifyX2( [cz, 42, 5 * t0, 1], [cx, cy/2, 0], undef, 4, false )
   div([cz, cy, cx], 0, 0, ty);
   div([cz, cy, t0], 0, 0, .4);
-
+  divXZ([cz, cx + ty, cy], 0);
 }
 
 coind = 23.2;
 coinz = 1.8;  // stack of 30 <= 54mm
 
 module coin () { cylinder(h = coinz, r = coind/2); }
-module coinTray(n = 40) {
-  cx = 4 * coind + 1.5 * t0 ; cy = coind+2*t0; cz = tilezb + .9;
-  coinv = round(coind * coind * coinz * n); 
-  roundedBox([cx+t2, cy+t0, cz], 1);
-  // show the coins:
-  astack(10, [0, 0, coinz])
-  astack(4, [coind, 0, 0])
-  trr([f1 + t0+coind/2, f1 + t0+coind/2, t0]) color("silver") cylinder(h = coinz, d = coind);
-  echo("coinTray: cx, cy, cz", [cx, cy, cz], cx * cy * cz/1000, coinv/1000);
+
+module coinTray(fill = loc == 0 || loc == 3) {
+  psx = (boxy - t2 -f1) / 2 - f1;
+  psy = nty - cardTrayh -3;
+  psz = psz0;
+  vol([psx-3, psy, psz], "Coins: ");
+  trr([t0 + f1, cardTrayh + t0 + f1 , t0]) {
+    roundedBox([psx-3, nty - cardTrayh -3, psz]);
+    // show the coins:
+    if (fill) {
+    astack(10, [0, 0, coinz])
+    astack(4, [coind, 0, 0])
+    trr([f1 + t0+coind/2, f1 + t2+coind/2, t0]) color("silver") cylinder(h = coinz, d = coind);
+    }
+  }
 }
 module woodTray(n = 40) {
   // wood: 6.6 x 14.6 x 7.4
-  woodv = round( 6.6 * 14.6 * 7.4 * n);
-  wx = cardTrayw-4*t0-2*f; wy = w0; wz = tilezb - cardz;
-  color("#611951f5")
-  trr([t0+f1, t0+t2, 0 + cardz])
-  box([wx+t2, wy+t2, wz+t0]);
-  echo("woodTray: wx, wy, wz", [wx, wy, wz], wx * wy * wz/1000, woodv/1000);
+  wood = [6.6, 7.4, 14.6, n, .001];
+  psx = (boxy) / 2;
+  psy = 23;
+  psz = psz0;
+  trr([ntx -psx-t0-f1, nty - ty - f1 - psy, t0])
+    color("#d6bd00f5")
+    roundedBox([psx, psy, psz], 1);
+  if (n > 0) {
+    fw = .3;
+    astackxyz([13, 3, 1], [wood.x * 1.3, wood.y + fw, wood.z + fw])
+    trr([ntx -psx-t0-f1, nty - ty - f1 - psy, t2])
+    color("#7a4402f5")
+    cube([wood.x, wood.y, wood.z]);
+
+  }
+  vol([psx, psy, psz], "wood: ");
+  woodv = round(prod(wood));
+  echo("wood: vol =", woodv);
 }
 
 module statDisks() {
@@ -361,29 +383,40 @@ module neutralLid(lz = lidz) {
 }
 module miscBox(fill = false) {
   // templeCards & forts
-  divw = 25; // wide for workerd, combatd, templed
-  fdx = (cardTrayw + ty) + divw/2 + f1;
+  divw = 27; // wide for workerd, combatd, templed
+  mx0 = cardTrayw;
+  mx1 = ntx - (t0 + shipdx3 + fortdx + t0);
+  mx2 = ntx - (t0 + shipdx3 + sfxyw + t0); // near center of board
+  my1 = ty + f1 + shipdy3 + t0; // cbh + 2*ty + 4;
+  fdx = (mx0+ mx1) / 2;
   fdy = ty + f;
-  divx = fdx + divw/2;
-  div([ntz0, nty -30, divx], 0, 0);
-  trr([18, nty-30, 0]) div([ntz0, 30, divx], 0, 0);
-  trr([divx, 0, 0]) divXZ([ntz0, 18 + t0, nty-30], 0, 0);
+  divx0 = fdx - divw/2 - f1 - ty;
+  divx1 = fdx + divw/2 - f1;
+  // zig to left, above 3 forts:
+  zigy = ty + f1 + fortdy3 +t0;
+  zigx = mx2 - mx1;
+                       div([ntz0,     zigy, divx1], 0); // vertical long
+  trr([zigx, zigy, 0]) div([ntz0, my1-zigy, divx1], 0); // vertical short
+  trr([divx1, 0, 0]) divXZ([ntz0, zigx, zigy], 0); // horizontal
 
-  fy0 = fdy + f1;
-  if (fill) trr([fdx, fy0, t0]) temples();
-  fy1 = fy0 + nTemple * tilez;
-  if (fill) trr([fdx, fy1, t0]) statDisks();
-  wdy = 10.2; 
-  wdz = 9.6;
-  fy2 = fy1 + 10 * combatt + f1;
-  if (fill) astack(2, [0, wdy + f1, 0])
-    trr([fdx - workerd/2, fy2, t0])
-    color("orange") cube([workerd, wdy, wdz]);
-  ccc = 8;
-  fy3 = fy2 + 2 * wdy;
-  if (fill) astack(2, [0, 0, ccc + f1])
-  astack(2, [0, ccc + f1, 0])
-  astack(3, [ccc + f1, 0, 0]) trr([fdx-1.5*ccc, fy3, t0]) cube([ccc, ccc, ccc]);
+  trr([divx1 + zigx, 0, 0]) divXZ([ntz0, ntx-mx2+t0, my1], 0);
+ * trr([divx0, 0, 0]) divXZ([ntz0, ntx-cardTrayw, my1], 0);
+
+  if (fill) {
+    fy0 = fdy + f1;
+    trr([fdx, fy0, t0]) temples();
+    fy1 = fy0 + nTemple * tilez;
+    trr([fdx, fy1, t0]) statDisks();
+    wdy = 10.2; 
+    wdz = 9.6;
+    fy2 = fy1 + 12 * combatt + f1;
+    astack(2, [0, wdy + f1, 0])
+      trr([mx2 - workerd - t2, fy2, t0])
+      color("orange") cube([workerd, wdy, wdz]);
+    ccc = 8; cc1 = ccc * 1.2;
+    fy3 = fy1 + 10 * combatt + t0;
+    astackxyz([2, 3, 2], [cc1, cc1, cc1]) trr([mx0 + 3*t0, fy3, t0]) cube([ccc, ccc, ccc]);
+  }
 }
 
 // temple risers?, coin tray, wood tray, 
@@ -393,6 +426,8 @@ module neutralTray() {
   difference() {
     roundedBox([ntx, nty, ntz], 1, [t0, ty, t0]);
     neutralLid(lidf);
+    astack(2, [0, (h0+6)/3, 0])
+    trr([(w0+6)/2, (h0+6)/3, 0]) cylinder(h = t2, d = 20, center = true);
   }
   shipcc = [shipx0 + shipdx3/2, shipy0 + shipdy3/2, 0]; // horiz
   // trr(shipcc) cylinder(20, 1);
@@ -400,6 +435,8 @@ module neutralTray() {
   trr([t0, 0, t0]) fortBox(3, 1);
 
   miscBox(loc == 0 || loc == 3);
+  woodTray();
+  coinTray();
 
   cardTray();
   
@@ -457,4 +494,4 @@ atrans(loc, [-1, -1, -1, -1, -1, -1, [0, 0, 0]]) cardSection(2, 2, .8);
 // 4: test print fort/ship boxes
 // 5: print 8 ship/fort boxes
 // 6: print 4 cardSection
-loc = 0; 
+loc = 3; 
